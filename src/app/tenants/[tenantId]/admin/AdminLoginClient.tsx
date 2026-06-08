@@ -164,6 +164,7 @@ export default function AdminLoginClient({
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="input-field pl-10 py-2.5 text-xs bg-secondary/30"
+                  style={{ paddingLeft: "2.5rem" }}
                   placeholder="admin-profile"
                 />
               </div>
@@ -179,6 +180,7 @@ export default function AdminLoginClient({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input-field pl-10 py-2.5 text-xs bg-secondary/30"
+                  style={{ paddingLeft: "2.5rem" }}
                   placeholder="••••••••"
                 />
               </div>

@@ -33,12 +33,12 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
       name: displayName,
       verticalName: "Sports Pitch Rental",
       tagline: "Zažijte nefalšovanou fotbalovou zábavu i bez přírodní trávy. Pronájem hřiště s umělým trávníkem 3. generace s certifikací FIFA.",
-      primary: "oklch(0.60 0.18 145)",
-      primaryHover: "oklch(0.53 0.18 145)",
+      primary: "oklch(0.48 0.18 270)",
+      primaryHover: "oklch(0.40 0.18 270)",
       primaryForeground: "#ffffff",
-      accent: "oklch(0.65 0.15 150)",
-      gradientStart: "oklch(0.60 0.18 145)",
-      gradientEnd: "oklch(0.45 0.18 160)",
+      accent: "oklch(0.58 0.16 270)",
+      gradientStart: "oklch(0.48 0.18 270)",
+      gradientEnd: "oklch(0.35 0.15 290)",
     };
   }
   
