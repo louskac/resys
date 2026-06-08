@@ -6,10 +6,12 @@ import Link from "next/link";
 import { 
   Building, Calendar, Clock, QrCode, ClipboardList, 
   Plus, Edit, Trash, Settings, 
-  ArrowLeft, Smartphone, Activity
+  ArrowLeft, Smartphone, Activity,
+  Upload, Image, ShieldCheck, Check, AlertCircle, Eye, List
 } from "lucide-react";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
+import CalendarView from "@/components/CalendarView";
 
 interface ResourceRule {
   id: string;
@@ -64,6 +66,14 @@ interface CheckinLog {
   result: string;
 }
 
+interface OpeningHoursDay {
+  dayOfWeek: number;
+  name: string;
+  openTime: string;
+  closeTime: string;
+  closed: boolean;
+}
+
 interface AdminDashboardClientProps {
   tenant: {
     id: string;
@@ -74,6 +84,8 @@ interface AdminDashboardClientProps {
       openTime?: string;
       closeTime?: string;
       adminEmails?: string[];
+      bannerImage?: string;
+      openingHours?: OpeningHoursDay[];
     };
   };
   resources: Resource[];
@@ -81,6 +93,16 @@ interface AdminDashboardClientProps {
   devices: Device[];
   checkinLogs: CheckinLog[];
 }
+
+const defaultOpeningHours: OpeningHoursDay[] = [
+  { dayOfWeek: 1, name: "Pondělí", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 2, name: "Úterý", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 3, name: "Středa", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 4, name: "Čtvrtek", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 5, name: "Pátek", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 6, name: "Sobota", openTime: "09:00", closeTime: "17:00", closed: false },
+  { dayOfWeek: 0, name: "Neděle", openTime: "09:00", closeTime: "17:00", closed: false }
+];
 
 export default function AdminDashboardClient({
   tenant,
@@ -93,17 +115,29 @@ export default function AdminDashboardClient({
   const theme = getTenantTheme(tenant.id, tenant.vertical, tenant.name);
 
   const [activeTab, setActiveTab] = useState<"overview" | "resources" | "rules" | "bookings" | "devices" | "settings">("overview");
+  const [bookingsSubTab, setBookingsSubTab] = useState<"calendar" | "list">("calendar");
 
   // Portal settings states
   const initialAttributes = tenant.attributes || {};
   const [settingsTagline, setSettingsTagline] = useState(initialAttributes.tagline || "");
   const [settingsOpenTime, setSettingsOpenTime] = useState(initialAttributes.openTime || "08:00");
-  const [settingsCloseTime, setSettingsCloseTime] = useState(initialAttributes.closeTime || "18:00");
+  const [settingsCloseTime, setSettingsCloseTime] = useState(initialAttributes.closeTime || "22:00");
+  const [settingsBannerImage, setSettingsBannerImage] = useState(initialAttributes.bannerImage || "");
+  const [settingsOpeningHours, setSettingsOpeningHours] = useState<OpeningHoursDay[]>(
+    initialAttributes.openingHours || defaultOpeningHours
+  );
+  
+  // Preset helpers for opening hours
+  const [presetOpenTime, setPresetOpenTime] = useState("08:00");
+  const [presetCloseTime, setPresetCloseTime] = useState("22:00");
+  const [presetClosed, setPresetClosed] = useState(false);
+
   const initialAdminEmails = Array.isArray(initialAttributes.adminEmails)
     ? initialAttributes.adminEmails.join(", ")
     : (initialAttributes.adminEmails || "josef.novak@deepvision.cz");
   const [settingsAdminEmails, setSettingsAdminEmails] = useState(initialAdminEmails);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Modals / forms states
   const [resourceModal, setResourceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; type: string; maxCapacity: number; instructor: string; room: string; parentId: string; surface: string; equipment: string; } }>({
@@ -112,10 +146,10 @@ export default function AdminDashboardClient({
     data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "" }
   });
 
-  const [ruleModal, setRuleModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; resourceId: string; name: string; dayOfWeek: number; startTime: string; endTime: string; price: number; maxCapacity: number; } }>({
+  const [ruleModal, setRuleModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; resourceId: string; name: string; dayOfWeek: number; startTime: string; endTime: string; price: number; maxCapacity: number; daysOfWeek: number[]; } }>({
     open: false,
     mode: "add",
-    data: { id: "", resourceId: "", name: "", dayOfWeek: 1, startTime: "12:00", endTime: "13:30", price: 100, maxCapacity: 10 }
+    data: { id: "", resourceId: "", name: "", dayOfWeek: 1, startTime: "12:00", endTime: "13:30", price: 100, maxCapacity: 10, daysOfWeek: [1] }
   });
 
   const [deviceModal, setDeviceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; token: string; active: boolean; } }>({
@@ -123,6 +157,63 @@ export default function AdminDashboardClient({
     mode: "add",
     data: { id: "", name: "", token: "", active: true }
   });
+
+  // --- Image Upload Handler ---
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result as string;
+      try {
+        const res = await fetch("/api/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "image_upload",
+            data: {
+              tenantId: tenant.id,
+              base64Data
+            }
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setSettingsBannerImage(data.imageUrl);
+          alert("Banner image uploaded successfully!");
+          router.refresh();
+        } else {
+          alert("Error uploading image");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to upload image");
+      } finally {
+        setImageUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Preset application functions
+  const applyPresetToDays = (daysToApply: number[]) => {
+    setSettingsOpeningHours(prev => 
+      prev.map(day => {
+        if (daysToApply.includes(day.dayOfWeek)) {
+          return {
+            ...day,
+            openTime: presetOpenTime,
+            closeTime: presetCloseTime,
+            closed: presetClosed
+          };
+        }
+        return day;
+      })
+    );
+  };
 
   // --- CRUD API Triggers ---
   const handleResourceSubmit = async (e: React.FormEvent) => {
@@ -175,11 +266,20 @@ export default function AdminDashboardClient({
 
   const handleRuleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // For bulk creation, if adding we send daysOfWeek array
     const dataToSend = {
-      ...ruleModal.data,
+      id: ruleModal.data.id || undefined,
+      resourceId: ruleModal.data.resourceId,
+      name: ruleModal.data.name,
+      dayOfWeek: ruleModal.mode === "edit" ? ruleModal.data.dayOfWeek : undefined,
+      daysOfWeek: ruleModal.mode === "add" ? ruleModal.data.daysOfWeek : undefined,
+      startTime: ruleModal.data.startTime,
+      endTime: ruleModal.data.endTime,
       price: typeof ruleModal.data.price === "string" ? parseFloat(ruleModal.data.price) : ruleModal.data.price,
       maxCapacity: typeof ruleModal.data.maxCapacity === "string" ? parseInt(ruleModal.data.maxCapacity, 10) : ruleModal.data.maxCapacity,
     };
+
     try {
       const res = await fetch("/api/admin", {
         method: "POST",
@@ -271,6 +371,8 @@ export default function AdminDashboardClient({
         tagline: settingsTagline,
         openTime: settingsOpenTime,
         closeTime: settingsCloseTime,
+        bannerImage: settingsBannerImage,
+        openingHours: settingsOpeningHours,
         adminEmails: emailsArray,
       }
     };
@@ -295,6 +397,72 @@ export default function AdminDashboardClient({
     }
   };
 
+  // Generate calendar events from bookings and rules client-side
+  const calendarEvents = React.useMemo(() => {
+    const events: any[] = [];
+    
+    // A. Add confirmed bookings as occupied calendar overlays
+    bookings.forEach((booking) => {
+      if (booking.status !== "CONFIRMED") return;
+      const from = new Date(booking.reservedFrom);
+      const to = new Date(booking.reservedTo);
+      const startHour = from.getHours() + from.getMinutes() / 60;
+      const endHour = to.getHours() + to.getMinutes() / 60;
+      const durationHours = endHour - startHour;
+      
+      const dayOfWeek = from.getDay();
+      const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      const resource = resources.find(r => r.name === booking.resourceName);
+      const room = resource?.attributes?.room || resource?.attributes?.surface || "Hřiště";
+
+      events.push({
+        id: booking.id,
+        name: booking.userName || booking.resourceName,
+        room: room,
+        instructor: booking.userEmail,
+        dayIndex,
+        startHour,
+        durationHours,
+        resourceId: resource?.id || "",
+        isOccupied: true,
+        resourceName: booking.resourceName,
+      });
+    });
+
+    // B. Add schedule rules (for classes/regular programs)
+    if (tenant.vertical !== "SPORTS_GROUND") {
+      resources.forEach((resource) => {
+        const instructor = resource.attributes.instructor || "Staff";
+        const room = resource.attributes.room || "Room";
+
+        resource.scheduleRules.forEach((rule) => {
+          const [sh, sm] = rule.startTime.split(":").map(Number);
+          const startHour = sh + sm / 60;
+          const [eh, em] = rule.endTime.split(":").map(Number);
+          const endHour = eh + em / 60;
+          const durationHours = endHour - startHour;
+          const dayIndex = rule.dayOfWeek !== null ? (rule.dayOfWeek === 0 ? 6 : rule.dayOfWeek - 1) : 0;
+
+          events.push({
+            id: rule.id,
+            name: rule.name,
+            room: room,
+            instructor: instructor,
+            dayIndex,
+            startHour,
+            durationHours,
+            resourceId: resource.id,
+            isOccupied: false,
+            resourceName: resource.name,
+          });
+        });
+      });
+    }
+
+    return events;
+  }, [bookings, resources, tenant.vertical]);
+
   // Helper translations
   const getDayName = (dayOfWeek: number | null) => {
     if (dayOfWeek === null) return "Jednorázově";
@@ -318,6 +486,10 @@ export default function AdminDashboardClient({
       default: return "bg-red-500/10 text-red-500 border border-red-500/20";
     }
   };
+
+  // Categorized resources
+  const facilities = resources.filter(r => r.type === "SPACE" || r.type === "SEAT");
+  const classesAndPrograms = resources.filter(r => r.type === "COURSE_PROGRAM");
 
   return (
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-200">
@@ -504,7 +676,7 @@ export default function AdminDashboardClient({
 
           {/* TAB 2: RESOURCES MANAGER */}
           {activeTab === "resources" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-bold text-foreground">Configured Resources ({resources.length})</h3>
                 <button
@@ -519,71 +691,137 @@ export default function AdminDashboardClient({
                 </button>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {resources.map((res) => (
-                  <div key={res.id} className="card p-5 flex flex-col justify-between hover:border-tenant-primary/30 transition-all">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground font-bold uppercase font-mono">
-                          {res.type}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-medium">Cap: {res.maxCapacity}</span>
-                      </div>
-                      <h4 className="font-bold text-base text-foreground">{res.name}</h4>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        {tenant.vertical === "SPORTS_GROUND" ? (
-                          <>
-                            <p>Povrch: <strong className="text-foreground">{res.attributes.surface || "Nenastaven"}</strong></p>
-                            <p>Vybavení: <strong className="text-foreground">{res.attributes.equipment || "Nenastaveno"}</strong></p>
-                            {res.attributes.parentId && (
-                              <p>Nadřazená plocha: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámá"}</strong></p>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <p>Lektor: <strong className="text-foreground">{res.attributes.instructor || "Nenastaven"}</strong></p>
-                            <p>Místnost: <strong className="text-foreground">{res.attributes.room || "Nenastavena"}</strong></p>
-                            {res.attributes.parentId && (
-                              <p>Nadřazený prvek: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámý"}</strong></p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+              {/* Categorization display */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 select-none flex items-center gap-1.5">
+                    <Building size={14} className="text-tenant-primary" />
+                    Facilities & Bookable Spaces (Fields, Sectors, Rooms)
+                  </h4>
+                  {facilities.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic mb-4">No facilities created yet.</p>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {facilities.map((res) => (
+                        <div key={res.id} className="card p-5 flex flex-col justify-between hover:border-tenant-primary/30 transition-all">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground font-bold uppercase font-mono">
+                                {res.type}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-medium">Max Cap: {res.maxCapacity}</span>
+                            </div>
+                            <h4 className="font-bold text-base text-foreground">{res.name}</h4>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>Povrch: <strong className="text-foreground">{res.attributes.surface || "Nenastaven"}</strong></p>
+                              <p>Vybavení: <strong className="text-foreground">{res.attributes.equipment || "Nenastaveno"}</strong></p>
+                              {res.attributes.parentId && (
+                                <p>Nadřazená plocha: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámá"}</strong></p>
+                              )}
+                            </div>
+                          </div>
 
-                    <div className="flex justify-end gap-2 border-t border-border pt-4 mt-4">
-                      <button
-                        onClick={() => setResourceModal({
-                          open: true,
-                          mode: "edit",
-                          data: {
-                            id: res.id,
-                            name: res.name,
-                            type: res.type,
-                            maxCapacity: res.maxCapacity,
-                            instructor: res.attributes.instructor || "",
-                            room: res.attributes.room || "",
-                            parentId: res.attributes.parentId || "",
-                            surface: res.attributes.surface || "",
-                            equipment: res.attributes.equipment || ""
-                          }
-                        })}
-                        className="btn-outline py-1 px-2 text-tenant-primary text-xs"
-                        title="Edit resource"
-                      >
-                        <Edit size={13} />
-                      </button>
-                      <button
-                        onClick={() => handleResourceDelete(res.id)}
-                        className="btn-outline py-1 px-2 text-destructive text-xs"
-                        style={{ color: "oklch(0.60 0.18 15)" }}
-                        title="Delete resource"
-                      >
-                        <Trash size={13} />
-                      </button>
+                          <div className="flex justify-end gap-2 border-t border-border pt-4 mt-4">
+                            <button
+                              onClick={() => setResourceModal({
+                                open: true,
+                                mode: "edit",
+                                data: {
+                                  id: res.id,
+                                  name: res.name,
+                                  type: res.type,
+                                  maxCapacity: res.maxCapacity,
+                                  instructor: "",
+                                  room: "",
+                                  parentId: res.attributes.parentId || "",
+                                  surface: res.attributes.surface || "",
+                                  equipment: res.attributes.equipment || ""
+                                }
+                              })}
+                              className="btn-outline py-1 px-2 text-tenant-primary text-xs"
+                              title="Edit resource"
+                            >
+                              <Edit size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleResourceDelete(res.id)}
+                              className="btn-outline py-1 px-2 text-destructive text-xs"
+                              style={{ color: "oklch(0.60 0.18 15)" }}
+                              title="Delete resource"
+                            >
+                              <Trash size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 select-none flex items-center gap-1.5 pt-4 border-t border-border">
+                    <Clock size={14} className="text-tenant-primary" />
+                    Available Classes, Courses & Programs
+                  </h4>
+                  {classesAndPrograms.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">No classes or programs created yet.</p>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {classesAndPrograms.map((res) => (
+                        <div key={res.id} className="card p-5 flex flex-col justify-between hover:border-tenant-primary/30 transition-all">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground font-bold uppercase font-mono">
+                                {res.type}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-medium">Max Cap: {res.maxCapacity}</span>
+                            </div>
+                            <h4 className="font-bold text-base text-foreground">{res.name}</h4>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>Lektor: <strong className="text-foreground">{res.attributes.instructor || "Nenastaven"}</strong></p>
+                              <p>Místnost: <strong className="text-foreground">{res.attributes.room || "Nenastavena"}</strong></p>
+                              {res.attributes.parentId && (
+                                <p>Nadřazené hřiště: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámé"}</strong></p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 border-t border-border pt-4 mt-4">
+                            <button
+                              onClick={() => setResourceModal({
+                                open: true,
+                                mode: "edit",
+                                data: {
+                                  id: res.id,
+                                  name: res.name,
+                                  type: res.type,
+                                  maxCapacity: res.maxCapacity,
+                                  instructor: res.attributes.instructor || "",
+                                  room: res.attributes.room || "",
+                                  parentId: res.attributes.parentId || "",
+                                  surface: "",
+                                  equipment: ""
+                                }
+                              })}
+                              className="btn-outline py-1 px-2 text-tenant-primary text-xs"
+                              title="Edit resource"
+                            >
+                              <Edit size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleResourceDelete(res.id)}
+                              className="btn-outline py-1 px-2 text-destructive text-xs"
+                              style={{ color: "oklch(0.60 0.18 15)" }}
+                              title="Delete resource"
+                            >
+                              <Trash size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -597,7 +835,7 @@ export default function AdminDashboardClient({
                   disabled={resources.length === 0}
                   onClick={() => setRuleModal({
                     open: true, mode: "add",
-                    data: { id: "", resourceId: resources[0]?.id || "", name: "", dayOfWeek: 1, startTime: "12:30", endTime: "14:00", price: 100, maxCapacity: 10 }
+                    data: { id: "", resourceId: resources[0]?.id || "", name: "", dayOfWeek: 1, startTime: "12:30", endTime: "14:00", price: 100, maxCapacity: 10, daysOfWeek: [1] }
                   })}
                   className="btn-tenant text-white text-xs font-bold flex items-center gap-1 shadow-sm disabled:opacity-50"
                 >
@@ -647,7 +885,8 @@ export default function AdminDashboardClient({
                                     startTime: rule.startTime,
                                     endTime: rule.endTime,
                                     price: parseFloat(rule.price),
-                                    maxCapacity: rule.maxCapacity
+                                    maxCapacity: rule.maxCapacity,
+                                    daysOfWeek: rule.dayOfWeek !== null ? [rule.dayOfWeek] : []
                                   }
                                 })}
                                 className="btn-outline py-1 px-1.5 text-tenant-primary text-[10px]"
@@ -674,51 +913,123 @@ export default function AdminDashboardClient({
 
           {/* TAB 4: BOOKINGS */}
           {activeTab === "bookings" && (
-            <div className="card p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-foreground mb-4">Customer Reservations</h3>
-
-              {bookings.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground font-mono">
-                  No reservations booked by users yet.
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Customer Reservations & Bookings</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Visualize reservations on the schedule or browse the details list.</p>
                 </div>
+                
+                {/* Sub-tab Toggle */}
+                <div className="flex bg-secondary p-1 rounded-xl border border-border text-xs select-none">
+                  <button
+                    onClick={() => setBookingsSubTab("calendar")}
+                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      bookingsSubTab === "calendar"
+                        ? "bg-card text-foreground shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Eye size={14} />
+                    Schedule Grid
+                  </button>
+                  <button
+                    onClick={() => setBookingsSubTab("list")}
+                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      bookingsSubTab === "list"
+                        ? "bg-card text-foreground shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <List size={14} />
+                    Details List
+                  </button>
+                </div>
+              </div>
+
+              {bookingsSubTab === "calendar" ? (
+                /* Admin Calendar View */
+                <CalendarView
+                  tenantId={tenant.id}
+                  initialEvents={calendarEvents}
+                  session={{ user: { name: "Admin", email: "admin@deepvision.cz" } }}
+                  resources={resources.map(r => ({
+                    id: r.id,
+                    name: r.name,
+                    parentId: r.attributes.parentId || null
+                  }))}
+                  openTime={settingsOpenTime}
+                  closeTime={settingsCloseTime}
+                  openingHours={settingsOpeningHours}
+                  isAdmin={true}
+                />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-border text-muted-foreground font-medium">
-                        <th className="py-2.5 font-semibold">User</th>
-                        <th className="py-2.5 font-semibold">Resource</th>
-                        <th className="py-2.5 font-semibold">Reserved Slot</th>
-                        <th className="py-2.5 font-semibold">Status</th>
-                        <th className="py-2.5 font-semibold text-right">Booking Token</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bookings.map((booking) => (
-                        <tr key={booking.id} className="border-b border-border/40 hover:bg-secondary/40 transition-colors">
-                          <td className="py-3 font-medium text-foreground">
-                            <div>{booking.userName}</div>
-                            <div className="text-[10px] text-muted-foreground font-mono">{booking.userEmail}</div>
-                          </td>
-                          <td className="py-3 text-foreground">{booking.resourceName}</td>
-                          <td className="py-3 text-foreground font-mono">
-                            {new Date(booking.reservedFrom).toLocaleDateString()}
-                            <span className="text-muted-foreground text-[10px] ml-1.5">
-                              {new Date(booking.reservedFrom).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(booking.reservedTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </td>
-                          <td className="py-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
-                              {booking.status}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right font-mono text-[10px] text-muted-foreground">
-                            {booking.id}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                /* List/Table View */
+                <div className="card p-6 shadow-sm">
+                  {bookings.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-muted-foreground font-mono">
+                      No reservations booked by users yet.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-border text-muted-foreground font-medium">
+                            <th className="py-2.5 font-semibold">User</th>
+                            <th className="py-2.5 font-semibold">Resource</th>
+                            <th className="py-2.5 font-semibold">Reserved Slot</th>
+                            <th className="py-2.5 font-semibold">Status</th>
+                            <th className="py-2.5 font-semibold text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bookings.map((booking) => (
+                            <tr key={booking.id} className="border-b border-border/40 hover:bg-secondary/40 transition-colors">
+                              <td className="py-3 font-medium text-foreground">
+                                <div>{booking.userName}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono">{booking.userEmail}</div>
+                              </td>
+                              <td className="py-3 text-foreground">{booking.resourceName}</td>
+                              <td className="py-3 text-foreground font-mono">
+                                {new Date(booking.reservedFrom).toLocaleDateString()}
+                                <span className="text-muted-foreground text-[10px] ml-1.5">
+                                  {new Date(booking.reservedFrom).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(booking.reservedTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
+                                  {booking.status}
+                                </span>
+                              </td>
+                              <td className="py-3 text-right">
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm("Are you sure you want to cancel this reservation?")) return;
+                                    try {
+                                      const res = await fetch(`/api/bookings?bookingId=${booking.id}`, {
+                                        method: "DELETE"
+                                      });
+                                      if (res.ok) {
+                                        alert("Booking cancelled successfully!");
+                                        router.refresh();
+                                      } else {
+                                        alert("Error cancelling booking");
+                                      }
+                                    } catch (err) {
+                                      console.error(err);
+                                    }
+                                  }}
+                                  className="text-red-500 font-bold hover:underline cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -791,88 +1102,279 @@ export default function AdminDashboardClient({
             </div>
           )}
 
+          {/* TAB 6: SETTINGS */}
           {activeTab === "settings" && (
-            <div className="card p-6 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-base font-bold text-foreground mb-1">Branding & Settings</h3>
-                <p className="text-xs text-muted-foreground">Configure customized parameters for this portal instance.</p>
+            <div className="space-y-6">
+              {/* Branding and configuration */}
+              <div className="card p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-foreground mb-1">Branding & Settings</h3>
+                  <p className="text-xs text-muted-foreground">Configure customized parameters for this portal instance.</p>
+                </div>
+
+                <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-muted-foreground mb-1 font-semibold">Custom Tagline</label>
+                        <input
+                          type="text"
+                          value={settingsTagline}
+                          onChange={(e) => setSettingsTagline(e.target.value)}
+                          className="input-field"
+                          placeholder="e.g. Volnočasové výtvarné a kreativní ateliéry"
+                        />
+                        <span className="text-[10px] text-muted-foreground mt-1 block">
+                          Will replace the default brand tagline on the main welcome banner.
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-muted-foreground mb-1 font-semibold">Grid Start Hour (HH:MM)</label>
+                          <input
+                            type="text"
+                            required
+                            pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                            value={settingsOpenTime}
+                            onChange={(e) => setSettingsOpenTime(e.target.value)}
+                            className="input-field font-mono"
+                            placeholder="08:00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-muted-foreground mb-1 font-semibold">Grid End Hour (HH:MM)</label>
+                          <input
+                            type="text"
+                            required
+                            pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                            value={settingsCloseTime}
+                            onChange={(e) => setSettingsCloseTime(e.target.value)}
+                            className="input-field font-mono"
+                            placeholder="22:00"
+                          />
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground block">
+                        Defines the default scale boundaries of the public calendar view.
+                      </span>
+
+                      {/* Banner Image Upload widget */}
+                      <div className="space-y-2.5 border-t border-border pt-4 mt-4">
+                        <label className="block text-muted-foreground font-semibold">Portal Banner Image</label>
+                        
+                        {settingsBannerImage ? (
+                          <div className="relative group rounded-2xl overflow-hidden border border-border h-36 bg-secondary flex items-center justify-center">
+                            <img 
+                              src={settingsBannerImage} 
+                              alt="Banner Preview" 
+                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <label className="p-2 bg-white text-zinc-950 rounded-xl cursor-pointer shadow-md text-[11px] font-bold flex items-center gap-1.5">
+                                <Upload size={14} />
+                                Change Banner
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  onChange={handleImageUpload} 
+                                  className="hidden" 
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center bg-secondary/10">
+                            <Image size={28} className="text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground font-medium mb-3">No custom banner image uploaded.</p>
+                            <label className="btn-secondary py-1.5 px-3.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5">
+                              {imageUploading ? (
+                                <span>Uploading...</span>
+                              ) : (
+                                <>
+                                  <Upload size={14} />
+                                  Upload Picture
+                                </>
+                              )}
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                disabled={imageUploading}
+                                onChange={handleImageUpload} 
+                                className="hidden" 
+                              />
+                            </label>
+                          </div>
+                        )}
+                        <span className="text-[10px] text-muted-foreground block">
+                          Upload a banner picture (PNG/JPG). It will display beautifully on the public portal banner page.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-muted-foreground mb-1 font-semibold">Administrator Emails</label>
+                        <textarea
+                          rows={3}
+                          value={settingsAdminEmails}
+                          onChange={(e) => setSettingsAdminEmails(e.target.value)}
+                          className="input-field font-mono resize-none"
+                          placeholder="josef.novak@deepvision.cz, admin@sferapardubice.cz"
+                        />
+                        <span className="text-[10px] text-muted-foreground mt-1 block">
+                          Comma-separated email list. Logged-in admin accounts must match these.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CUSTOM OPENING HOURS SECTION WITH PRESETS */}
+                  <div className="border-t border-border pt-6 mt-6 space-y-4">
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground mb-1 flex items-center gap-1">
+                        <Clock size={14} className="text-tenant-primary" />
+                        Custom Day-of-Week Opening Hours
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground">Define specific opening and closing hours for each weekday. Closed days won{"'"}t allow bookings.</p>
+                    </div>
+
+                    {/* Master Preset Bar */}
+                    <div className="bg-secondary/40 border border-border/80 p-4 rounded-2xl space-y-3">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">Bulk Apply Presets</span>
+                      <div className="flex flex-wrap items-center gap-4 text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <span>Open:</span>
+                          <input 
+                            type="text" 
+                            value={presetOpenTime}
+                            onChange={(e) => setPresetOpenTime(e.target.value)}
+                            placeholder="08:00" 
+                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span>Close:</span>
+                          <input 
+                            type="text" 
+                            value={presetCloseTime}
+                            onChange={(e) => setPresetCloseTime(e.target.value)}
+                            placeholder="22:00" 
+                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input 
+                            type="checkbox" 
+                            id="preset-closed" 
+                            checked={presetClosed}
+                            onChange={(e) => setPresetClosed(e.target.checked)}
+                            className="rounded"
+                          />
+                          <label htmlFor="preset-closed" className="cursor-pointer font-semibold">Closed</label>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 pt-1 sm:pt-0">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetToDays([1, 2, 3, 4, 5, 6, 0])}
+                            className="btn-outline px-2.5 py-1 text-[10px] font-bold hover:bg-tenant-primary hover:text-white"
+                          >
+                            Apply Everyday
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPresetToDays([1, 2, 3, 4, 5])}
+                            className="btn-outline px-2.5 py-1 text-[10px] font-bold hover:bg-tenant-primary hover:text-white"
+                          >
+                            Apply Weekdays
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPresetToDays([6, 0])}
+                            className="btn-outline px-2.5 py-1 text-[10px] font-bold hover:bg-tenant-primary hover:text-white"
+                          >
+                            Apply Weekend
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Opening hours table */}
+                    <div className="overflow-hidden border border-border rounded-xl">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-secondary/45 text-muted-foreground font-semibold border-b border-border">
+                            <th className="p-3">Day</th>
+                            <th className="p-3">Opening Time (HH:MM)</th>
+                            <th className="p-3">Closing Time (HH:MM)</th>
+                            <th className="p-3 text-right">Closed</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {settingsOpeningHours.map((day, idx) => (
+                            <tr key={day.dayOfWeek} className="border-b border-border/40 hover:bg-secondary/15 transition-colors">
+                              <td className="p-3 font-semibold text-foreground">{day.name}</td>
+                              <td className="p-3">
+                                <input
+                                  type="text"
+                                  pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                                  disabled={day.closed}
+                                  value={day.openTime}
+                                  onChange={(e) => {
+                                    const updated = [...settingsOpeningHours];
+                                    updated[idx].openTime = e.target.value;
+                                    setSettingsOpeningHours(updated);
+                                  }}
+                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40"
+                                  placeholder="08:00"
+                                />
+                              </td>
+                              <td className="p-3">
+                                <input
+                                  type="text"
+                                  pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                                  disabled={day.closed}
+                                  value={day.closeTime}
+                                  onChange={(e) => {
+                                    const updated = [...settingsOpeningHours];
+                                    updated[idx].closeTime = e.target.value;
+                                    setSettingsOpeningHours(updated);
+                                  }}
+                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40"
+                                  placeholder="22:00"
+                                />
+                              </td>
+                              <td className="p-3 text-right">
+                                <input
+                                  type="checkbox"
+                                  checked={day.closed}
+                                  onChange={(e) => {
+                                    const updated = [...settingsOpeningHours];
+                                    updated[idx].closed = e.target.checked;
+                                    setSettingsOpeningHours(updated);
+                                  }}
+                                  className="h-4 w-4 rounded bg-input border-border text-primary"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t border-border">
+                    <button
+                      type="submit"
+                      disabled={isSavingSettings}
+                      className="btn-tenant text-white font-bold disabled:opacity-50 shadow-md"
+                    >
+                      {isSavingSettings ? "Saving Settings..." : "Save Portal Settings"}
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              <form onSubmit={handleSettingsSubmit} className="space-y-4 text-xs">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-muted-foreground mb-1 font-semibold">Custom Tagline</label>
-                      <input
-                        type="text"
-                        value={settingsTagline}
-                        onChange={(e) => setSettingsTagline(e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. Volnočasové výtvarné a kreativní ateliéry"
-                      />
-                      <span className="text-[10px] text-muted-foreground mt-1 block">
-                        Will replace the default brand tagline on the main welcome banner.
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-muted-foreground mb-1 font-semibold">Opening Time (HH:MM)</label>
-                        <input
-                          type="text"
-                          required
-                          pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
-                          value={settingsOpenTime}
-                          onChange={(e) => setSettingsOpenTime(e.target.value)}
-                          className="input-field font-mono"
-                          placeholder="08:00"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-muted-foreground mb-1 font-semibold">Closing Time (HH:MM)</label>
-                        <input
-                          type="text"
-                          required
-                          pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
-                          value={settingsCloseTime}
-                          onChange={(e) => setSettingsCloseTime(e.target.value)}
-                          className="input-field font-mono"
-                          placeholder="18:00"
-                        />
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground block">
-                      Defines the hour scale boundaries shown on the front calendar view.
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-muted-foreground mb-1 font-semibold">Administrator Emails</label>
-                      <textarea
-                        rows={4}
-                        value={settingsAdminEmails}
-                        onChange={(e) => setSettingsAdminEmails(e.target.value)}
-                        className="input-field font-mono resize-none"
-                        placeholder="josef.novak@deepvision.cz, admin@sferapardubice.cz"
-                      />
-                      <span className="text-[10px] text-muted-foreground mt-1 block">
-                        Comma-separated email list. Only users logging in via OneiD matching these emails can access this admin console.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4 border-t border-border">
-                  <button
-                    type="submit"
-                    disabled={isSavingSettings}
-                    className="btn-tenant text-white font-bold disabled:opacity-50 shadow-md"
-                  >
-                    {isSavingSettings ? "Saving Settings..." : "Save Portal Settings"}
-                  </button>
-                </div>
-              </form>
             </div>
           )}
 
@@ -914,9 +1416,9 @@ export default function AdminDashboardClient({
                   })}
                   className="select-field"
                 >
-                  <option value="SPACE">SPACE (Kapacitní prostor)</option>
-                  <option value="SEAT">SEAT (Místo / Sedadlo)</option>
-                  <option value="COURSE_PROGRAM">COURSE_PROGRAM (Výukový program)</option>
+                  <option value="SPACE">SPACE (Facility / Pitch / Space)</option>
+                  <option value="SEAT">SEAT (Seat / Spot)</option>
+                  <option value="COURSE_PROGRAM">COURSE_PROGRAM (Regular Class / Program)</option>
                 </select>
               </div>
 
@@ -934,41 +1436,66 @@ export default function AdminDashboardClient({
                 />
               </div>
 
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">
-                  {tenant.vertical === "SPORTS_GROUND" ? "Povrch / Surface" : "Lektor / Instructor"}
-                </label>
-                <input
-                  type="text"
-                  value={tenant.vertical === "SPORTS_GROUND" ? resourceModal.data.surface : resourceModal.data.instructor}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: tenant.vertical === "SPORTS_GROUND" 
-                      ? { ...resourceModal.data, surface: e.target.value }
-                      : { ...resourceModal.data, instructor: e.target.value }
-                  })}
-                  className="input-field"
-                  placeholder={tenant.vertical === "SPORTS_GROUND" ? "e.g. Umělá tráva 3. generace" : "e.g. RNDr. Pavel Černý"}
-                />
-              </div>
-
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">
-                  {tenant.vertical === "SPORTS_GROUND" ? "Vybavení / Equipment" : "Místnost / Room"}
-                </label>
-                <input
-                  type="text"
-                  value={tenant.vertical === "SPORTS_GROUND" ? resourceModal.data.equipment : resourceModal.data.room}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: tenant.vertical === "SPORTS_GROUND" 
-                      ? { ...resourceModal.data, equipment: e.target.value }
-                      : { ...resourceModal.data, room: e.target.value }
-                  })}
-                  className="input-field"
-                  placeholder={tenant.vertical === "SPORTS_GROUND" ? "e.g. Přenosné branky" : "e.g. Učebna C"}
-                />
-              </div>
+              {/* Conditionally display attributes depending on SPACE vs COURSE_PROGRAM */}
+              {(resourceModal.data.type === "SPACE" || resourceModal.data.type === "SEAT") ? (
+                <>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-semibold">Povrch / Surface</label>
+                    <input
+                      type="text"
+                      value={resourceModal.data.surface}
+                      onChange={(e) => setResourceModal({
+                        ...resourceModal,
+                        data: { ...resourceModal.data, surface: e.target.value }
+                      })}
+                      className="input-field"
+                      placeholder="e.g. Umělá tráva 3. generace"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-semibold">Vybavení / Equipment</label>
+                    <input
+                      type="text"
+                      value={resourceModal.data.equipment}
+                      onChange={(e) => setResourceModal({
+                        ...resourceModal,
+                        data: { ...resourceModal.data, equipment: e.target.value }
+                      })}
+                      className="input-field"
+                      placeholder="e.g. Přenosné branky"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-semibold">Lektor / Instructor</label>
+                    <input
+                      type="text"
+                      value={resourceModal.data.instructor}
+                      onChange={(e) => setResourceModal({
+                        ...resourceModal,
+                        data: { ...resourceModal.data, instructor: e.target.value }
+                      })}
+                      className="input-field"
+                      placeholder="e.g. RNDr. Pavel Černý"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-semibold">Místnost / Room</label>
+                    <input
+                      type="text"
+                      value={resourceModal.data.room}
+                      onChange={(e) => setResourceModal({
+                        ...resourceModal,
+                        data: { ...resourceModal.data, room: e.target.value }
+                      })}
+                      className="input-field"
+                      placeholder="e.g. Učebna C"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-muted-foreground mb-1 font-semibold">Parent Area / Field (Nadřazený prvek)</label>
@@ -1051,25 +1578,100 @@ export default function AdminDashboardClient({
                 />
               </div>
 
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Day of Week</label>
-                <select
-                  value={ruleModal.data.dayOfWeek}
-                  onChange={(e) => setRuleModal({
-                    ...ruleModal,
-                    data: { ...ruleModal.data, dayOfWeek: parseInt(e.target.value, 10) }
-                  })}
-                  className="select-field"
-                >
-                  <option value={1}>Pondělí</option>
-                  <option value={2}>Úterý</option>
-                  <option value={3}>Středa</option>
-                  <option value={4}>Čtvrtek</option>
-                  <option value={5}>Pátek</option>
-                  <option value={6}>Sobota</option>
-                  <option value={0}>Neděle</option>
-                </select>
-              </div>
+              {/* Day Selection - Select for edit, checkboxes for add */}
+              {ruleModal.mode === "edit" ? (
+                <div>
+                  <label className="block text-muted-foreground mb-1 font-semibold">Day of Week</label>
+                  <select
+                    value={ruleModal.data.dayOfWeek}
+                    onChange={(e) => setRuleModal({
+                      ...ruleModal,
+                      data: { ...ruleModal.data, dayOfWeek: parseInt(e.target.value, 10) }
+                    })}
+                    className="select-field"
+                  >
+                    <option value={1}>Pondělí</option>
+                    <option value={2}>Úterý</option>
+                    <option value={3}>Středa</option>
+                    <option value={4}>Čtvrtek</option>
+                    <option value={5}>Pátek</option>
+                    <option value={6}>Sobota</option>
+                    <option value={0}>Neděle</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="block text-muted-foreground font-semibold">Repeating Days</label>
+                  <div className="grid grid-cols-3 gap-2 border border-border p-3 rounded-xl bg-secondary/25">
+                    {[
+                      { val: 1, label: "Po" },
+                      { val: 2, label: "Út" },
+                      { val: 3, label: "St" },
+                      { val: 4, label: "Čt" },
+                      { val: 5, label: "Pá" },
+                      { val: 6, label: "So" },
+                      { val: 0, label: "Ne" }
+                    ].map(day => (
+                      <div key={day.val} className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          id={`chk-day-${day.val}`}
+                          checked={ruleModal.data.daysOfWeek.includes(day.val)}
+                          onChange={(e) => {
+                            const current = [...ruleModal.data.daysOfWeek];
+                            if (e.target.checked) {
+                              current.push(day.val);
+                            } else {
+                              const idx = current.indexOf(day.val);
+                              if (idx > -1) current.splice(idx, 1);
+                            }
+                            setRuleModal({
+                              ...ruleModal,
+                              data: { ...ruleModal.data, daysOfWeek: current }
+                            });
+                          }}
+                          className="h-3.5 w-3.5 rounded"
+                        />
+                        <label htmlFor={`chk-day-${day.val}`} className="cursor-pointer font-medium">{day.label}</label>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bulk Select Helper Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRuleModal({
+                        ...ruleModal,
+                        data: { ...ruleModal.data, daysOfWeek: [1, 2, 3, 4, 5, 6, 0] }
+                      })}
+                      className="px-2 py-1 border border-border hover:bg-secondary rounded text-[10px] font-semibold"
+                    >
+                      All Everyday
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRuleModal({
+                        ...ruleModal,
+                        data: { ...ruleModal.data, daysOfWeek: [1, 2, 3, 4, 5] }
+                      })}
+                      className="px-2 py-1 border border-border hover:bg-secondary rounded text-[10px] font-semibold"
+                    >
+                      Weekdays (Po-Pá)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRuleModal({
+                        ...ruleModal,
+                        data: { ...ruleModal.data, daysOfWeek: [6, 0] }
+                      })}
+                      className="px-2 py-1 border border-border hover:bg-secondary rounded text-[10px] font-semibold"
+                    >
+                      Weekend (So-Ne)
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

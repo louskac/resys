@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import { exec } from "child_process";
 import util from "util";
+import fs from "fs";
+import path from "path";
 
 const execPromise = util.promisify(exec);
 
@@ -89,14 +91,101 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: "success", message: "Resource deleted." });
       }
 
-      case "rule_upsert": {
-        const { id, resourceId, name, dayOfWeek, startTime, endTime, price, maxCapacity } = data;
-        const rule = await prisma.scheduleRule.upsert({
-          where: { id: id || "temp-uuid-placeholder-non-existent" },
-          update: { name, dayOfWeek: parseInt(dayOfWeek, 10), startTime, endTime, price: parseFloat(price), maxCapacity: parseInt(maxCapacity, 10) },
-          create: { resourceId, name, dayOfWeek: parseInt(dayOfWeek, 10), startTime, endTime, price: parseFloat(price), maxCapacity: parseInt(maxCapacity, 10) },
+      case "image_upload": {
+        const { tenantId, base64Data } = data;
+        if (!tenantId || !base64Data) {
+          return NextResponse.json({ error: "Missing tenantId or base64Data" }, { status: 400 });
+        }
+
+        const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        let cleanBase64 = base64Data;
+        let ext = "png";
+        if (matches && matches.length === 3) {
+          cleanBase64 = matches[2];
+          const mimeType = matches[1];
+          if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = "jpg";
+          else if (mimeType.includes("gif")) ext = "gif";
+          else if (mimeType.includes("webp")) ext = "webp";
+        }
+
+        const buffer = Buffer.from(cleanBase64, "base64");
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        const fileName = `${tenantId}-banner.${ext}`;
+        const filePath = path.join(uploadDir, fileName);
+        
+        fs.writeFileSync(filePath, buffer);
+        const imageUrl = `/uploads/${fileName}`;
+
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId }
         });
-        return NextResponse.json({ status: "success", rule });
+
+        const currentAttributes = (tenant?.attributes as Record<string, any>) || {};
+        const updatedAttributes = {
+          ...currentAttributes,
+          bannerImage: imageUrl
+        };
+
+        await prisma.tenant.update({
+          where: { id: tenantId },
+          data: { attributes: updatedAttributes }
+        });
+
+        return NextResponse.json({ status: "success", imageUrl });
+      }
+
+      case "rule_upsert": {
+        const { id, resourceId, name, dayOfWeek, startTime, endTime, price, maxCapacity, daysOfWeek } = data;
+        
+        if (id) {
+          const rule = await prisma.scheduleRule.update({
+            where: { id },
+            data: { 
+              name, 
+              dayOfWeek: dayOfWeek !== undefined && dayOfWeek !== null ? parseInt(dayOfWeek, 10) : null, 
+              startTime, 
+              endTime, 
+              price: parseFloat(price), 
+              maxCapacity: parseInt(maxCapacity, 10) 
+            },
+          });
+          return NextResponse.json({ status: "success", rule });
+        } else if (Array.isArray(daysOfWeek) && daysOfWeek.length > 0) {
+          const createdRules = [];
+          for (const dIndex of daysOfWeek) {
+            const rule = await prisma.scheduleRule.create({
+              data: {
+                resourceId,
+                name,
+                dayOfWeek: parseInt(dIndex, 10),
+                startTime,
+                endTime,
+                price: parseFloat(price),
+                maxCapacity: parseInt(maxCapacity, 10),
+              }
+            });
+            createdRules.push(rule);
+          }
+          return NextResponse.json({ status: "success", rules: createdRules });
+        } else {
+          const rule = await prisma.scheduleRule.create({
+            data: { 
+              resourceId, 
+              name, 
+              dayOfWeek: dayOfWeek !== undefined && dayOfWeek !== null ? parseInt(dayOfWeek, 10) : null, 
+              startTime, 
+              endTime, 
+              price: parseFloat(price), 
+              maxCapacity: parseInt(maxCapacity, 10) 
+            },
+          });
+          return NextResponse.json({ status: "success", rule });
+        }
       }
 
       case "rule_delete": {

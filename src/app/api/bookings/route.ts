@@ -282,3 +282,48 @@ export async function POST(request: NextRequest) {
     return makeErrorResponse("DATABASE_ERROR", "Internal Server Error or Database transaction fail.", {}, 500);
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const bookingId = searchParams.get("bookingId");
+
+    if (!bookingId) {
+      return NextResponse.json({ error: "Missing bookingId" }, { status: 400 });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { tenant: true },
+    });
+
+    if (!booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    const userEmail = session.user.email || "";
+    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || ["josef.novak@deepvision.cz"];
+
+    const isAuthorized = 
+      adminEmails.includes(userEmail) || 
+      userEmail.endsWith("@deepvision.cz");
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await prisma.booking.delete({
+      where: { id: bookingId },
+    });
+
+    return NextResponse.json({ status: "success", message: "Booking cancelled successfully" });
+  } catch (error: any) {
+    console.error("Delete booking error:", error);
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+  }
+}

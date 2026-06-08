@@ -65,6 +65,27 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    CredentialsProvider({
+      id: "admin-credentials",
+      name: "Admin Credentials",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (
+          credentials?.username === "admin-profile" &&
+          credentials?.password === "admin"
+        ) {
+          return {
+            id: "admin",
+            name: "Administrator",
+            email: "admin@deepvision.cz",
+          };
+        }
+        return null;
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {

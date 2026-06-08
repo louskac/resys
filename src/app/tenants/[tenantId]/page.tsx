@@ -36,6 +36,8 @@ interface TenantAttributes {
   openTime?: string;
   closeTime?: string;
   adminEmails?: string[];
+  bannerImage?: string;
+  openingHours?: any[];
 }
 
 interface ResourceAttributes {
@@ -262,7 +264,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 Weekly Schedule & Program Slots
               </h3>
             </div>
-             <CalendarView 
+            <CalendarView 
               tenantId={tenantId} 
               initialEvents={calendarEvents} 
               session={session}
@@ -273,24 +275,37 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               }))}
               openTime={openTime}
               closeTime={closeTime}
+              openingHours={attributes.openingHours}
               weekStart={formatLocalDate(monday)}
               activeDate={date || formatLocalDate(monday)}
             />
           </div>
-
+ 
           {/* Right Column - Hero Info & Programs (sidebar on desktop, stacked first on mobile) */}
           <div className="space-y-6 order-1 lg:order-2">
             {/* Hero Banner Card */}
-            <div className="card relative p-6 bg-card border-border hover:border-tenant-primary/30 transition-all shadow-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-tenant-primary mb-2 block select-none">
-                {data.verticalName}
-              </span>
-              <h2 className="text-xl font-extrabold text-foreground mb-2 leading-snug">
-                Welcome to {data.name}
-              </h2>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {tagline}. Select a program below to check details, check capacity slots, and secure your booking.
-              </p>
+            <div className="card relative p-0 overflow-hidden bg-card border-border hover:border-tenant-primary/30 transition-all shadow-sm group">
+              {attributes.bannerImage && (
+                <div className="relative h-44 w-full overflow-hidden border-b border-border bg-secondary flex items-center justify-center">
+                  <img 
+                    src={attributes.bannerImage} 
+                    alt="Tenant Banner" 
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40" />
+                </div>
+              )}
+              <div className="p-6">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-tenant-primary mb-2 block select-none">
+                  {data.verticalName}
+                </span>
+                <h2 className="text-xl font-extrabold text-foreground mb-2 leading-snug">
+                  Welcome to {data.name}
+                </h2>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {tagline}. Select a program below to check details, check capacity slots, and secure your booking.
+                </p>
+              </div>
             </div>
 
             {/* Programs List Widget */}
