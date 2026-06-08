@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Vertical {
+  SPORTS_GROUND
+  CAPACITY_CLASS
+  EDUCATIONAL_COURSE
+  EVENT_TICKETING
+}
+
+enum ResourceType {
+  SPACE
+  SEAT
+  COURSE_PROGRAM
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+}
+
+enum CheckinResult {
+  SUCCESS
+  ALREADY_ATTENDED
+  INVALID_TIME
+  INVALID_TICKET
+}
+
+// SaaS Tenant Configuration
+model Tenant {
+  id           String    @id // e.g., "sfera", "umelka", "motogp"
+  name         String
+  domain       String    @unique // e.g., "rezervace.sferapardubice.eu"
+  vertical     Vertical
+  ssoClientId  String
+  ssoClientSec String    // Client secret for OneiD SSO
+  attributes   Json?
+  createdAt    DateTime  @default(now())
+  resources    Resource[]
+  bookings     Booking[]
+  devices      CheckinDevice[]
+}
+
+// Bookable resources (gyms, yoga rooms, classes)
+model Resource {
+  id           String         @id @default(uuid())
+  tenantId     String
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  type         ResourceType
+  maxCapacity  Int            @default(1)
+  attributes   Json?          // Dynamic metadata (e.g. equipment list, custom rules)
+  scheduleRules ScheduleRule[]
+  bookings     Booking[]
+}
+
+// Availability/Scheduling rules
+model ScheduleRule {
+  id           String       @id @default(uuid())
+  resourceId   String
+  resource     Resource     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  name         String
+  dayOfWeek    Int?         // 0 (Sunday) to 6 (Saturday), null for one-offs
+  startTime    String       // "HH:MM"
+  endTime      String       // "HH:MM"
+  dateFrom     DateTime?
+  dateTo       DateTime?
+  price        Decimal      @db.Decimal(10, 2) @default(0.00)
+  maxCapacity  Int
+  bookings     Booking[]
+}
+
+// Customer Bookings
+model Booking {
+  id                   String        @id @default(uuid()) // Used as the unique token in QR code
+  tenantId             String
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  resourceId           String
+  resource             Resource      @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  scheduleRuleId       String?
+  scheduleRule         ScheduleRule? @relation(fields: [scheduleRuleId], references: [id], onDelete: SetNull)
+  oneidUserId          String        // User ID resolved from OneiD SSO
+  userName             String
+  userEmail            String
+  reservedFrom         DateTime
+  reservedTo           DateTime
+  status               BookingStatus @default(PENDING_PAYMENT)
+  paymentTransactionId String?
+  createdAt            DateTime      @default(now())
+  checkinLogs          CheckinLog[]
+
+  @@index([tenantId, oneidUserId])
+}
+
+// Physical scanning devices (turnstiles, tablets)
+model CheckinDevice {
+  id          String       @id @default(uuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  tokenHash   String       @unique // Hashed API token for verification
+  active      Boolean      @default(true)
+  checkinLogs CheckinLog[]
+}
+
+// Checkin scan events
+model CheckinLog {
+  id        String        @id @default(uuid())
+  deviceId  String
+  device    CheckinDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  bookingId String
+  booking   Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  scannedAt DateTime      @default(now())
+  result    CheckinResult
+}

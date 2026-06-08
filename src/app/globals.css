@@ -1,26 +1,318 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode selector in Tailwind CSS v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* --- LIGHT MODE --- */
+  /* Neutral scale - clean, crisp zinc/slate tones */
+  --background: oklch(0.99 0.003 270);
+  --foreground: oklch(0.18 0.01 270);
+  
+  --card: oklch(1.0 0.0 0);
+  --card-foreground: oklch(0.18 0.01 270);
+  
+  --popover: oklch(1.0 0.0 0);
+  --popover-foreground: oklch(0.18 0.01 270);
+  
+  /* Brand Color - High-End SaaS Indigo */
+  --primary: oklch(0.48 0.18 270);
+  --primary-foreground: oklch(1.0 0.0 0);
+  
+  --secondary: oklch(0.97 0.005 270);
+  --secondary-foreground: oklch(0.35 0.01 270);
+  
+  --muted: oklch(0.96 0.005 270);
+  --muted-foreground: oklch(0.5 0.01 270);
+  
+  --accent: oklch(0.94 0.01 270);
+  --accent-foreground: oklch(0.2 0.01 270);
+  
+  --border: oklch(0.92 0.005 270);
+  --input: oklch(1.0 0.0 0);
+  --ring: oklch(0.48 0.18 270);
+  
+  /* Tenant variable placeholders - mapped to solid colors instead of gradients */
+  --tenant-primary: oklch(0.48 0.18 270);
+  --tenant-primary-hover: oklch(0.40 0.18 270);
+  --tenant-accent: oklch(0.48 0.18 270);
+  --tenant-gradient: var(--tenant-primary);
 }
 
-@theme inline {
+
+
+/* Explicit class-based dark mode override */
+.dark {
+  --background: oklch(0.12 0.01 270);
+  --foreground: oklch(0.98 0.003 270);
+  
+  --card: oklch(0.15 0.01 270);
+  --card-foreground: oklch(0.98 0.003 270);
+  
+  --popover: oklch(0.15 0.01 270);
+  --popover-foreground: oklch(0.98 0.003 270);
+  
+  --primary: oklch(0.64 0.17 270);
+  --primary-foreground: oklch(0.12 0.01 270);
+  
+  --secondary: oklch(0.18 0.01 270);
+  --secondary-foreground: oklch(0.9 0.003 270);
+  
+  --muted: oklch(0.16 0.01 270);
+  --muted-foreground: oklch(0.6 0.01 270);
+  
+  --accent: oklch(0.22 0.02 270);
+  --accent-foreground: oklch(0.95 0.003 270);
+  
+  --border: oklch(0.22 0.01 270);
+  --input: oklch(0.14 0.01 270);
+  --ring: oklch(0.64 0.17 270);
+}
+
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Dynamic tenant colors */
+  --color-tenant-primary: var(--tenant-primary);
+  --color-tenant-primary-hover: var(--tenant-primary-hover);
+  --color-tenant-accent: var(--tenant-accent);
+  --background-image-tenant-gradient: var(--tenant-gradient);
+  
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* --- Base Rules --- */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  accent-color: var(--primary);
 }
+
+/* Custom Scrollbars */
+:root {
+  --color-scrollbar-track: light-dark(oklch(0.97 0.005 270), oklch(0.15 0.01 270));
+  --color-scrollbar-thumb: light-dark(oklch(0.85 0.005 270), oklch(0.3 0.01 270));
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+/* --- DESIGN SYSTEM COMPONENTS --- */
+
+/* 1. Headings & Typography */
+.heading-xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+@media (min-width: 768px) {
+  .heading-xl {
+    font-size: 3rem;
+    line-height: 1.1;
+  }
+}
+
+.heading-lg {
+  font-size: 1.375rem;
+  line-height: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+@media (min-width: 768px) {
+  .heading-lg {
+    font-size: 1.625rem;
+    line-height: 2.125rem;
+  }
+}
+
+.heading-md {
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.heading-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+
+/* 2. Buttons (Base Layout) */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-danger,
+.btn-tenant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem; /* ~13px */
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.4375rem 0.875rem;
+  transition: all 0.12s ease;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  outline: none;
+}
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-outline:disabled,
+.btn-danger:disabled,
+.btn-tenant:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Buttons (Color Variants) */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.btn-primary:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--muted);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--secondary);
+  border-color: var(--border);
+}
+
+.btn-danger {
+  background-color: oklch(0.20 0.05 15 / 0.08);
+  color: oklch(0.60 0.18 15);
+  border-color: oklch(0.60 0.18 15 / 0.15);
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: oklch(0.60 0.18 15 / 0.12);
+  color: oklch(0.68 0.18 15);
+}
+
+/* Tenant custom button */
+.btn-tenant {
+  background-color: var(--tenant-primary);
+  color: var(--primary-foreground);
+}
+.btn-tenant:hover:not(:disabled) {
+  background-color: var(--tenant-primary-hover);
+}
+.btn-tenant:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* 3. Cards */
+.card {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  padding: 1.25rem 1.5rem;
+  border-t: 1px solid var(--border);
+  background-color: var(--secondary);
+}
+
+/* 4. Form inputs (Base Layout) */
+.input-field,
+.select-field {
+  width: 100%;
+  background-color: var(--input);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.4375rem 0.75rem;
+  font-size: 0.8125rem;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.input-field:focus,
+.select-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+.input-field:disabled,
+.select-field:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* Background stripes utility for past calendar slots */
+.bg-stripes-past {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--border) 0px,
+    var(--border) 1px,
+    transparent 1px,
+    transparent 8px
+  );
+  background-color: var(--secondary);
+}
+
