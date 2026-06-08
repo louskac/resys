@@ -7,7 +7,8 @@ import { getTenantTheme } from "@/lib/tenantThemes";
 import { notFound } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
-import { Clock, Users, CreditCard } from "lucide-react";
+import { Clock, Users, CreditCard, Layers, Wrench, GitMerge, MapPin, User } from "lucide-react";
+import TenantBanner from "@/components/TenantBanner";
 
 interface PageProps {
   params: Promise<{
@@ -37,7 +38,12 @@ interface TenantAttributes {
   closeTime?: string;
   adminEmails?: string[];
   bannerImage?: string;
-  openingHours?: any[];
+  openingHours?: {
+    dayOfWeek: number;
+    openTime: string;
+    closeTime: string;
+    closed: boolean;
+  }[];
 }
 
 interface ResourceAttributes {
@@ -195,12 +201,35 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     }
   };
 
+  // Helper to resolve root resource ID
+  const getRootResourceId = (resId: string): string => {
+    const res = tenant.resources.find(r => r.id === resId);
+    const parentId = (res?.attributes as Record<string, unknown>)?.parentId as string | undefined;
+    if (!parentId) return resId;
+    return getRootResourceId(parentId);
+  };
+
   // List of flat resources to render in cards at bottom
   const resourcesList = tenant.resources.map((resource) => {
     // Find the first rule price/time or default
     const firstRule = resource.scheduleRules[0];
-    const priceText = firstRule ? `${firstRule.price} Kč` : "Dle dohody";
+    const resAttrs = (resource.attributes as Record<string, unknown>) || {};
+    const priceText = firstRule 
+      ? `${firstRule.price} Kč` 
+      : resAttrs.price 
+        ? `${resAttrs.price} Kč` 
+        : "Dle dohody";
     const timeText = firstRule ? `${firstRule.startTime} - ${firstRule.endTime}` : "Dle dohody";
+
+    // Find parent resource name if parentId exists
+    let parentName = "";
+    const parentId = resAttrs.parentId as string | undefined;
+    if (parentId) {
+      const parentRes = tenant.resources.find(r => r.id === parentId);
+      if (parentRes) {
+        parentName = parentRes.name;
+      }
+    }
 
     return {
       id: resource.id,
@@ -209,7 +238,23 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       capacity: resource.maxCapacity,
       price: priceText,
       time: timeText,
+      surface: (resAttrs.surface as string) || "",
+      equipment: (resAttrs.equipment as string) || "",
+      room: (resAttrs.room as string) || "",
+      instructor: (resAttrs.instructor as string) || "",
+      parentName,
     };
+  });
+
+  // Group resources by their root resource name
+  const groupedResources: Record<string, typeof resourcesList> = {};
+  resourcesList.forEach(res => {
+    const rootId = getRootResourceId(res.id);
+    const rootName = tenant.resources.find(r => r.id === rootId)?.name || "Standalone";
+    if (!groupedResources[rootName]) {
+      groupedResources[rootName] = [];
+    }
+    groupedResources[rootName].push(res);
   });
 
   return (
@@ -271,7 +316,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               resources={tenant.resources.map(r => ({ 
                 id: r.id, 
                 name: r.name,
-                parentId: (r.attributes as any)?.parentId || null
+                parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
               }))}
               openTime={openTime}
               closeTime={closeTime}
@@ -285,16 +330,13 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           <div className="space-y-6 order-1 lg:order-2">
             {/* Hero Banner Card */}
             <div className="card relative p-0 overflow-hidden bg-card border-border hover:border-tenant-primary/30 transition-all shadow-sm group">
-              {attributes.bannerImage && (
-                <div className="relative h-44 w-full overflow-hidden border-b border-border bg-secondary flex items-center justify-center">
-                  <img 
-                    src={attributes.bannerImage} 
-                    alt="Tenant Banner" 
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40" />
-                </div>
-              )}
+              <TenantBanner 
+                src={attributes.bannerImage} 
+                alt="Tenant Banner" 
+                heightClass="h-44"
+                className="border-b border-border"
+                fallbackText={data.name || "Welcome"}
+              />
               <div className="p-6">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-tenant-primary mb-2 block select-none">
                   {data.verticalName}
@@ -320,59 +362,120 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                   No resources or program slots are currently configured.
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {resourcesList.map((res) => (
-                    <div
-                      key={res.id}
-                      className="card p-5 border-l-4 border-l-tenant-primary hover:border-l-tenant-primary/80 transition-all flex flex-col justify-between group bg-card"
-                    >
-                      <div>
-                        <span className="text-[9px] px-2.5 py-0.5 rounded bg-tenant-primary/10 text-tenant-primary font-bold border border-tenant-primary/20 uppercase tracking-wider select-none">
-                          {res.type}
-                        </span>
-                        <h4 className="font-bold text-sm text-foreground mt-3.5 mb-2.5 group-hover:text-tenant-primary transition-colors">
-                          {res.name}
+                <div className="space-y-6">
+                  {Object.entries(groupedResources).map(([groupName, items]) => (
+                    <div key={groupName} className="space-y-3">
+                      {Object.keys(groupedResources).length > 1 && (
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1 mt-4 select-none">
+                          {groupName}
                         </h4>
-                        <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                          <div className="flex items-center justify-between py-0.5">
-                            <span className="flex items-center gap-2">
-                              <Clock size={13} className="text-tenant-primary" />
-                              <span>Time slot</span>
-                            </span>
-                            <span className="text-foreground font-semibold">{res.time}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-0.5">
-                            <span className="flex items-center gap-2">
-                              <Users size={13} className="text-tenant-primary" />
-                              <span>Capacity</span>
-                            </span>
-                            <span className="text-foreground font-semibold">{res.capacity} slots</span>
-                          </div>
-                          <div className="flex items-center justify-between py-0.5">
-                            <span className="flex items-center gap-2">
-                              <CreditCard size={13} className="text-tenant-primary" />
-                              <span>Admission</span>
-                            </span>
-                            <span className="text-tenant-primary font-bold">{res.price}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {session ? (
-                        <button
-                          className="btn-outline w-full py-1.5 text-xs rounded-lg cursor-not-allowed opacity-60"
-                          disabled
-                        >
-                          Active Session Booked
-                        </button>
-                      ) : (
-                        <Link
-                          href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
-                          className="btn-secondary w-full py-1.5 text-center text-xs block rounded-lg font-semibold"
-                        >
-                          Sign in to Reserve
-                        </Link>
                       )}
+                      <div className="flex flex-col gap-4">
+                        {items.map((res) => (
+                          <div
+                            key={res.id}
+                            className="card p-5 border-l-4 border-l-tenant-primary hover:border-l-tenant-primary/80 transition-all flex flex-col justify-between group bg-card"
+                          >
+                            <div>
+                              <span className="text-[9px] px-2.5 py-0.5 rounded bg-tenant-primary/10 text-tenant-primary font-bold border border-tenant-primary/20 uppercase tracking-wider select-none">
+                                {res.type}
+                              </span>
+                              <h4 className="font-bold text-sm text-foreground mt-3.5 mb-2.5 group-hover:text-tenant-primary transition-colors">
+                                {res.name}
+                              </h4>
+                              <div className="space-y-2 text-xs text-muted-foreground mb-4">
+                                <div className="flex items-center justify-between py-0.5">
+                                  <span className="flex items-center gap-2">
+                                    <Clock size={13} className="text-tenant-primary" />
+                                    <span>Time slot</span>
+                                  </span>
+                                  <span className="text-foreground font-semibold">{res.time}</span>
+                                </div>
+                                <div className="flex items-center justify-between py-0.5">
+                                  <span className="flex items-center gap-2">
+                                    <Users size={13} className="text-tenant-primary" />
+                                    <span>Capacity</span>
+                                  </span>
+                                  <span className="text-foreground font-semibold">{res.capacity} slots</span>
+                                </div>
+                                <div className="flex items-center justify-between py-0.5">
+                                  <span className="flex items-center gap-2">
+                                    <CreditCard size={13} className="text-tenant-primary" />
+                                    <span>Admission</span>
+                                  </span>
+                                  <span className="text-tenant-primary font-bold">{res.price}</span>
+                                </div>
+
+                                {res.surface && (
+                                  <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <Layers size={13} className="text-tenant-primary" />
+                                      <span>Surface</span>
+                                    </span>
+                                    <span className="text-foreground font-semibold text-right">{res.surface}</span>
+                                  </div>
+                                )}
+
+                                {res.equipment && (
+                                  <div className="flex items-start justify-between py-0.5 gap-4">
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <Wrench size={13} className="text-tenant-primary" />
+                                      <span>Equipment</span>
+                                    </span>
+                                    <span className="text-foreground font-semibold text-right leading-relaxed">{res.equipment}</span>
+                                  </div>
+                                )}
+
+                                {res.parentName && (
+                                  <div className="flex items-start justify-between py-0.5 gap-4">
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <GitMerge size={13} className="text-tenant-primary" />
+                                      <span>Parent Area</span>
+                                    </span>
+                                    <span className="text-foreground font-semibold text-right">{res.parentName}</span>
+                                  </div>
+                                )}
+
+                                {res.room && (
+                                  <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <MapPin size={13} className="text-tenant-primary" />
+                                      <span>Room</span>
+                                    </span>
+                                    <span className="text-foreground font-semibold text-right">{res.room}</span>
+                                  </div>
+                                )}
+
+                                {res.instructor && (
+                                  <div className="flex items-start justify-between py-0.5 gap-4">
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <User size={13} className="text-tenant-primary" />
+                                      <span>Instructor</span>
+                                    </span>
+                                    <span className="text-foreground font-semibold text-right">{res.instructor}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {session ? (
+                              <button
+                                className="btn-outline w-full py-1.5 text-xs rounded-lg cursor-not-allowed opacity-60"
+                                disabled
+                              >
+                                Active Session Booked
+                              </button>
+                            ) : (
+                              <Link
+                                href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
+                                className="btn-secondary w-full py-1.5 text-center text-xs block rounded-lg font-semibold"
+                              >
+                                Sign in to Reserve
+                              </Link>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

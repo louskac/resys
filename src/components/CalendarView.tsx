@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import ConfirmDialog from "./ConfirmDialog";
+import AlertDialog from "./AlertDialog";
 
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   name: string;
   room: string;
@@ -15,6 +17,8 @@ interface CalendarEvent {
   resourceId: string;
   isOccupied?: boolean;
   resourceName?: string;
+  lane?: number;
+  totalLanes?: number;
 }
 
 interface CalendarViewProps {
@@ -57,6 +61,16 @@ const getOpeningSlots = (openTime: string = "08:00", closeTime: string = "18:00"
   return slots;
 }
 
+const defaultOpeningHours = [
+  { dayOfWeek: 1, name: "Pondělí", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 2, name: "Úterý", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 3, name: "Středa", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 4, name: "Čtvrtek", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 5, name: "Pátek", openTime: "08:00", closeTime: "22:00", closed: false },
+  { dayOfWeek: 6, name: "Sobota", openTime: "09:00", closeTime: "17:00", closed: false },
+  { dayOfWeek: 0, name: "Neděle", openTime: "09:00", closeTime: "17:00", closed: false }
+];
+
 export default function CalendarView({ 
   tenantId, 
   initialEvents, 
@@ -64,19 +78,69 @@ export default function CalendarView({
   resources,
   openTime = "08:00",
   closeTime = "18:00",
-  weekStart,
   activeDate,
   isAdmin = false,
-  openingHours
+  openingHours = defaultOpeningHours
 }: CalendarViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [selectedResourceId, setSelectedResourceId] = useState<string>("");
+  const rootResources = resources.filter(r => !r.parentId);
+  
+  const activeRootId = (() => {
+    const rootFromUrl = searchParams.get("rootId");
+    if (rootFromUrl && rootResources.some(r => r.id === rootFromUrl)) {
+      return rootFromUrl;
+    }
+    return rootResources[0]?.id || "";
+  })();
+
+  const selectedResourceId = (() => {
+    const resFromUrl = searchParams.get("resourceId");
+    if (resFromUrl && resources.some(r => r.id === resFromUrl)) {
+      const res = resources.find(r => r.id === resFromUrl);
+      const isChildOfActiveRoot = res?.id === activeRootId || res?.parentId === activeRootId;
+      if (isChildOfActiveRoot) {
+        return resFromUrl;
+      }
+    }
+    return activeRootId;
+  })();
+
+  const selectRoot = (rootId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("rootId", rootId);
+    params.set("resourceId", rootId);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const selectResource = (resId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("resourceId", resId);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const [isBooked, setIsBooked] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+
+  const bookingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const closeBookingModalAndRefresh = () => {
+    if (bookingTimeoutRef.current) {
+      clearTimeout(bookingTimeoutRef.current);
+      bookingTimeoutRef.current = null;
+    }
+    setBookingType(null);
+    setSelectedEvent(null);
+    setSelectedDayIndex(null);
+    setIsBooked(false);
+    setGuestName("");
+    setGuestEmail("");
+    setModalError(null);
+    router.refresh();
+  };
 
   const baseDate = activeDate ? new Date(`${activeDate}T00:00:00`) : new Date("2026-06-08T00:00:00");
 
@@ -295,15 +359,16 @@ export default function CalendarView({
   };
 
   // Dynamic style mapper based on resource name hashes for any N resources
-  const getResourceStyles = (resourceName: string, isOccupied?: boolean) => {
+  const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false) => {
     const name = (resourceName || "").toLowerCase();
+    const cursorClass = isOccupied ? (isAdminView ? "cursor-pointer" : "cursor-not-allowed") : "cursor-pointer";
     
     if (name.includes("sektor a") || name.includes("sector a")) {
       return {
         badgeBg: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
         themeClass: isOccupied
-          ? "bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 border-l-4 border-l-rose-600 text-rose-800 dark:text-rose-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-rose-500 text-foreground hover:border-rose-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 border-l-4 border-l-rose-600 text-rose-800 dark:text-rose-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-rose-500 text-foreground hover:border-rose-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-rose-700 dark:text-rose-300"
       };
     }
@@ -311,8 +376,8 @@ export default function CalendarView({
       return {
         badgeBg: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300",
         themeClass: isOccupied
-          ? "bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 border-l-4 border-l-amber-600 text-amber-800 dark:text-amber-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-amber-500 text-foreground hover:border-amber-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 border-l-4 border-l-amber-600 text-amber-800 dark:text-amber-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-amber-500 text-foreground hover:border-amber-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-amber-700 dark:text-amber-300"
       };
     }
@@ -320,8 +385,8 @@ export default function CalendarView({
       return {
         badgeBg: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
         themeClass: isOccupied
-          ? "bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 border-l-4 border-l-emerald-600 text-emerald-800 dark:text-emerald-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-emerald-500 text-foreground hover:border-emerald-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 border-l-4 border-l-emerald-600 text-emerald-800 dark:text-emerald-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-emerald-500 text-foreground hover:border-emerald-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-emerald-700 dark:text-emerald-300"
       };
     }
@@ -331,29 +396,29 @@ export default function CalendarView({
       {
         badgeBg: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
         themeClass: isOccupied
-          ? "bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 border-l-4 border-l-blue-600 text-blue-800 dark:text-blue-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-blue-500 text-foreground hover:border-blue-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 border-l-4 border-l-blue-600 text-blue-800 dark:text-blue-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-blue-500 text-foreground hover:border-blue-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-blue-700 dark:text-blue-300"
       },
       {
         badgeBg: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
         themeClass: isOccupied
-          ? "bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900/50 border-l-4 border-l-violet-600 text-violet-800 dark:text-violet-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-violet-500 text-foreground hover:border-violet-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900/50 border-l-4 border-l-violet-600 text-violet-800 dark:text-violet-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-violet-500 text-foreground hover:border-violet-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-violet-700 dark:text-violet-300"
       },
       {
         badgeBg: "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300",
         themeClass: isOccupied
-          ? "bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 border-l-4 border-l-indigo-600 text-indigo-800 dark:text-indigo-400 cursor-not-allowed"
-          : "bg-card border border-border border-l-4 border-l-indigo-500 text-foreground hover:border-indigo-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 border-l-4 border-l-indigo-600 text-indigo-800 dark:text-indigo-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-indigo-500 text-foreground hover:border-indigo-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-indigo-700 dark:text-indigo-300"
       },
       {
         badgeBg: "bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300",
         themeClass: isOccupied
-          ? "bg-cyan-50/90 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-900/50 border-l-4 border-l-cyan-600 text-cyan-800 dark:text-cyan-400"
-          : "bg-card border border-border border-l-4 border-l-cyan-500 text-foreground hover:border-cyan-500/40 hover:scale-[1.005] transition-all shadow-sm",
+          ? `bg-cyan-50/90 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-900/50 border-l-4 border-l-cyan-600 text-cyan-800 dark:text-cyan-400 ${cursorClass}`
+          : `bg-card border border-border border-l-4 border-l-cyan-500 text-foreground hover:border-cyan-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
         textHex: "text-cyan-700 dark:text-cyan-300"
       }
     ];
@@ -415,24 +480,24 @@ export default function CalendarView({
           if (event.startHour >= lastEnd) {
             laneEvents.push(event);
             placed = true;
-            (event as any).lane = i;
+            event.lane = i;
             break;
           }
         }
         if (!placed) {
           lanes.push([event]);
-          (event as any).lane = lanes.length - 1;
+          event.lane = lanes.length - 1;
         }
       });
 
       cluster.forEach(event => {
-        (event as any).totalLanes = lanes.length;
+        event.totalLanes = lanes.length;
       });
     });
 
     return sorted.map(event => {
-      const lane = (event as any).lane ?? 0;
-      const totalLanes = (event as any).totalLanes ?? 1;
+      const lane = event.lane ?? 0;
+      const totalLanes = event.totalLanes ?? 1;
       
       const leftVal = lane * (100 / totalLanes);
       const widthVal = 100 / totalLanes;
@@ -459,6 +524,10 @@ export default function CalendarView({
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [modalError, setModalError] = useState<{ code: string; message: string } | null>(null);
+
+  // Custom alert and confirmation modal states
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void | Promise<void> } | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; title: string; message: string; onClose?: () => void } | null>(null);
 
   // Drag selection states
   const [dragStartSlot, setDragStartSlot] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
@@ -575,7 +644,14 @@ export default function CalendarView({
   }, [openingHours]);
 
   const events = selectedResourceId
-    ? (initialEvents || []).filter((e) => e.resourceId === selectedResourceId)
+    ? (initialEvents || []).filter((e) => {
+        if (e.resourceId === selectedResourceId) return true;
+        if (e.isOccupied) {
+          const conflictingIds = getConflictingResourceIds(selectedResourceId);
+          return conflictingIds.includes(e.resourceId);
+        }
+        return false;
+      })
     : (initialEvents || []);
 
   const formatHourString = (hour: number) => {
@@ -666,16 +742,10 @@ export default function CalendarView({
       }
 
       setIsBooked(true);
-      setTimeout(() => {
-        setBookingType(null);
-        setSelectedEvent(null);
-        setSelectedDayIndex(null);
-        setIsBooked(false);
-        setGuestName("");
-        setGuestEmail("");
-        setModalError(null);
-        window.location.reload();
+      const timer = setTimeout(() => {
+        closeBookingModalAndRefresh();
       }, 2000);
+      bookingTimeoutRef.current = timer;
     } catch (e) {
       console.error(e);
       setModalError({
@@ -741,34 +811,65 @@ export default function CalendarView({
         </h2>
       </div>
 
-      {/* Resource Filtering Tabs */}
-      {resources && resources.length > 1 && (
-        <div className="flex flex-wrap gap-2 mb-6 border-b border-border/50 pb-4">
-          <button
-            onClick={() => setSelectedResourceId("")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-              selectedResourceId === ""
-                ? "bg-tenant-primary/10 border-tenant-primary/25 text-tenant-primary"
-                : "bg-secondary border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            All Areas / Fields
-          </button>
-          {resources.map((res) => (
+      {/* Root Resource Selector (if multiple roots exist) */}
+      {rootResources.length > 1 && (
+        <div className="flex flex-wrap gap-2 mb-4 p-1 bg-secondary/60 rounded-xl border border-border/50 w-fit">
+          {rootResources.map((root) => {
+            const isActive = activeRootId === root.id;
+            return (
+              <button
+                key={root.id}
+                type="button"
+                onClick={() => selectRoot(root.id)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-card border border-border/40 shadow-sm text-tenant-primary"
+                    : "border border-transparent hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {root.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Sub-resource Selector (if children exist for the active root) */}
+      {(() => {
+        const children = resources.filter(r => r.parentId === activeRootId);
+        if (children.length === 0) return null;
+        
+        const activeRoot = resources.find(r => r.id === activeRootId);
+        return (
+          <div className="flex flex-wrap gap-2 mb-6 border-b border-border/50 pb-4">
             <button
-              key={res.id}
-              onClick={() => setSelectedResourceId(res.id)}
+              type="button"
+              onClick={() => selectResource(activeRootId)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                selectedResourceId === res.id
+                selectedResourceId === activeRootId
                   ? "bg-tenant-primary/10 border-tenant-primary/25 text-tenant-primary"
                   : "bg-secondary border-border hover:bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
-              {res.name}
+              Vše ({activeRoot?.name || "Vše"})
             </button>
-          ))}
-        </div>
-      )}
+            {children.map((child) => (
+              <button
+                key={child.id}
+                type="button"
+                onClick={() => selectResource(child.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  selectedResourceId === child.id
+                    ? "bg-tenant-primary/10 border-tenant-primary/25 text-tenant-primary"
+                    : "bg-secondary border-border hover:bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {child.name}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Main Grid View */}
       <div className="overflow-x-auto">
@@ -924,7 +1025,7 @@ export default function CalendarView({
                         return visualEvents.map((event) => {
                           const topOffset = (event.startHour - startHourOffset) * HOUR_HEIGHT;
                           const heightVal = event.durationHours * HOUR_HEIGHT;
-                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied);
+                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin);
                           const isWeekView = viewMode === "week";
                           const isNarrow = isWeekView && event.totalLanes && event.totalLanes > 1;
                           const isExtremelyNarrow = isWeekView && event.totalLanes && event.totalLanes >= 3;
@@ -936,7 +1037,7 @@ export default function CalendarView({
                             : styles.themeClass;
 
                           const badgeBgClass = isPastEvent 
-                            ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-550 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
+                            ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
                             : styles.badgeBg;
 
                           return (
@@ -1023,7 +1124,7 @@ export default function CalendarView({
                                       <span className="text-[9px] font-mono opacity-80 block truncate">
                                         {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
                                       </span>
-                                      {!isNarrow && selectedResourceId === "" && event.resourceName && (
+                                      {!isNarrow && (selectedResourceId === "" || event.resourceId !== selectedResourceId) && event.resourceName && (
                                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase select-none ${badgeBgClass}`}>
                                           {event.resourceName.split(" (")[0]}
                                         </span>
@@ -1198,7 +1299,7 @@ export default function CalendarView({
 
             {modalError && (
               <div className="mb-4 bg-red-500/10 border border-red-500/25 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-2 duration-150">
-                <AlertCircle size={14} className="mt-0.5 text-red-550 shrink-0" />
+                <AlertCircle size={14} className="mt-0.5 text-red-500 shrink-0" />
                 <div className="flex-1 space-y-0.5">
                   <p className="font-bold uppercase tracking-wide text-[9px] opacity-75">
                     {modalError.code.replace(/_/g, " ")}
@@ -1209,7 +1310,7 @@ export default function CalendarView({
                 </div>
                 <button 
                   onClick={() => setModalError(null)}
-                  className="text-red-550 hover:text-red-700 dark:hover:text-red-300 font-bold ml-1 transition-colors"
+                  className="text-red-500 hover:text-red-700 dark:hover:text-red-300 font-bold ml-1 transition-colors"
                 >
                   ×
                 </button>
@@ -1279,33 +1380,44 @@ export default function CalendarView({
                   </p>
    
                   {/* Resource Selector Dropdown if multiple exist */}
-                  {resources && resources.length > 0 && (
-                    <div>
-                      <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Select Area/Field</label>
-                      <select
-                        value={customResourceId}
-                        onChange={(e) => {
-                          setCustomResourceId(e.target.value);
-                          setModalError(null);
-                        }}
-                        className="select-field text-xs py-1.5"
-                      >
-                        {resources.map((res) => {
-                          const available = isResourceAvailable(res.id, selectedDayIndex, selectedTimeStr, customDuration);
-                          return (
-                            <option 
-                              key={res.id} 
-                              value={res.id}
-                              disabled={!available}
-                              className={!available ? "text-muted-foreground/60 line-through bg-muted" : ""}
-                            >
-                              {res.name} {!available ? "(Occupied / Obsazeno)" : ""}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                  )}
+                  {resources && resources.length > 0 && (() => {
+                    const dropdownResources = resources.filter(res => {
+                      const getRoot = (id: string): string => {
+                        const r = resources.find(item => item.id === id);
+                        if (!r || !r.parentId) return id;
+                        return getRoot(r.parentId);
+                      };
+                      return getRoot(res.id) === activeRootId;
+                    });
+                    
+                    return (
+                      <div>
+                        <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Select Area/Field</label>
+                        <select
+                          value={customResourceId}
+                          onChange={(e) => {
+                            setCustomResourceId(e.target.value);
+                            setModalError(null);
+                          }}
+                          className="select-field text-xs py-1.5"
+                        >
+                          {dropdownResources.map((res) => {
+                            const available = isResourceAvailable(res.id, selectedDayIndex, selectedTimeStr, customDuration);
+                            return (
+                              <option 
+                                key={res.id} 
+                                value={res.id}
+                                disabled={!available}
+                                className={!available ? "text-muted-foreground/60 line-through bg-muted" : ""}
+                              >
+                                {res.name} {!available ? "(Occupied / Obsazeno)" : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    );
+                  })()}
    
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
@@ -1391,11 +1503,20 @@ export default function CalendarView({
             )}
 
             {isBooked ? (
-              <div className="flex flex-col items-center justify-center py-4 text-tenant-primary gap-2">
-                <div className="h-10 w-10 rounded-full bg-tenant-primary/10 flex items-center justify-center">
-                  <Check size={20} />
+              <div className="flex flex-col items-center justify-center py-4 text-tenant-primary gap-4">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-tenant-primary/10 flex items-center justify-center animate-bounce">
+                    <Check size={20} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Reservation Confirmed!</span>
                 </div>
-                <span className="text-sm font-semibold">Reservation Confirmed!</span>
+                <button
+                  type="button"
+                  onClick={closeBookingModalAndRefresh}
+                  className="btn-tenant w-full py-2 text-xs text-white font-semibold shadow-sm"
+                >
+                  Zavřít / Close
+                </button>
               </div>
             ) : bookingType === "admin_view" && selectedEvent ? (
               <div className="flex items-center gap-3 w-full">
@@ -1409,28 +1530,46 @@ export default function CalendarView({
                   Close
                 </button>
                 <button
-                  onClick={async () => {
-                    if (!confirm("Are you sure you want to cancel this reservation?")) return;
-                    try {
-                      const res = await fetch(`/api/bookings?bookingId=${selectedEvent.id}`, {
-                        method: "DELETE"
-                      });
-                      if (res.ok) {
-                        alert("Reservation cancelled successfully!");
-                        setBookingType(null);
-                        setSelectedEvent(null);
-                        window.location.reload();
-                      } else {
-                        const data = await res.json();
-                        alert("Error cancelling booking: " + (data.error || "Unknown error"));
+                  onClick={() => {
+                    setConfirmModal({
+                      title: "Cancel Reservation",
+                      message: "Are you sure you want to cancel this reservation?",
+                      onConfirm: async () => {
+                        try {
+                          const res = await fetch(`/api/bookings?bookingId=${selectedEvent.id}`, {
+                            method: "DELETE"
+                          });
+                          if (res.ok) {
+                            setNotification({
+                              type: "success",
+                              title: "Reservation Cancelled",
+                              message: "Reservation cancelled successfully!",
+                              onClose: () => {
+                                setBookingType(null);
+                                setSelectedEvent(null);
+                                window.location.reload();
+                              }
+                            });
+                          } else {
+                            const data = await res.json();
+                            setNotification({
+                              type: "error",
+                              title: "Cancellation Failed",
+                              message: "Error cancelling booking: " + (data.error || "Unknown error")
+                            });
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          setNotification({
+                            type: "error",
+                            title: "Error",
+                            message: "Failed to connect to the server."
+                          });
+                        }
                       }
-                    } catch (err) {
-                      console.error(err);
-                      alert("Failed to connect to the server.");
-                    }
+                    });
                   }}
-                  className="btn-danger flex-1 py-2 text-xs text-white"
-                  style={{ backgroundColor: "oklch(0.60 0.18 15)" }}
+                  className="btn-danger-filled flex-1 py-2 text-xs font-bold"
                 >
                   Cancel Booking
                 </button>
@@ -1469,6 +1608,38 @@ export default function CalendarView({
           </div>
         </div>
       )}
+      {/* 4. Reusable Confirm Modal */}
+      <ConfirmDialog
+        isOpen={confirmModal !== null}
+        title={confirmModal?.title || ""}
+        message={confirmModal?.message || ""}
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmModal(null)}
+        onConfirm={async () => {
+          if (confirmModal) {
+            const onConf = confirmModal.onConfirm;
+            setConfirmModal(null);
+            await onConf();
+          }
+        }}
+      />
+
+      {/* 5. Reusable Alert/Notification Modal */}
+      <AlertDialog
+        isOpen={notification !== null}
+        type={notification?.type || "info"}
+        title={notification?.title || ""}
+        message={notification?.message || ""}
+        onClose={() => {
+          if (notification) {
+            const onCl = notification.onClose;
+            setNotification(null);
+            if (onCl) onCl();
+          }
+        }}
+      />
+
     </div>
   );
 }

@@ -7,9 +7,45 @@ export default function Home() {
       <header className="border-b border-border bg-card sticky top-0 z-50 transition-colors shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 select-none">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center font-bold text-white text-lg shadow-sm shadow-primary/15 transition-transform hover:scale-105">
-              R
-            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 500 500"
+              className="h-9 w-9 transition-transform hover:scale-105"
+              fill="none"
+            >
+              <defs>
+                <linearGradient id="resysGradientInline" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6" />
+                  <stop offset="50%" stopColor="#6366F1" />
+                  <stop offset="100%" stopColor="#14B8A6" />
+                </linearGradient>
+                <filter id="subtleGlowInline" x="-15%" y="-15%" width="130%" height="130%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="16" floodColor="#6366F1" floodOpacity="0.3" />
+                </filter>
+              </defs>
+              <g filter="url(#subtleGlowInline)">
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M 110 150 L 155 105 H 315 C 385 105 405 145 405 205 C 405 255 380 285 325 295 L 385 395 H 320 L 265 305 H 175 V 395 H 120 V 170 L 110 150 Z M 175 160 V 255 H 275 C 325 255 345 235 345 205 C 345 175 325 160 275 160 H 175 Z"
+                  fill="url(#resysGradientInline)"
+                />
+                <g fill="#FFFFFF" opacity="0.85">
+                  <rect x="290" y="325" width="10" height="10" rx="2.5" />
+                  <rect x="312" y="325" width="10" height="10" rx="2.5" />
+                  <rect x="334" y="325" width="10" height="10" rx="2.5" />
+                  <rect x="356" y="325" width="10" height="10" rx="2.5" />
+                  <rect x="301" y="345" width="10" height="10" rx="2.5" />
+                  <rect x="323" y="345" width="10" height="10" rx="2.5" />
+                  <rect x="345" y="345" width="10" height="10" rx="2.5" />
+                  <rect x="367" y="345" width="10" height="10" rx="2.5" />
+                  <rect x="312" y="365" width="10" height="10" rx="2.5" />
+                  <rect x="334" y="365" width="10" height="10" rx="2.5" />
+                  <rect x="356" y="365" width="10" height="10" rx="2.5" />
+                  <rect x="378" y="365" width="10" height="10" rx="2.5" />
+                </g>
+              </g>
+            </svg>
             <span className="font-bold text-lg tracking-tight text-foreground">
               ReSys SaaS
             </span>

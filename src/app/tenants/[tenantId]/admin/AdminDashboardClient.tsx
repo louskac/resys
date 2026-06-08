@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
-import CalendarView from "@/components/CalendarView";
+import CalendarView, { CalendarEvent } from "@/components/CalendarView";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import AlertDialog from "@/components/AlertDialog";
+import TenantBanner from "@/components/TenantBanner";
 
 interface ResourceRule {
   id: string;
@@ -34,6 +37,7 @@ interface Resource {
     surface?: string;
     equipment?: string;
     parentId?: string;
+    price?: string;
   };
   scheduleRules: ResourceRule[];
 }
@@ -139,11 +143,15 @@ export default function AdminDashboardClient({
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
 
+  // Custom alert and confirmation modal states
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void | Promise<void> } | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; title: string; message: string; onClose?: () => void } | null>(null);
+
   // Modals / forms states
-  const [resourceModal, setResourceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; type: string; maxCapacity: number; instructor: string; room: string; parentId: string; surface: string; equipment: string; } }>({
+  const [resourceModal, setResourceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; type: string; maxCapacity: number; instructor: string; room: string; parentId: string; surface: string; equipment: string; price: string; } }>({
     open: false,
     mode: "add",
-    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "" }
+    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
   });
 
   const [ruleModal, setRuleModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; resourceId: string; name: string; dayOfWeek: number; startTime: string; endTime: string; price: number; maxCapacity: number; daysOfWeek: number[]; } }>({
@@ -183,14 +191,26 @@ export default function AdminDashboardClient({
         if (res.ok) {
           const data = await res.json();
           setSettingsBannerImage(data.imageUrl);
-          alert("Banner image uploaded successfully!");
-          router.refresh();
+          setNotification({
+            type: "success",
+            title: "Upload Successful",
+            message: "Banner image uploaded successfully!",
+            onClose: () => router.refresh()
+          });
         } else {
-          alert("Error uploading image");
+          setNotification({
+            type: "error",
+            title: "Upload Failed",
+            message: "Error uploading image."
+          });
         }
       } catch (err) {
         console.error(err);
-        alert("Failed to upload image");
+        setNotification({
+          type: "error",
+          title: "Upload Failed",
+          message: "Failed to upload image."
+        });
       } finally {
         setImageUploading(false);
       }
@@ -229,7 +249,8 @@ export default function AdminDashboardClient({
         room: resourceModal.data.room,
         parentId: resourceModal.data.parentId || undefined,
         surface: resourceModal.data.surface,
-        equipment: resourceModal.data.equipment
+        equipment: resourceModal.data.equipment,
+        price: resourceModal.data.price
       }
     };
 
@@ -241,27 +262,64 @@ export default function AdminDashboardClient({
       });
       if (res.ok) {
         setResourceModal({ ...resourceModal, open: false });
-        router.refresh();
+        setNotification({
+          type: "success",
+          title: "Resource Saved",
+          message: "Resource details saved successfully!",
+          onClose: () => router.refresh()
+        });
       } else {
-        alert("Error saving resource");
+        setNotification({
+          type: "error",
+          title: "Save Failed",
+          message: "Error saving resource."
+        });
       }
     } catch (err) {
       console.error(err);
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred."
+      });
     }
   };
 
-  const handleResourceDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this resource and all its schedule rules?")) return;
-    try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "resource_delete", data: { id } })
-      });
-      if (res.ok) router.refresh();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleResourceDelete = (id: string) => {
+    setConfirmModal({
+      title: "Delete Resource",
+      message: "Are you sure you want to delete this resource and all its schedule rules?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "resource_delete", data: { id } })
+          });
+          if (res.ok) {
+            setNotification({
+              type: "success",
+              title: "Resource Deleted",
+              message: "Resource and its rules deleted successfully!",
+              onClose: () => router.refresh()
+            });
+          } else {
+            setNotification({
+              type: "error",
+              title: "Delete Failed",
+              message: "Error deleting resource."
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setNotification({
+            type: "error",
+            title: "Error",
+            message: "An unexpected error occurred."
+          });
+        }
+      }
+    });
   };
 
   const handleRuleSubmit = async (e: React.FormEvent) => {
@@ -288,27 +346,64 @@ export default function AdminDashboardClient({
       });
       if (res.ok) {
         setRuleModal({ ...ruleModal, open: false });
-        router.refresh();
+        setNotification({
+          type: "success",
+          title: "Schedule Slot Saved",
+          message: "Schedule slot configuration saved successfully!",
+          onClose: () => router.refresh()
+        });
       } else {
-        alert("Error saving schedule slot");
+        setNotification({
+          type: "error",
+          title: "Save Failed",
+          message: "Error saving schedule slot."
+        });
       }
     } catch (err) {
       console.error(err);
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred."
+      });
     }
   };
 
-  const handleRuleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this schedule slot?")) return;
-    try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rule_delete", data: { id } })
-      });
-      if (res.ok) router.refresh();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleRuleDelete = (id: string) => {
+    setConfirmModal({
+      title: "Delete Schedule Slot",
+      message: "Are you sure you want to delete this schedule slot?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "rule_delete", data: { id } })
+          });
+          if (res.ok) {
+            setNotification({
+              type: "success",
+              title: "Slot Deleted",
+              message: "Schedule slot deleted successfully!",
+              onClose: () => router.refresh()
+            });
+          } else {
+            setNotification({
+              type: "error",
+              title: "Delete Failed",
+              message: "Error deleting schedule slot."
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setNotification({
+            type: "error",
+            title: "Error",
+            message: "An unexpected error occurred."
+          });
+        }
+      }
+    });
   };
 
   const handleDeviceSubmit = async (e: React.FormEvent) => {
@@ -327,31 +422,76 @@ export default function AdminDashboardClient({
       });
       if (res.ok) {
         await res.json();
-        if (deviceModal.mode === "add" && deviceModal.data.token) {
-          alert(`IoT Device configured successfully!\nSave the Token for turnstile device config:\nToken: ${deviceModal.data.token}`);
-        }
+        const createdToken = deviceModal.data.token;
         setDeviceModal({ ...deviceModal, open: false });
-        router.refresh();
+
+        if (deviceModal.mode === "add" && createdToken) {
+          setNotification({
+            type: "success",
+            title: "Device Configured",
+            message: `IoT Device configured successfully!\n\nSave the Token for turnstile device config:\nToken: ${createdToken}`,
+            onClose: () => router.refresh()
+          });
+        } else {
+          setNotification({
+            type: "success",
+            title: "Success",
+            message: "Device settings saved successfully!",
+            onClose: () => router.refresh()
+          });
+        }
       } else {
-        alert("Error saving device configuration");
+        setNotification({
+          type: "error",
+          title: "Save Failed",
+          message: "Error saving device configuration."
+        });
       }
     } catch (err) {
       console.error(err);
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred."
+      });
     }
   };
 
-  const handleDeviceDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this check-in device?")) return;
-    try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "device_delete", data: { id } })
-      });
-      if (res.ok) router.refresh();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeviceDelete = (id: string) => {
+    setConfirmModal({
+      title: "Delete IoT Device",
+      message: "Are you sure you want to delete this check-in device?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "device_delete", data: { id } })
+          });
+          if (res.ok) {
+            setNotification({
+              type: "success",
+              title: "Device Deleted",
+              message: "Check-in device registration removed successfully!",
+              onClose: () => router.refresh()
+            });
+          } else {
+            setNotification({
+              type: "error",
+              title: "Delete Failed",
+              message: "Error deleting check-in device."
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setNotification({
+            type: "error",
+            title: "Error",
+            message: "An unexpected error occurred."
+          });
+        }
+      }
+    });
   };
 
   const handleSettingsSubmit = async (e: React.FormEvent) => {
@@ -384,14 +524,26 @@ export default function AdminDashboardClient({
         body: JSON.stringify({ action: "tenant_settings_update", data: dataToSend })
       });
       if (res.ok) {
-        alert("Portal settings updated successfully!");
-        router.refresh();
+        setNotification({
+          type: "success",
+          title: "Settings Updated",
+          message: "Portal settings updated successfully!",
+          onClose: () => router.refresh()
+        });
       } else {
-        alert("Error saving settings");
+        setNotification({
+          type: "error",
+          title: "Save Failed",
+          message: "Error saving settings."
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to save settings");
+      setNotification({
+        type: "error",
+        title: "Save Failed",
+        message: "Failed to save settings."
+      });
     } finally {
       setIsSavingSettings(false);
     }
@@ -399,7 +551,7 @@ export default function AdminDashboardClient({
 
   // Generate calendar events from bookings and rules client-side
   const calendarEvents = React.useMemo(() => {
-    const events: any[] = [];
+    const events: CalendarEvent[] = [];
     
     // A. Add confirmed bookings as occupied calendar overlays
     bookings.forEach((booking) => {
@@ -682,7 +834,7 @@ export default function AdminDashboardClient({
                 <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
-                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "" }
+                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
                   })}
                   className="btn-tenant text-white text-xs font-bold flex items-center gap-1 shadow-sm"
                 >
@@ -715,6 +867,7 @@ export default function AdminDashboardClient({
                             <div className="text-xs text-muted-foreground space-y-1">
                               <p>Povrch: <strong className="text-foreground">{res.attributes.surface || "Nenastaven"}</strong></p>
                               <p>Vybavení: <strong className="text-foreground">{res.attributes.equipment || "Nenastaveno"}</strong></p>
+                              <p>Cena: <strong className="text-foreground">{res.attributes.price ? `${res.attributes.price} Kč` : "Nenastavena (Dle dohody)"}</strong></p>
                               {res.attributes.parentId && (
                                 <p>Nadřazená plocha: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámá"}</strong></p>
                               )}
@@ -735,7 +888,8 @@ export default function AdminDashboardClient({
                                   room: "",
                                   parentId: res.attributes.parentId || "",
                                   surface: res.attributes.surface || "",
-                                  equipment: res.attributes.equipment || ""
+                                  equipment: res.attributes.equipment || "",
+                                  price: res.attributes.price || ""
                                 }
                               })}
                               className="btn-outline py-1 px-2 text-tenant-primary text-xs"
@@ -780,6 +934,7 @@ export default function AdminDashboardClient({
                             <div className="text-xs text-muted-foreground space-y-1">
                               <p>Lektor: <strong className="text-foreground">{res.attributes.instructor || "Nenastaven"}</strong></p>
                               <p>Místnost: <strong className="text-foreground">{res.attributes.room || "Nenastavena"}</strong></p>
+                              <p>Cena: <strong className="text-foreground">{res.attributes.price ? `${res.attributes.price} Kč` : "Nenastavena (Dle dohody)"}</strong></p>
                               {res.attributes.parentId && (
                                 <p>Nadřazené hřiště: <strong className="text-foreground">{resources.find(r => r.id === res.attributes.parentId)?.name || "Neznámé"}</strong></p>
                               )}
@@ -800,7 +955,8 @@ export default function AdminDashboardClient({
                                   room: res.attributes.room || "",
                                   parentId: res.attributes.parentId || "",
                                   surface: "",
-                                  equipment: ""
+                                  equipment: "",
+                                  price: res.attributes.price || ""
                                 }
                               })}
                               className="btn-outline py-1 px-2 text-tenant-primary text-xs"
@@ -1003,21 +1159,39 @@ export default function AdminDashboardClient({
                               </td>
                               <td className="py-3 text-right">
                                 <button
-                                  onClick={async () => {
-                                    if (!confirm("Are you sure you want to cancel this reservation?")) return;
-                                    try {
-                                      const res = await fetch(`/api/bookings?bookingId=${booking.id}`, {
-                                        method: "DELETE"
-                                      });
-                                      if (res.ok) {
-                                        alert("Booking cancelled successfully!");
-                                        router.refresh();
-                                      } else {
-                                        alert("Error cancelling booking");
+                                  onClick={() => {
+                                    setConfirmModal({
+                                      title: "Cancel Reservation",
+                                      message: "Are you sure you want to cancel this reservation?",
+                                      onConfirm: async () => {
+                                        try {
+                                          const res = await fetch(`/api/bookings?bookingId=${booking.id}`, {
+                                            method: "DELETE"
+                                          });
+                                          if (res.ok) {
+                                            setNotification({
+                                              type: "success",
+                                              title: "Reservation Cancelled",
+                                              message: "Booking cancelled successfully!",
+                                              onClose: () => router.refresh()
+                                            });
+                                          } else {
+                                            setNotification({
+                                              type: "error",
+                                              title: "Cancellation Failed",
+                                              message: "Error cancelling booking."
+                                            });
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                          setNotification({
+                                            type: "error",
+                                            title: "Error",
+                                            message: "Failed to connect to the server."
+                                          });
+                                        }
                                       }
-                                    } catch (err) {
-                                      console.error(err);
-                                    }
+                                    });
                                   }}
                                   className="text-red-500 font-bold hover:underline cursor-pointer"
                                 >
@@ -1163,39 +1337,17 @@ export default function AdminDashboardClient({
                       <div className="space-y-2.5 border-t border-border pt-4 mt-4">
                         <label className="block text-muted-foreground font-semibold">Portal Banner Image</label>
                         
-                        {settingsBannerImage ? (
-                          <div className="relative group rounded-2xl overflow-hidden border border-border h-36 bg-secondary flex items-center justify-center">
-                            <img 
-                              src={settingsBannerImage} 
-                              alt="Banner Preview" 
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <label className="p-2 bg-white text-zinc-950 rounded-xl cursor-pointer shadow-md text-[11px] font-bold flex items-center gap-1.5">
-                                <Upload size={14} />
-                                Change Banner
-                                <input 
-                                  type="file" 
-                                  accept="image/*" 
-                                  onChange={handleImageUpload} 
-                                  className="hidden" 
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center bg-secondary/10">
-                            <Image size={28} className="text-muted-foreground mb-2" />
-                            <p className="text-xs text-muted-foreground font-medium mb-3">No custom banner image uploaded.</p>
-                            <label className="btn-secondary py-1.5 px-3.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5">
-                              {imageUploading ? (
-                                <span>Uploading...</span>
-                              ) : (
-                                <>
-                                  <Upload size={14} />
-                                  Upload Picture
-                                </>
-                              )}
+                        <div className="relative group rounded-2xl overflow-hidden border border-border h-36">
+                          <TenantBanner 
+                            src={settingsBannerImage} 
+                            alt="Banner Preview" 
+                            heightClass="h-full"
+                            fallbackText={tenant.name || "Tenant Banner"}
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                            <label className="p-2 bg-white text-zinc-950 rounded-xl cursor-pointer shadow-md text-[11px] font-bold flex items-center gap-1.5">
+                              <Upload size={14} />
+                              {imageUploading ? "Uploading..." : settingsBannerImage ? "Change Banner" : "Upload Picture"}
                               <input 
                                 type="file" 
                                 accept="image/*" 
@@ -1205,7 +1357,7 @@ export default function AdminDashboardClient({
                               />
                             </label>
                           </div>
-                        )}
+                        </div>
                         <span className="text-[10px] text-muted-foreground block">
                           Upload a banner picture (PNG/JPG). It will display beautifully on the public portal banner page.
                         </span>
@@ -1250,7 +1402,7 @@ export default function AdminDashboardClient({
                             value={presetOpenTime}
                             onChange={(e) => setPresetOpenTime(e.target.value)}
                             placeholder="08:00" 
-                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono"
+                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono text-foreground"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1260,7 +1412,7 @@ export default function AdminDashboardClient({
                             value={presetCloseTime}
                             onChange={(e) => setPresetCloseTime(e.target.value)}
                             placeholder="22:00" 
-                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono"
+                            className="bg-card border border-border rounded px-2 py-1 w-14 text-center font-mono text-foreground"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1326,7 +1478,7 @@ export default function AdminDashboardClient({
                                     updated[idx].openTime = e.target.value;
                                     setSettingsOpeningHours(updated);
                                   }}
-                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40"
+                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40 text-foreground"
                                   placeholder="08:00"
                                 />
                               </td>
@@ -1341,7 +1493,7 @@ export default function AdminDashboardClient({
                                     updated[idx].closeTime = e.target.value;
                                     setSettingsOpeningHours(updated);
                                   }}
-                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40"
+                                  className="bg-card border border-border rounded-lg px-3 py-1.5 w-20 text-center font-mono disabled:opacity-40 text-foreground"
                                   placeholder="22:00"
                                 />
                               </td>
@@ -1433,6 +1585,20 @@ export default function AdminDashboardClient({
                     data: { ...resourceModal.data, maxCapacity: parseInt(e.target.value, 10) || 0 }
                   })}
                   className="input-field"
+                />
+              </div>
+
+              <div>
+                <label className="block text-muted-foreground mb-1 font-semibold">Cena / Price (Kč / hod or per session)</label>
+                <input
+                  type="text"
+                  value={resourceModal.data.price}
+                  onChange={(e) => setResourceModal({
+                    ...resourceModal,
+                    data: { ...resourceModal.data, price: e.target.value }
+                  })}
+                  className="input-field"
+                  placeholder="e.g. 500 or Dle dohody"
                 />
               </div>
 
@@ -1848,6 +2014,37 @@ export default function AdminDashboardClient({
           </div>
         </div>
       )}
+      {/* 4. Reusable Confirm Modal */}
+      <ConfirmDialog
+        isOpen={confirmModal !== null}
+        title={confirmModal?.title || ""}
+        message={confirmModal?.message || ""}
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmModal(null)}
+        onConfirm={async () => {
+          if (confirmModal) {
+            const onConf = confirmModal.onConfirm;
+            setConfirmModal(null);
+            await onConf();
+          }
+        }}
+      />
+
+      {/* 5. Reusable Alert/Notification Modal */}
+      <AlertDialog
+        isOpen={notification !== null}
+        type={notification?.type || "info"}
+        title={notification?.title || ""}
+        message={notification?.message || ""}
+        onClose={() => {
+          if (notification) {
+            const onCl = notification.onClose;
+            setNotification(null);
+            if (onCl) onCl();
+          }
+        }}
+      />
 
     </div>
   );
