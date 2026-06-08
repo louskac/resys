@@ -931,17 +931,13 @@ export default function CalendarView({
                           const isShort = event.durationHours <= 0.5;
                           const isPastEvent = isEventInPast(event.dayIndex, event.startHour, event.durationHours);
 
-                          const getPastResourceBorder = (resourceName: string) => {
-                            const name = (resourceName || "").toLowerCase();
-                            if (name.includes("sektor a") || name.includes("sector a")) return "border-l-rose-300 dark:border-l-rose-900/50";
-                            if (name.includes("sektor b") || name.includes("sector b")) return "border-l-amber-300 dark:border-l-amber-900/50";
-                            if (name.includes("sektor c") || name.includes("sector c")) return "border-l-emerald-300 dark:border-l-emerald-900/50";
-                            return "border-l-zinc-300 dark:border-l-zinc-700";
-                          };
-
                           const cardThemeClass = isPastEvent 
-                            ? `bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed hover:scale-100 hover:z-10 border-l-4 ${getPastResourceBorder(event.resourceName || "")}`
+                            ? "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed hover:scale-100 hover:z-10 border-l-4 border-l-zinc-300 dark:border-l-zinc-700"
                             : styles.themeClass;
+
+                          const badgeBgClass = isPastEvent 
+                            ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-550 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
+                            : styles.badgeBg;
 
                           return (
                             <div
@@ -1028,7 +1024,7 @@ export default function CalendarView({
                                         {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
                                       </span>
                                       {!isNarrow && selectedResourceId === "" && event.resourceName && (
-                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase select-none ${styles.badgeBg}`}>
+                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase select-none ${badgeBgClass}`}>
                                           {event.resourceName.split(" (")[0]}
                                         </span>
                                       )}
