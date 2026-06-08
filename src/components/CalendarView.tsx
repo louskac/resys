@@ -35,6 +35,9 @@ interface CalendarViewProps {
   }[];
 }
 
+const SLOT_HEIGHT = 60;
+const HOUR_HEIGHT = SLOT_HEIGHT * 2;
+
 // DAYS is dynamically generated inside CalendarView based on baseDate
 
 const getOpeningSlots = (openTime: string = "08:00", closeTime: string = "18:00") => {
@@ -552,7 +555,7 @@ export default function CalendarView({
   const TIME_SLOTS = getOpeningSlots(calculatedOpenTime, calculatedCloseTime);
   const startHourOffset = parseInt(calculatedOpenTime.split(":")[0], 10);
   const totalSlotsCount = TIME_SLOTS.length;
-  const totalHeightPx = totalSlotsCount * 44;
+  const totalHeightPx = totalSlotsCount * SLOT_HEIGHT;
 
   const isSlotClosed = React.useCallback((dbDayIndex: number, timeStr: string) => {
     if (!openingHours || openingHours.length === 0) return false;
@@ -827,7 +830,7 @@ export default function CalendarView({
                 {TIME_SLOTS.map((time) => (
                   <div
                     key={time}
-                    className="h-[44px] border-b border-border/30 flex items-center justify-center font-mono text-[10px] text-muted-foreground"
+                    className="h-[60px] border-b border-border/30 flex items-center justify-center font-mono text-[10px] text-muted-foreground"
                   >
                     {time}
                   </div>
@@ -859,7 +862,7 @@ export default function CalendarView({
                 const nowLineTop = (() => {
                   if (!currentTime) return 0;
                   const currentHourDec = currentTime.getHours() + currentTime.getMinutes() / 60;
-                  return (currentHourDec - startHourOffset) * 88;
+                  return (currentHourDec - startHourOffset) * HOUR_HEIGHT;
                 })();
 
                 return (
@@ -894,7 +897,7 @@ export default function CalendarView({
                           onMouseDown={(e) => !isDisabled && handleCellMouseDown(e, day.dbDayIndex, timeIdx)}
                           onMouseEnter={() => !isDisabled && handleCellMouseEnter(day.dbDayIndex, timeIdx)}
                           onMouseUp={!isDisabled ? commitDragSelection : undefined}
-                          className={`h-[44px] border-b border-border/30 relative group transition-all duration-150 ${
+                          className={`h-[60px] border-b border-border/30 relative group transition-all duration-150 ${
                             isDisabled 
                               ? "bg-stripes-past opacity-70 cursor-not-allowed"
                               : isHighlighted 
@@ -919,8 +922,8 @@ export default function CalendarView({
                       {(() => {
                         const visualEvents = layoutDayEvents(dayEvents);
                         return visualEvents.map((event) => {
-                          const topOffset = (event.startHour - startHourOffset) * 88;
-                          const heightVal = event.durationHours * 88;
+                          const topOffset = (event.startHour - startHourOffset) * HOUR_HEIGHT;
+                          const heightVal = event.durationHours * HOUR_HEIGHT;
                           const styles = getResourceStyles(event.resourceName || "", event.isOccupied);
                           const isWeekView = viewMode === "week";
                           const isNarrow = isWeekView && event.totalLanes && event.totalLanes > 1;
@@ -991,9 +994,9 @@ export default function CalendarView({
                                     {formatHourString(event.startHour).split(":")[0]}
                                   </span>
                                   {event.isOccupied ? (
-                                    <div className="opacity-90 my-0.5 shrink-0 text-[10px]">🔒</div>
+                                    <Lock size={9} className="opacity-90 my-0.5 shrink-0" />
                                   ) : (
-                                    <div className="opacity-90 my-0.5 shrink-0 text-[10px]">📅</div>
+                                    <Calendar size={9} className="opacity-90 my-0.5 shrink-0" />
                                   )}
                                   {!isShort && (
                                     <span className="text-[7px] font-mono opacity-70 block leading-none">
@@ -1008,9 +1011,9 @@ export default function CalendarView({
                                       {formatHourString(event.startHour)}
                                     </span>
                                     {event.isOccupied ? (
-                                      <div className="opacity-70 shrink-0 text-[10px]">🔒</div>
+                                      <Lock size={9} className="opacity-70 shrink-0" />
                                     ) : (
-                                      <div className="opacity-70 shrink-0 text-[10px]">📅</div>
+                                      <Calendar size={9} className="opacity-70 shrink-0" />
                                     )}
                                   </div>
                                   <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
@@ -1035,7 +1038,7 @@ export default function CalendarView({
                                     </h4>
                                   </div>
                                   
-                                  {!isNarrow ? (
+                                  {!isNarrow && (!event.isOccupied || isAdmin) ? (
                                     <div className="text-[9px] opacity-80 leading-tight truncate">
                                       <p className="font-semibold text-[9px] truncate">
                                         {event.isOccupied ? (isAdmin ? event.instructor : "Obsazeno") : `Lektor: ${event.instructor}`}
@@ -1047,9 +1050,9 @@ export default function CalendarView({
                                   ) : (
                                     <div className="flex justify-end items-center opacity-70 mt-1">
                                       {event.isOccupied ? (
-                                        <div className="text-[10px]">🔒</div>
+                                        <Lock size={10} />
                                       ) : (
-                                        <div className="text-[10px]">📅</div>
+                                        <Calendar size={10} />
                                       )}
                                     </div>
                                   )}
