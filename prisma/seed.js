@@ -318,136 +318,136 @@ async function main() {
       resourceId: sektorAlfa.id,
       userName: "Sektor Alfa",
       userEmail: "alfa-team@seznam.cz",
-      from: "2026-06-09T10:00:00",
-      to: "2026-06-09T11:30:00",
+      from: "2026-06-09T10:00:00Z",
+      to: "2026-06-09T11:30:00Z",
     },
     // Wednesday, June 10: Sektro Beta (11:00 - 12:00)
     {
       resourceId: sektorBeta.id,
       userName: "Sektro Beta",
       userEmail: "beta-team@seznam.cz",
-      from: "2026-06-10T11:00:00",
-      to: "2026-06-10T12:00:00",
+      from: "2026-06-10T11:00:00Z",
+      to: "2026-06-10T12:00:00Z",
     },
     // Wednesday, June 10: Sektor Gamma (12:30 - 14:00)
     {
       resourceId: sektorGamma.id,
       userName: "Sektor Gamma",
       userEmail: "gamma-team@seznam.cz",
-      from: "2026-06-10T12:30:00",
-      to: "2026-06-10T14:00:00",
+      from: "2026-06-10T12:30:00Z",
+      to: "2026-06-10T14:00:00Z",
     },
     // Thursday, June 11: Hřiště 2 (18:00 - 20:00)
     {
       resourceId: hriste2.id,
       userName: "Hřiště 2",
       userEmail: "vecerni-fotbal@seznam.cz",
-      from: "2026-06-11T18:00:00",
-      to: "2026-06-11T20:00:00",
+      from: "2026-06-11T18:00:00Z",
+      to: "2026-06-11T20:00:00Z",
     },
     // 1. Tuesday, June 9: Sektor A (8:00 - 9:00)
     {
       resourceId: sektorA.id,
       userName: "Sektor A",
       userEmail: "klub@fkpardubice.cz",
-      from: "2026-06-09T08:00:00",
-      to: "2026-06-09T09:00:00",
+      from: "2026-06-09T08:00:00Z",
+      to: "2026-06-09T09:00:00Z",
     },
     // 2. Wednesday, June 10: Sektor B (8:00 - 9:00)
     {
       resourceId: sektorB.id,
       userName: "Sektor B",
       userEmail: "klub@fkpardubice.cz",
-      from: "2026-06-10T08:00:00",
-      to: "2026-06-10T09:00:00",
+      from: "2026-06-10T08:00:00Z",
+      to: "2026-06-10T09:00:00Z",
     },
     // 3. Monday, June 8: Celá plocha (14:30 - 16:00)
     {
       resourceId: celaplocha.id,
       userName: "Celá plocha",
       userEmail: "hc@dynamopardubice.cz",
-      from: "2026-06-08T14:30:00",
-      to: "2026-06-08T16:00:00",
+      from: "2026-06-08T14:30:00Z",
+      to: "2026-06-08T16:00:00Z",
     },
     // 4. Tuesday, June 9: Celá plocha (14:30 - 16:00)
     {
       resourceId: celaplocha.id,
       userName: "Celá plocha",
       userEmail: "hc@dynamopardubice.cz",
-      from: "2026-06-09T14:30:00",
-      to: "2026-06-09T16:00:00",
+      from: "2026-06-09T14:30:00Z",
+      to: "2026-06-09T16:00:00Z",
     },
     // 5. Wednesday, June 10: Sektor B (15:30 - 16:30)
     {
       resourceId: sektorB.id,
       userName: "Sektor B",
       userEmail: "klub@fkpardubice.cz",
-      from: "2026-06-10T15:30:00",
-      to: "2026-06-10T16:30:00",
+      from: "2026-06-10T15:30:00Z",
+      to: "2026-06-10T16:30:00Z",
     },
     // 6. Thursday, June 11: Celá plocha (14:30 - 16:00)
     {
       resourceId: celaplocha.id,
       userName: "Celá plocha",
       userEmail: "hc@dynamopardubice.cz",
-      from: "2026-06-11T14:30:00",
-      to: "2026-06-11T16:00:00",
+      from: "2026-06-11T14:30:00Z",
+      to: "2026-06-11T16:00:00Z",
     },
     // 7. Friday, June 12: Celá plocha (14:30 - 16:00)
     {
       resourceId: celaplocha.id,
       userName: "Celá plocha",
       userEmail: "hc@dynamopardubice.cz",
-      from: "2026-06-12T14:30:00",
-      to: "2026-06-12T16:00:00",
+      from: "2026-06-12T14:30:00Z",
+      to: "2026-06-12T16:00:00Z",
     },
     // 8. Monday, June 8: Sektor A (16:00 - 17:00)
     {
       resourceId: sektorA.id,
       userName: "Sektor A",
       userEmail: "amater@seznam.cz",
-      from: "2026-06-08T16:00:00",
-      to: "2026-06-08T17:00:00",
+      from: "2026-06-08T16:00:00Z",
+      to: "2026-06-08T17:00:00Z",
     },
     // 9. Tuesday, June 9: Sektor B (16:00 - 17:00)
     {
       resourceId: sektorB.id,
       userName: "Sektor B",
       userEmail: "amater@seznam.cz",
-      from: "2026-06-09T16:00:00",
-      to: "2026-06-09T17:00:00",
+      from: "2026-06-09T16:00:00Z",
+      to: "2026-06-09T17:00:00Z",
     },
     // 10. Thursday, June 11: Sektor B (16:00 - 17:00)
     {
       resourceId: sektorB.id,
       userName: "Sektor B",
       userEmail: "amater@seznam.cz",
-      from: "2026-06-11T16:00:00",
-      to: "2026-06-11T17:00:00",
+      from: "2026-06-11T16:00:00Z",
+      to: "2026-06-11T17:00:00Z",
     },
     // 11. Friday, June 12: Celá plocha (16:00 - 22:00)
     {
       resourceId: celaplocha.id,
       userName: "Celá plocha",
       userEmail: "firemka@era.cz",
-      from: "2026-06-12T16:00:00",
-      to: "2026-06-12T22:00:00",
+      from: "2026-06-12T16:00:00Z",
+      to: "2026-06-12T22:00:00Z",
     },
     // 12. Monday, June 8: Sektor A (17:00 - 17:30)
     {
       resourceId: sektorA.id,
       userName: "Sektor A",
       userEmail: "soused@gmail.com",
-      from: "2026-06-08T17:00:00",
-      to: "2026-06-08T17:30:00",
+      from: "2026-06-08T17:00:00Z",
+      to: "2026-06-08T17:30:00Z",
     },
     // 13. Wednesday, June 10: Sektor B (17:00 - 18:00)
     {
       resourceId: sektorB.id,
       userName: "Sektor B",
       userEmail: "soused@gmail.com",
-      from: "2026-06-10T17:00:00",
-      to: "2026-06-10T18:00:00",
+      from: "2026-06-10T17:00:00Z",
+      to: "2026-06-10T18:00:00Z",
     },
   ];
 

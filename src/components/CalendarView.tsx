@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, L
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
+import Pusher from "pusher-js";
 
 export interface CalendarEvent {
   id: string;
@@ -103,22 +104,60 @@ export default function CalendarView({
   const searchParams = useSearchParams();
 
   const rootResources = resources.filter(r => !r.parentId);
+
+  // Slugify helper to make resource names URL-friendly
+  const slugify = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents/diacritics
+      .replace(/\s+/g, "-")           // Replace spaces with -
+      .replace(/[^\w\-]+/g, "")       // Remove all non-word chars
+      .replace(/\-\-+/g, "-")         // Replace multiple - with single -
+      .replace(/^-+/, "")             // Trim - from start
+      .replace(/-+$/, "");            // Trim - from end
+  };
+
+  // Generates a clean slug e.g. "cela-plocha-6288f5f1"
+  const getResourceSlug = (res: { id: string; name: string }) => {
+    const cleanName = slugify(res.name);
+    const shortId = res.id.slice(0, 8);
+    return `${cleanName}-${shortId}`;
+  };
+
+  // Resolves a resource slug or raw ID back to a resource
+  const findResourceBySlugOrId = (slugOrId: string | null) => {
+    if (!slugOrId) return null;
+    const exactMatch = resources.find(r => r.id === slugOrId);
+    if (exactMatch) return exactMatch;
+
+    // Match by first 8 characters suffix/prefix
+    const parts = slugOrId.split("-");
+    const suffix = parts[parts.length - 1];
+    if (suffix && suffix.length === 8) {
+      const match = resources.find(r => r.id.startsWith(suffix));
+      if (match) return match;
+    }
+    return resources.find(r => slugify(r.name) === slugOrId) || null;
+  };
   
   const activeRootId = (() => {
-    const rootFromUrl = searchParams.get("rootId");
-    if (rootFromUrl && rootResources.some(r => r.id === rootFromUrl)) {
-      return rootFromUrl;
+    const rootFromUrl = searchParams.get("root") || searchParams.get("rootId");
+    const matchedRes = findResourceBySlugOrId(rootFromUrl);
+    if (matchedRes && rootResources.some(r => r.id === matchedRes.id)) {
+      return matchedRes.id;
     }
     return rootResources[0]?.id || "";
   })();
 
   const selectedResourceId = (() => {
-    const resFromUrl = searchParams.get("resourceId");
-    if (resFromUrl && resources.some(r => r.id === resFromUrl)) {
-      const res = resources.find(r => r.id === resFromUrl);
-      const isChildOfActiveRoot = res?.id === activeRootId || res?.parentId === activeRootId;
+    const resFromUrl = searchParams.get("resource") || searchParams.get("resourceId");
+    const matchedRes = findResourceBySlugOrId(resFromUrl);
+    if (matchedRes && resources.some(r => r.id === matchedRes.id)) {
+      const isChildOfActiveRoot = matchedRes.id === activeRootId || matchedRes.parentId === activeRootId;
       if (isChildOfActiveRoot) {
-        return resFromUrl;
+        return matchedRes.id;
       }
     }
     return activeRootId;
@@ -126,14 +165,32 @@ export default function CalendarView({
 
   const selectRoot = (rootId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("rootId", rootId);
-    params.set("resourceId", rootId);
+    const rootRes = resources.find(r => r.id === rootId);
+    if (rootRes) {
+      const slug = getResourceSlug(rootRes);
+      params.set("root", slug);
+      params.set("resource", slug);
+    } else {
+      params.set("root", rootId);
+      params.set("resource", rootId);
+    }
+    // Clean up old UUID parameters
+    params.delete("rootId");
+    params.delete("resourceId");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const selectResource = (resId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("resourceId", resId);
+    const res = resources.find(r => r.id === resId);
+    if (res) {
+      const slug = getResourceSlug(res);
+      params.set("resource", slug);
+    } else {
+      params.set("resource", resId);
+    }
+    // Clean up old UUID parameter
+    params.delete("resourceId");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -155,6 +212,7 @@ export default function CalendarView({
     setGuestName("");
     setGuestEmail("");
     setModalError(null);
+    setIsPending(false);
     router.refresh();
   };
 
@@ -310,6 +368,82 @@ export default function CalendarView({
       clearInterval(timer);
     };
   }, []);
+
+  // Real-time synchronization (Pusher WebSockets + Native Server-Sent Events + Polling fallback)
+  useEffect(() => {
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "eu";
+
+    let pusherClient: Pusher | null = null;
+    let channel: any = null;
+    let eventSource: EventSource | null = null;
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    if (pusherKey) {
+      // 1. Pusher WebSockets (configured staging/production)
+      try {
+        pusherClient = new Pusher(pusherKey, {
+          cluster: pusherCluster,
+        });
+
+        channel = pusherClient.subscribe(`tenant-${tenantId}`);
+        channel.bind("bookings-updated", () => {
+          console.log("Real-time Pusher bookings update received. Refreshing calendar data...");
+          router.refresh();
+        });
+
+        console.log(`Connected to real-time WebSockets (Pusher) for tenant-${tenantId}`);
+      } catch (error) {
+        console.error("Failed to initialize Pusher real-time client:", error);
+      }
+    } else if (typeof window !== "undefined" && window.EventSource) {
+      // 2. Native Server-Sent Events (SSE) - Zero-Config, Instant Real-Time for Localhost
+      try {
+        eventSource = new EventSource(`/api/bookings/stream?tenantId=${tenantId}`);
+        
+        eventSource.addEventListener("bookings-updated", () => {
+          console.log("Real-time SSE bookings update received. Refreshing calendar data...");
+          router.refresh();
+        });
+
+        eventSource.onopen = () => {
+          console.log(`Connected to real-time Server-Sent Events (SSE) stream for tenant-${tenantId}`);
+        };
+
+        eventSource.onerror = () => {
+          // EventSource handles reconnection natively under the hood.
+          console.warn("SSE connection error or connection closed. Browser will auto-reconnect...");
+        };
+      } catch (error) {
+        console.error("Failed to initialize Server-Sent Events client:", error);
+        startPolling();
+      }
+    } else {
+      // 3. Fallback to smart polling
+      startPolling();
+    }
+
+    function startPolling() {
+      console.log("Real-time streaming unavailable. Falling back to smart polling (every 15s).");
+      pollInterval = setInterval(() => {
+        router.refresh();
+      }, 15000);
+    }
+
+    return () => {
+      if (channel && pusherClient) {
+        channel.unbind_all();
+        pusherClient.unsubscribe(`tenant-${tenantId}`);
+        pusherClient.disconnect();
+      }
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [tenantId, router]);
 
   const isSlotInPast = (dayIdx: number, timeStr: string) => {
     if (!currentTime) return false;
@@ -588,6 +722,7 @@ export default function CalendarView({
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [modalError, setModalError] = useState<{ code: string; message: string } | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
   // Custom alert and confirmation modal states
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void | Promise<void> } | null>(null);
@@ -741,6 +876,8 @@ export default function CalendarView({
   };
 
   const handleBooking = async () => {
+    if (isPending) return;
+    setIsPending(true);
     const monday = getMondayOfDate(baseDate);
     const payload: Record<string, string | number | null | undefined> = {
       tenantId,
@@ -766,6 +903,7 @@ export default function CalendarView({
           code: "OPERATING_HOURS_EXCEEDED",
           message: `The selected duration exceeds portal operating hours (closes at ${closeTime}).`
         });
+        setIsPending(false);
         return;
       }
 
@@ -774,15 +912,19 @@ export default function CalendarView({
       payload.startTime = selectedTimeStr;
       payload.endTime = calculatedEndTime;
     } else {
+      setIsPending(false);
       return;
     }
 
-    if (!session || !session.user) {
+    if (!session || !session.user || isAdmin) {
       if (!guestName.trim() || !guestEmail.trim()) {
         setModalError({
           code: "MISSING_PARAMETER",
-          message: "Please enter your name and email to proceed with guest booking."
+          message: isAdmin 
+            ? "Zadejte prosím jméno a e-mail zákazníka."
+            : "Please enter your name and email to proceed with guest booking."
         });
+        setIsPending(false);
         return;
       }
       payload.guestName = guestName.trim();
@@ -803,6 +945,7 @@ export default function CalendarView({
           code: err.code || "UNKNOWN_ERROR",
           message: err.message || "Failed to confirm reservation."
         });
+        setIsPending(false);
         return;
       }
 
@@ -817,6 +960,7 @@ export default function CalendarView({
         code: "CONNECTION_FAILED",
         message: "Error connecting to the server. Please check your network connection."
       });
+      setIsPending(false);
     }
   };
 
@@ -1311,7 +1455,7 @@ export default function CalendarView({
                   const isInRange = d >= monday && d <= sunday;
                   
                   const dayEventsCount = isInRange 
-                    ? initialEvents.filter(e => e.dayIndex === dbDayIndex).length 
+                    ? events.filter(e => e.dayIndex === dbDayIndex).length 
                     : 0;
 
                   return (
@@ -1356,11 +1500,13 @@ export default function CalendarView({
             <h3 className="text-base font-bold text-foreground mb-2">
               {bookingType === "admin_view" ? "Detaily rezervace" : "Nová rezervace"}
             </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              {bookingType === "admin_view" ? "Administrátorská správa této rezervace:" : "Potvrďte termín nebo upravte parametry níže:"}
-            </p>
+            {!isBooked && (
+              <p className="text-xs text-muted-foreground mb-4">
+                {bookingType === "admin_view" ? "Administrátorská správa této rezervace:" : "Potvrďte termín nebo upravte parametry níže:"}
+              </p>
+            )}
 
-            {modalError && (
+            {!isBooked && modalError && (
               <div className="mb-4 bg-red-500/10 border border-red-500/25 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-2 duration-150">
                 <AlertCircle size={14} className="mt-0.5 text-red-500 shrink-0" />
                 <div className="flex-1 space-y-0.5">
@@ -1380,7 +1526,7 @@ export default function CalendarView({
               </div>
             )}
 
-            {bookingType === "admin_view" && selectedEvent && (
+            {!isBooked && bookingType === "admin_view" && selectedEvent && (
               <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-3">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold border-b border-border pb-1.5 flex items-center gap-1.5 font-sans">
                   <ShieldCheck size={14} className="text-tenant-primary" />
@@ -1415,7 +1561,7 @@ export default function CalendarView({
               </div>
             )}
 
-            {bookingType === "event" && selectedEvent && (
+            {!isBooked && bookingType === "event" && selectedEvent && (
               <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-2">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold">Program lekce</p>
                 <h4 className="text-sm font-bold text-foreground">{selectedEvent.name}</h4>
@@ -1433,7 +1579,7 @@ export default function CalendarView({
               </div>
             )}
 
-            {bookingType === "custom" && selectedDayIndex !== null && (() => {
+            {!isBooked && bookingType === "custom" && selectedDayIndex !== null && (() => {
               const isCurrentSelectionAvailable = isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration);
               return (
                 <div className="space-y-4 mb-6 bg-secondary p-4 rounded-xl border border-border">
@@ -1528,13 +1674,25 @@ export default function CalendarView({
             })()}
 
             {/* Guest/Anonymous Booking Form fields */}
-            {(!session || !session.user) && bookingType !== "admin_view" && (
+            {!isBooked && (!session || !session.user || isAdmin) && bookingType !== "admin_view" && (
               <div className="space-y-3 mb-6 p-4 bg-secondary rounded-xl border border-border text-xs">
-                <p className="font-semibold text-foreground border-b border-border pb-1.5 mb-2">
-                  Údaje o rezervaci pro hosta (anonymní)
-                </p>
+                <div className="font-semibold text-foreground border-b border-border pb-1.5 mb-2 flex items-center justify-between flex-wrap gap-2">
+                  <span>
+                    {isAdmin 
+                      ? "Údaje o zákazníkovi, pro kterého rezervujete" 
+                      : "Údaje o rezervaci pro hosta (anonymní)"
+                    }
+                  </span>
+                  {isAdmin && (
+                    <span className="bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400 px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider border border-amber-500/20">
+                      Admin vstup
+                    </span>
+                  )}
+                </div>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Vaše celé jméno</label>
+                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                    {isAdmin ? "Jméno a příjmení zákazníka" : "Vaše celé jméno"}
+                  </label>
                   <input
                     type="text"
                     required
@@ -1544,11 +1702,13 @@ export default function CalendarView({
                       setModalError(null);
                     }}
                     className="input-field text-xs py-1.5"
-                    placeholder="např. Jan Novák"
+                    placeholder={isAdmin ? "např. Jan Novák" : "např. Jan Novák"}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">E-mailová adresa</label>
+                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                    {isAdmin ? "E-mailová adresa zákazníka" : "E-mailová adresa"}
+                  </label>
                   <input
                     type="email"
                     required
@@ -1558,7 +1718,7 @@ export default function CalendarView({
                       setModalError(null);
                     }}
                     className="input-field text-xs py-1.5"
-                    placeholder="např. jan.novak@email.cz"
+                    placeholder={isAdmin ? "např. jan.novak@email.cz" : "např. jan.novak@email.cz"}
                   />
                 </div>
               </div>
@@ -1640,7 +1800,7 @@ export default function CalendarView({
               const isCurrentSelectionAvailable = bookingType === "custom" && selectedDayIndex !== null 
                 ? isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration)
                 : true;
-              return (
+               return (
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
@@ -1651,18 +1811,26 @@ export default function CalendarView({
                       setGuestEmail("");
                       setModalError(null);
                     }}
-                    className="btn-secondary flex-1 py-2 text-xs"
+                    disabled={isPending}
+                    className={`btn-secondary flex-1 py-2 text-xs ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     Zrušit
                   </button>
                   <button
                     onClick={handleBooking}
-                    disabled={!isCurrentSelectionAvailable}
-                    className={`btn-tenant flex-1 py-2 text-xs text-white ${
-                      !isCurrentSelectionAvailable ? "opacity-45 cursor-not-allowed" : ""
+                    disabled={!isCurrentSelectionAvailable || isPending}
+                    className={`btn-tenant flex-1 py-2 text-xs text-white flex items-center justify-center gap-1.5 ${
+                      (!isCurrentSelectionAvailable || isPending) ? "opacity-45 cursor-not-allowed" : ""
                     }`}
                   >
-                    Potvrdit rezervaci
+                    {isPending ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Rezervuje se...
+                      </>
+                    ) : (
+                      "Potvrdit rezervaci"
+                    )}
                   </button>
                 </div>
               );

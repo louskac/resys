@@ -7,7 +7,7 @@ import {
   Building, Calendar, Clock, QrCode, ClipboardList, 
   Plus, Edit, Trash, Settings, 
   ArrowLeft, Smartphone, Activity,
-  Upload, Image, ShieldCheck, Check, AlertCircle, Eye, List
+  Upload, Eye, List
 } from "lucide-react";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -15,6 +15,28 @@ import CalendarView, { CalendarEvent } from "@/components/CalendarView";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import AlertDialog from "@/components/AlertDialog";
 import TenantBanner from "@/components/TenantBanner";
+
+// UTC Date/Time format helpers to avoid client-side timezone shifts
+const formatUTCDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const day = d.getUTCDate();
+  const month = d.getUTCMonth() + 1;
+  const year = d.getUTCFullYear();
+  return `${day}. ${month}. ${year}`;
+};
+
+const formatUTCTimeRange = (fromStr: string, toStr: string) => {
+  const from = new Date(fromStr);
+  const to = new Date(toStr);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(from.getUTCHours())}:${pad(from.getUTCMinutes())} – ${pad(to.getUTCHours())}:${pad(to.getUTCMinutes())}`;
+};
+
+const formatUTCTime = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+};
 
 interface ResourceRule {
   id: string;
@@ -44,6 +66,7 @@ interface Resource {
 
 interface Booking {
   id: string;
+  resourceId: string;
   resourceName: string;
   userName: string;
   userEmail: string;
@@ -96,6 +119,8 @@ interface AdminDashboardClientProps {
   bookings: Booking[];
   devices: Device[];
   checkinLogs: CheckinLog[];
+  activeDate?: string;
+  weekStart?: string;
 }
 
 const defaultOpeningHours: OpeningHoursDay[] = [
@@ -113,7 +138,9 @@ export default function AdminDashboardClient({
   resources,
   bookings,
   devices,
-  checkinLogs
+  checkinLogs,
+  activeDate,
+  weekStart
 }: AdminDashboardClientProps) {
   const router = useRouter();
   const theme = getTenantTheme(tenant.id, tenant.vertical, tenant.name);
@@ -549,6 +576,26 @@ export default function AdminDashboardClient({
     }
   };
 
+  // Find Monday of the week containing activeDate or default
+  const monday = React.useMemo(() => {
+    if (weekStart) return new Date(`${weekStart}T00:00:00.000Z`);
+    // Fallback: calculate from URL or default date
+    const d = activeDate ? new Date(`${activeDate}T00:00:00.000Z`) : new Date("2026-06-08T00:00:00.000Z");
+    const temp = new Date(d);
+    const day = temp.getUTCDay();
+    const diff = temp.getUTCDate() - day + (day === 0 ? -6 : 1);
+    const mon = new Date(temp);
+    mon.setUTCDate(diff);
+    mon.setUTCHours(0, 0, 0, 0);
+    return mon;
+  }, [weekStart, activeDate]);
+
+  const nextMonday = React.useMemo(() => {
+    const next = new Date(monday);
+    next.setUTCDate(monday.getUTCDate() + 7);
+    return next;
+  }, [monday]);
+
   // Generate calendar events from bookings and rules client-side
   const calendarEvents = React.useMemo(() => {
     const events: CalendarEvent[] = [];
@@ -558,14 +605,18 @@ export default function AdminDashboardClient({
       if (booking.status !== "CONFIRMED") return;
       const from = new Date(booking.reservedFrom);
       const to = new Date(booking.reservedTo);
-      const startHour = from.getHours() + from.getMinutes() / 60;
-      const endHour = to.getHours() + to.getMinutes() / 60;
+
+      // Filter bookings to only include those in the current navigated week
+      if (from < monday || from >= nextMonday) return;
+
+      const startHour = from.getUTCHours() + from.getUTCMinutes() / 60;
+      const endHour = to.getUTCHours() + to.getUTCMinutes() / 60;
       const durationHours = endHour - startHour;
       
-      const dayOfWeek = from.getDay();
+      const dayOfWeek = from.getUTCDay();
       const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       
-      const resource = resources.find(r => r.name === booking.resourceName);
+      const resource = resources.find(r => r.id === booking.resourceId);
       const room = resource?.attributes?.room || resource?.attributes?.surface || "Hřiště";
 
       events.push({
@@ -576,7 +627,7 @@ export default function AdminDashboardClient({
         dayIndex,
         startHour,
         durationHours,
-        resourceId: resource?.id || "",
+        resourceId: booking.resourceId,
         isOccupied: true,
         resourceName: booking.resourceName,
       });
@@ -613,7 +664,7 @@ export default function AdminDashboardClient({
     }
 
     return events;
-  }, [bookings, resources, tenant.vertical]);
+  }, [bookings, resources, tenant.vertical, monday, nextMonday]);
 
   // Helper translations
   const getDayName = (dayOfWeek: number | null) => {
@@ -803,7 +854,7 @@ export default function AdminDashboardClient({
                         {checkinLogs.map((log) => (
                           <tr key={log.id} className="border-b border-border/40 hover:bg-secondary/40 transition-colors">
                             <td className="py-3 font-mono text-muted-foreground">
-                              {new Date(log.scannedAt).toLocaleTimeString()}
+                              {formatUTCTime(log.scannedAt)}
                             </td>
                             <td className="py-3 font-medium text-foreground">
                               <div>{log.userName}</div>
@@ -1118,6 +1169,8 @@ export default function AdminDashboardClient({
                   closeTime={settingsCloseTime}
                   openingHours={settingsOpeningHours}
                   isAdmin={true}
+                  activeDate={activeDate}
+                  weekStart={weekStart}
                 />
               ) : (
                 /* List/Table View */
@@ -1147,9 +1200,9 @@ export default function AdminDashboardClient({
                               </td>
                               <td className="py-3 text-foreground">{booking.resourceName}</td>
                               <td className="py-3 text-foreground font-mono">
-                                {new Date(booking.reservedFrom).toLocaleDateString()}
+                                {formatUTCDate(booking.reservedFrom)}
                                 <span className="text-muted-foreground text-[10px] ml-1.5">
-                                  {new Date(booking.reservedFrom).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(booking.reservedTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {formatUTCTimeRange(booking.reservedFrom, booking.reservedTo)}
                                 </span>
                               </td>
                               <td className="py-3">
@@ -1581,23 +1634,23 @@ export default function AdminDashboardClient({
                     <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
                     <ul className="list-disc list-inside space-y-0.5 pl-1">
                       <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
-                      <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu "1/2" či "sektor").</li>
+                      <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu &bdquo;1/2&ldquo; či &bdquo;sektor&ldquo;).</li>
                     </ul>
                   </div>
                   <div className="space-y-1.5 pt-1">
                     <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-secondary px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-secondary px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
                     <ol className="list-decimal list-inside space-y-1 pl-1">
                       <li>
-                        <strong>Možnost 2 (Formát hry):</strong> Např. <em>"Fotbal 11v11"</em> pro celou plochu a <em>"Malý fotbal (5v5 / 7v7)"</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
+                        <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
                       </li>
                       <li>
-                        <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>"Jednorázový pronájem"</em>, <em>"Dlouhodobý trénink"</em> nebo <em>"Turnajový slot"</em>. Vhodné, pokud nabízíte různé obchodní modely.
+                        <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>&bdquo;Jednorázový pronájem&ldquo;</em>, <em>&bdquo;Dlouhodobý trénink&ldquo;</em> nebo <em>&bdquo;Turnajový slot&ldquo;</em>. Vhodné, pokud nabízíte různé obchodní modely.
                       </li>
                       <li>
-                        <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>"Fotbalové hřiště"</em>, <em>"Tenisový kurt"</em>, <em>"Beachvolejbal"</em> nebo <em>"Dráha"</em>. Užitečné pro multi-sportovní areály.
+                        <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>&bdquo;Fotbalové hřiště&ldquo;</em>, <em>&bdquo;Tenisový kurt&ldquo;</em>, <em>&bdquo;Beachvolejbal&ldquo;</em> nebo <em>&bdquo;Dráha&ldquo;</em>. Užitečné pro multi-sportovní areály.
                       </li>
                       <li>
-                        <strong>Možnost 5 (Účel plochy):</strong> Např. <em>"Zápasová plocha"</em> (s osvětlením a pevnými brankami) vs. <em>"Tréninková plocha"</em> (s přenosnými brankami).
+                        <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
                       </li>
                       <li>
                         <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-secondary px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.

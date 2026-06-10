@@ -68,35 +68,39 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   const { tenantId } = await params;
   const { date } = await searchParams;
 
-  // Helper to format Date to local YYYY-MM-DD
-  const formatLocalDate = (d: Date) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
+  // Helper to format Date to UTC YYYY-MM-DD
+  const formatUTCDate = (d: Date) => {
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
   let targetDate = new Date();
   if (date) {
-    const parsed = new Date(`${date}T00:00:00`);
+    const parsed = new Date(`${date}T00:00:00.000Z`);
     if (!isNaN(parsed.getTime())) {
       targetDate = parsed;
     }
+  } else {
+    const today = new Date();
+    targetDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
   }
 
-  // Find Monday of the week containing targetDate
+  // Find Monday of the week containing targetDate in UTC
   const getMondayOfDate = (d: Date) => {
     const temp = new Date(d);
-    const day = temp.getDay();
-    const diff = temp.getDate() - day + (day === 0 ? -6 : 1);
-    const mon = new Date(temp.setDate(diff));
-    mon.setHours(0, 0, 0, 0);
+    const day = temp.getUTCDay();
+    const diff = temp.getUTCDate() - day + (day === 0 ? -6 : 1);
+    const mon = new Date(temp);
+    mon.setUTCDate(diff);
+    mon.setUTCHours(0, 0, 0, 0);
     return mon;
   };
 
   const monday = getMondayOfDate(targetDate);
   const nextMonday = new Date(monday);
-  nextMonday.setDate(monday.getDate() + 7);
+  nextMonday.setUTCDate(monday.getUTCDate() + 7);
   const session = await getServerSession(authOptions);
 
   // Fetch tenant and its resources/rules/bookings from PostgreSQL
@@ -144,10 +148,10 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
 
   // A. Add confirmed bookings for the week as occupied calendar overlays
   tenant.bookings.forEach((booking) => {
-    const startHour = booking.reservedFrom.getHours() + booking.reservedFrom.getMinutes() / 60;
-    const endHour = booking.reservedTo.getHours() + booking.reservedTo.getMinutes() / 60;
+    const startHour = booking.reservedFrom.getUTCHours() + booking.reservedFrom.getUTCMinutes() / 60;
+    const endHour = booking.reservedTo.getUTCHours() + booking.reservedTo.getUTCMinutes() / 60;
     const durationHours = endHour - startHour;
-    const dayIndex = getCalendarDayIndex(booking.reservedFrom.getDay());
+    const dayIndex = getCalendarDayIndex(booking.reservedFrom.getUTCDay());
 
     const resAttrs = (booking.resource.attributes as unknown as ResourceAttributes) || {};
 
@@ -363,8 +367,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               openTime={openTime}
               closeTime={closeTime}
               openingHours={attributes.openingHours}
-              weekStart={formatLocalDate(monday)}
-              activeDate={date || formatLocalDate(targetDate)}
+              weekStart={formatUTCDate(monday)}
+              activeDate={date || formatUTCDate(targetDate)}
             />
           </div>
  

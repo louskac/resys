@@ -10,11 +10,47 @@ interface AdminPageProps {
   params: Promise<{
     tenantId: string;
   }>;
+  searchParams: Promise<{
+    date?: string;
+  }>;
 }
 
-export default async function TenantAdminPage({ params }: AdminPageProps) {
+export default async function TenantAdminPage({ params, searchParams }: AdminPageProps) {
   const { tenantId } = await params;
+  const { date } = await searchParams;
   const session = await getServerSession(authOptions);
+
+  // Helper to format Date to UTC YYYY-MM-DD
+  const formatUTCDate = (d: Date) => {
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  let targetDate = new Date();
+  if (date) {
+    const parsed = new Date(`${date}T00:00:00.000Z`);
+    if (!isNaN(parsed.getTime())) {
+      targetDate = parsed;
+    }
+  } else {
+    const today = new Date();
+    targetDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  }
+
+  // Find Monday of the week containing targetDate in UTC
+  const getMondayOfDate = (d: Date) => {
+    const temp = new Date(d);
+    const day = temp.getUTCDay();
+    const diff = temp.getUTCDate() - day + (day === 0 ? -6 : 1);
+    const mon = new Date(temp);
+    mon.setUTCDate(diff);
+    mon.setUTCHours(0, 0, 0, 0);
+    return mon;
+  };
+
+  const monday = getMondayOfDate(targetDate);
 
   // 1. Fetch tenant and all its relational records
   const tenant = await prisma.tenant.findUnique({
@@ -129,6 +165,7 @@ export default async function TenantAdminPage({ params }: AdminPageProps) {
 
   const serializedBookings = tenant.bookings.map(booking => ({
     id: booking.id,
+    resourceId: booking.resourceId,
     resourceName: booking.resource.name,
     userName: booking.userName,
     userEmail: booking.userEmail,
@@ -152,6 +189,8 @@ export default async function TenantAdminPage({ params }: AdminPageProps) {
       bookings={serializedBookings}
       devices={serializedDevices}
       checkinLogs={allLogs}
+      activeDate={date || formatUTCDate(targetDate)}
+      weekStart={formatUTCDate(monday)}
     />
   );
 }
