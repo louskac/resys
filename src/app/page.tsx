@@ -1,7 +1,12 @@
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import { headers } from "next/headers";
 
-export default function Home() {
+export default async function Home() {
+  const hostHeader = (await headers()).get("host") || "";
+  const isLocal = hostHeader.includes("localhost") || hostHeader.includes("127.0.0.1");
+  const sferaUrl = isLocal ? "http://sfera.localhost:3000" : "/tenants/sfera";
+  const umelkaUrl = isLocal ? "http://umelka.localhost:3000" : "/tenants/umelka";
   return (
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
       <header className="border-b border-border bg-card sticky top-0 z-50 transition-colors shadow-sm">
@@ -87,26 +92,30 @@ export default function Home() {
 
             {/* Sandbox Quick Switcher */}
             <div className="card p-6 max-w-xl mx-auto bg-card shadow-sm">
-              <h3 className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wider">Local Development Tenant Sandbox</h3>
+              <h3 className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wider">
+                {isLocal ? "Local Development Tenant Sandbox" : "Demo Tenant Portals"}
+              </h3>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
-                  href="http://sfera.localhost:3000"
+                  href={sferaUrl}
                   className="btn-outline flex items-center justify-center gap-2 py-2"
                 >
                   <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
                   Sféra Portal
                 </Link>
                 <Link
-                  href="http://umelka.localhost:3000"
+                  href={umelkaUrl}
                   className="btn-outline flex items-center justify-center gap-2 py-2"
                 >
                   <span className="h-2 w-2 rounded-full bg-rose-500"></span>
                   Umělka Portal
                 </Link>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-3 font-mono">
-                Note: Map subdomains in your local /etc/hosts to run sandbox portals.
-              </p>
+              {isLocal && (
+                <p className="text-[10px] text-muted-foreground mt-3 font-mono">
+                  Note: Map subdomains in your local /etc/hosts to run sandbox portals.
+                </p>
+              )}
             </div>
           </div>
         </section>

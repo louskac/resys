@@ -18,7 +18,7 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
   if (normalized === "sfera") {
     return {
       name: displayName,
-      verticalName: "Educational Classes",
+      verticalName: "Vzdělávací lekce",
       tagline: "Vědecko-technologické centrum a laboratoře",
       primary: "oklch(0.58 0.16 200)",
       primaryHover: "oklch(0.50 0.16 200)",
@@ -31,7 +31,7 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
   if (normalized === "umelka") {
     return {
       name: displayName,
-      verticalName: "Sports Pitch Rental",
+      verticalName: "Pronájem hřišť",
       tagline: "Zažijte nefalšovanou fotbalovou zábavu i bez přírodní trávy. Pronájem hřiště s umělým trávníkem 3. generace s certifikací FIFA.",
       primary: "oklch(0.48 0.18 270)",
       primaryHover: "oklch(0.40 0.18 270)",
@@ -47,8 +47,8 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
     case "SPORTS_GROUND":
       return {
         name: displayName,
-        verticalName: "Sports Ground Rental",
-        tagline: "Sport facility slots, courts, and fields reservations",
+        verticalName: "Pronájem sportovišť",
+        tagline: "Rezervace sportovních ploch, kurtů a hřišť",
         primary: "oklch(0.55 0.15 145)",
         primaryHover: "oklch(0.48 0.15 145)",
         primaryForeground: "#ffffff",
@@ -59,8 +59,8 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
     case "CAPACITY_CLASS":
       return {
         name: displayName,
-        verticalName: "Capacity Class & Training",
-        tagline: "Group classes, workouts, and reservation slots",
+        verticalName: "Skupinové lekce a tréninky",
+        tagline: "Rezervace skupinových lekcí, cvičení a tréninků",
         primary: "oklch(0.60 0.20 320)",
         primaryHover: "oklch(0.53 0.20 320)",
         primaryForeground: "#ffffff",
@@ -71,8 +71,8 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
     case "EDUCATIONAL_COURSE":
       return {
         name: displayName,
-        verticalName: "Educational & Science Courses",
-        tagline: "Interactive labs, lecture halls, and school bookings",
+        verticalName: "Vzdělávací a vědecké kurzy",
+        tagline: "Interaktivní laboratoře, přednáškové sály a školní rezervace",
         primary: "oklch(0.58 0.16 200)",
         primaryHover: "oklch(0.50 0.16 200)",
         primaryForeground: "#ffffff",
@@ -83,8 +83,8 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
     case "EVENT_TICKETING":
       return {
         name: displayName,
-        verticalName: "Event Ticketing & Seating",
-        tagline: "Secure your tickets for upcoming matches, plays, or galleries",
+        verticalName: "Vstupenky a rezervace míst",
+        tagline: "Zajistěte si vstupenky na zápasy, představení nebo do galerií",
         primary: "oklch(0.65 0.16 70)",
         primaryHover: "oklch(0.58 0.16 70)",
         primaryForeground: "#ffffff",
@@ -95,8 +95,8 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
     default:
       return {
         name: displayName,
-        verticalName: "General SaaS Reservation Portal",
-        tagline: "Rent resources, verify schedules, and book slots online",
+        verticalName: "Rezervační portál",
+        tagline: "Rezervace ploch, termínů a lekcí online",
         primary: "oklch(0.60 0.05 285)",
         primaryHover: "oklch(0.53 0.05 285)",
         primaryForeground: "#ffffff",

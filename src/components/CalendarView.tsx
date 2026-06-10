@@ -71,6 +71,22 @@ const defaultOpeningHours = [
   { dayOfWeek: 0, name: "Neděle", openTime: "09:00", closeTime: "17:00", closed: false }
 ];
 
+const formatDurationCzech = (val: number) => {
+  if (val === 0.5) return "30 minut";
+  if (val === 1) return "1 hodina";
+  if (val === 1.5) return "1,5 hodiny";
+  if (val === 2) return "2 hodiny";
+  if (val === 2.5) return "2,5 hodiny";
+  if (val === 3) return "3 hodiny";
+  if (val === 3.5) return "3,5 hodiny";
+  if (val === 4) return "4 hodiny";
+  if (val === 4.5) return "4,5 hodiny";
+  if (val === 5) return "5 hodin";
+  if (val === 6) return "6 hodin";
+  if (val === 8) return "8 hodin";
+  return `${val} hod.`;
+};
+
 export default function CalendarView({ 
   tenantId, 
   initialEvents, 
@@ -260,12 +276,13 @@ export default function CalendarView({
   } else if (viewMode === "month") {
     headerTitle = `${monthNamesCzech[baseDate.getMonth()]} ${baseDate.getFullYear()}`;
   } else {
-    const startDay = baseDate.getDate();
-    const startMonth = baseDate.getMonth() + 1;
-    const startYear = baseDate.getFullYear();
+    const monday = getMondayOfDate(baseDate);
+    const startDay = monday.getDate();
+    const startMonth = monday.getMonth() + 1;
+    const startYear = monday.getFullYear();
     
-    const endOfWeekDate = new Date(baseDate);
-    endOfWeekDate.setDate(baseDate.getDate() + 6);
+    const endOfWeekDate = new Date(monday);
+    endOfWeekDate.setDate(monday.getDate() + 6);
     const endDay = endOfWeekDate.getDate();
     const endMonth = endOfWeekDate.getMonth() + 1;
     const endYear = endOfWeekDate.getFullYear();
@@ -296,8 +313,9 @@ export default function CalendarView({
 
   const isSlotInPast = (dayIdx: number, timeStr: string) => {
     if (!currentTime) return false;
-    const slotDate = new Date(baseDate);
-    slotDate.setDate(baseDate.getDate() + dayIdx);
+    const monday = getMondayOfDate(baseDate);
+    const slotDate = new Date(monday);
+    slotDate.setDate(monday.getDate() + dayIdx);
     const [sh, sm] = timeStr.split(":").map(Number);
     slotDate.setHours(sh, sm, 0, 0);
     return slotDate <= currentTime;
@@ -305,8 +323,9 @@ export default function CalendarView({
 
   const isEventInPast = (dayIdx: number, startHour: number, durationHours: number) => {
     if (!currentTime) return false;
-    const eventEndDate = new Date(baseDate);
-    eventEndDate.setDate(baseDate.getDate() + dayIdx);
+    const monday = getMondayOfDate(baseDate);
+    const eventEndDate = new Date(monday);
+    eventEndDate.setDate(monday.getDate() + dayIdx);
     const endHour = startHour + durationHours;
     const hh = Math.floor(endHour);
     const mm = Math.round((endHour % 1) * 60);
@@ -360,70 +379,115 @@ export default function CalendarView({
 
   // Dynamic style mapper based on resource name hashes for any N resources
   const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false) => {
-    const name = (resourceName || "").toLowerCase();
+    const nameLower = (resourceName || "").toLowerCase();
     const cursorClass = isOccupied ? (isAdminView ? "cursor-pointer" : "cursor-not-allowed") : "cursor-pointer";
-    
-    if (name.includes("sektor a") || name.includes("sector a")) {
-      return {
-        badgeBg: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
-        themeClass: isOccupied
-          ? `bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 border-l-4 border-l-rose-600 text-rose-800 dark:text-rose-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-rose-500 text-foreground hover:border-rose-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-rose-700 dark:text-rose-300"
-      };
-    }
-    if (name.includes("sektor b") || name.includes("sector b")) {
-      return {
-        badgeBg: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300",
-        themeClass: isOccupied
-          ? `bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 border-l-4 border-l-amber-600 text-amber-800 dark:text-amber-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-amber-500 text-foreground hover:border-amber-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-amber-700 dark:text-amber-300"
-      };
-    }
-    if (name.includes("sektor c") || name.includes("sector c")) {
-      return {
-        badgeBg: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
-        themeClass: isOccupied
-          ? `bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 border-l-4 border-l-emerald-600 text-emerald-800 dark:text-emerald-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-emerald-500 text-foreground hover:border-emerald-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-emerald-700 dark:text-emerald-300"
-      };
-    }
 
-    const hash = name.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-    const palettes = [
-      {
-        badgeBg: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
-        themeClass: isOccupied
-          ? `bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 border-l-4 border-l-blue-600 text-blue-800 dark:text-blue-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-blue-500 text-foreground hover:border-blue-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-blue-700 dark:text-blue-300"
-      },
-      {
-        badgeBg: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
-        themeClass: isOccupied
-          ? `bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900/50 border-l-4 border-l-violet-600 text-violet-800 dark:text-violet-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-violet-500 text-foreground hover:border-violet-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-violet-700 dark:text-violet-300"
-      },
-      {
-        badgeBg: "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300",
-        themeClass: isOccupied
-          ? `bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 border-l-4 border-l-indigo-600 text-indigo-800 dark:text-indigo-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-indigo-500 text-foreground hover:border-indigo-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-indigo-700 dark:text-indigo-300"
-      },
-      {
-        badgeBg: "bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300",
-        themeClass: isOccupied
-          ? `bg-cyan-50/90 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-900/50 border-l-4 border-l-cyan-600 text-cyan-800 dark:text-cyan-400 ${cursorClass}`
-          : `bg-card border border-border border-l-4 border-l-cyan-500 text-foreground hover:border-cyan-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-        textHex: "text-cyan-700 dark:text-cyan-300"
+    // Detect if this resource represents a sector (vs full pitch)
+    const isSector = (() => {
+      if (nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
+        return true;
       }
-    ];
+      const res = resources?.find(r => r.name.toLowerCase() === nameLower);
+      if (res && res.parentId) {
+        return true;
+      }
+      return false;
+    })();
 
-    return palettes[hash % palettes.length];
+    // Sector Palettes (Vibrant)
+    const getRosePalette = () => ({
+      badgeBg: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
+      themeClass: isOccupied
+        ? `bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 border-l-4 border-l-rose-600 text-rose-800 dark:text-rose-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-rose-500 text-foreground hover:border-rose-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-rose-700 dark:text-rose-300",
+      barColor: "bg-rose-500"
+    });
+
+    const getAmberPalette = () => ({
+      badgeBg: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300",
+      themeClass: isOccupied
+        ? `bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 border-l-4 border-l-amber-600 text-amber-800 dark:text-amber-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-amber-500 text-foreground hover:border-amber-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-amber-700 dark:text-amber-300",
+      barColor: "bg-amber-500"
+    });
+
+    const getEmeraldPalette = () => ({
+      badgeBg: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
+      themeClass: isOccupied
+        ? `bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 border-l-4 border-l-emerald-600 text-emerald-800 dark:text-emerald-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-emerald-500 text-foreground hover:border-emerald-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-emerald-700 dark:text-emerald-300",
+      barColor: "bg-emerald-500"
+    });
+
+    const getOrangePalette = () => ({
+      badgeBg: "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300",
+      themeClass: isOccupied
+        ? `bg-orange-50/90 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 border-l-4 border-l-orange-600 text-orange-800 dark:text-orange-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-orange-500 text-foreground hover:border-orange-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-orange-700 dark:text-orange-300",
+      barColor: "bg-orange-500"
+    });
+
+    // Pitch Palettes (Cool tones)
+    const getBluePalette = () => ({
+      badgeBg: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
+      themeClass: isOccupied
+        ? `bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 border-l-4 border-l-blue-600 text-blue-800 dark:text-blue-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-blue-500 text-foreground hover:border-blue-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-blue-700 dark:text-blue-300",
+      barColor: "bg-blue-500"
+    });
+
+    const getVioletPalette = () => ({
+      badgeBg: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
+      themeClass: isOccupied
+        ? `bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900/50 border-l-4 border-l-violet-600 text-violet-800 dark:text-violet-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-violet-500 text-foreground hover:border-violet-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-violet-700 dark:text-violet-300",
+      barColor: "bg-violet-500"
+    });
+
+    const getIndigoPalette = () => ({
+      badgeBg: "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300",
+      themeClass: isOccupied
+        ? `bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 border-l-4 border-l-indigo-600 text-indigo-800 dark:text-indigo-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-indigo-500 text-foreground hover:border-indigo-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-indigo-700 dark:text-indigo-300",
+      barColor: "bg-indigo-500"
+    });
+
+    const getCyanPalette = () => ({
+      badgeBg: "bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300",
+      themeClass: isOccupied
+        ? `bg-cyan-50/90 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-900/50 border-l-4 border-l-cyan-600 text-cyan-800 dark:text-cyan-400 ${cursorClass}`
+        : `bg-card border border-border border-l-4 border-l-cyan-500 text-foreground hover:border-cyan-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
+      textHex: "text-cyan-700 dark:text-cyan-300",
+      barColor: "bg-cyan-500"
+    });
+
+    // Explicit mappings for common sectors to maintain layout colors
+    if (nameLower.includes("sektor a") || nameLower.includes("sector a")) {
+      return getRosePalette();
+    }
+    if (nameLower.includes("sektor b") || nameLower.includes("sector b") || nameLower.includes("sektro beta") || nameLower.includes("sector beta")) {
+      return getAmberPalette();
+    }
+    if (nameLower.includes("sektor c") || nameLower.includes("sector c") || nameLower.includes("sektor gamma") || nameLower.includes("sector gamma")) {
+      return getEmeraldPalette();
+    }
+
+    const hash = nameLower.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+
+    if (isSector) {
+      const sectorPalettes = [getRosePalette, getAmberPalette, getEmeraldPalette, getOrangePalette];
+      return sectorPalettes[hash % sectorPalettes.length]();
+    } else {
+      const pitchPalettes = [getBluePalette, getVioletPalette, getIndigoPalette, getCyanPalette];
+      return pitchPalettes[hash % pitchPalettes.length]();
+    }
   };
 
   interface VisualEvent extends CalendarEvent {
@@ -677,9 +741,10 @@ export default function CalendarView({
   };
 
   const handleBooking = async () => {
+    const monday = getMondayOfDate(baseDate);
     const payload: Record<string, string | number | null | undefined> = {
       tenantId,
-      weekStart: toLocalDateString(baseDate),
+      weekStart: toLocalDateString(monday),
     };
 
     if (bookingType === "event" && selectedEvent) {
@@ -801,8 +866,8 @@ export default function CalendarView({
             ))}
           </div>
 
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20">
-            {events.length} schedule slots
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 select-none">
+            {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
           </span>
         </div>
         
@@ -878,8 +943,8 @@ export default function CalendarView({
             
             {/* Header Row */}
             <div className={`grid ${viewMode === "day" ? "grid-cols-[75px_1fr]" : "grid-cols-[75px_repeat(7,_1fr)]"} border-b border-border bg-secondary relative z-10`}>
-              <div className="p-2.5 text-center font-mono text-[10px] text-muted-foreground border-r border-border/80 flex items-center justify-center">
-                Time
+              <div className="p-2.5 text-center font-mono text-[10px] text-muted-foreground border-r border-border/80 flex items-center justify-center select-none">
+                Čas
               </div>
               {DAYS.map((day) => {
                 const isPastDay = (() => {
@@ -1010,7 +1075,7 @@ export default function CalendarView({
                           {!isDragging && !isDisabled && (
                             <div className="absolute inset-0 flex items-center justify-center transition-all">
                               <span className="text-[9px] font-bold text-tenant-primary opacity-0 group-hover:opacity-100 transition-all">
-                                + Reserve
+                                + Rezervovat
                               </span>
                             </div>
                           )}
@@ -1164,12 +1229,8 @@ export default function CalendarView({
                                   : "bottom-[107%] top-auto origin-bottom";
                                 
                                 const getResourceColor = (resourceName: string) => {
-                                  const name = (resourceName || "").toLowerCase();
-                                  if (name.includes("sektor a") || name.includes("sector a")) return "bg-rose-500";
-                                  if (name.includes("sektor b") || name.includes("sector b")) return "bg-amber-500";
-                                  if (name.includes("sektor c") || name.includes("sector c")) return "bg-emerald-500";
-                                  return "bg-tenant-primary";
-                                };
+                                   return getResourceStyles(resourceName).barColor;
+                                 };
 
                                 return (
                                   <div className={`absolute left-1/2 -translate-x-1/2 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md text-zinc-900 dark:text-zinc-50 text-xs p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/85 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-200 ease-out z-50 space-y-3.5 select-none pl-6 ${tooltipPositionClass}`}>
@@ -1274,7 +1335,9 @@ export default function CalendarView({
                       {dayEventsCount > 0 && (
                         <div className="flex gap-1 items-center">
                           <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary" />
-                          <span className="text-[8px] text-tenant-primary font-bold">{dayEventsCount} slots</span>
+                          <span className="text-[8px] text-tenant-primary font-bold">
+                            {dayEventsCount} {dayEventsCount === 1 ? "rezervace" : dayEventsCount >= 2 && dayEventsCount <= 4 ? "rezervace" : "rezervací"}
+                          </span>
                         </div>
                       )}
                     </button>
@@ -1291,10 +1354,10 @@ export default function CalendarView({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
           <div className="bg-card border border-border max-w-md w-full p-6 rounded-2xl shadow-2xl relative transition-colors duration-200">
             <h3 className="text-base font-bold text-foreground mb-2">
-              {bookingType === "admin_view" ? "Reservation details" : "Configure Reservation"}
+              {bookingType === "admin_view" ? "Detaily rezervace" : "Nová rezervace"}
             </h3>
             <p className="text-xs text-muted-foreground mb-4">
-              {bookingType === "admin_view" ? "Administrative management of this booking:" : "Confirm your slot or customize parameters below:"}
+              {bookingType === "admin_view" ? "Administrátorská správa této rezervace:" : "Potvrďte termín nebo upravte parametry níže:"}
             </p>
 
             {modalError && (
@@ -1321,29 +1384,29 @@ export default function CalendarView({
               <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-3">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold border-b border-border pb-1.5 flex items-center gap-1.5 font-sans">
                   <ShieldCheck size={14} className="text-tenant-primary" />
-                  Reserved Area / Class Details
+                  Detaily rezervované lekce / plochy
                 </p>
                 <div className="text-xs space-y-2">
                   <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Resource Name:</span>
+                    <span className="text-muted-foreground">Plocha / Lekce:</span>
                     <span className="text-foreground font-semibold">{selectedEvent.resourceName}</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Reserved By:</span>
+                    <span className="text-muted-foreground">Rezervoval:</span>
                     <span className="text-foreground font-semibold">{selectedEvent.name}</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">User Email:</span>
+                    <span className="text-muted-foreground">E-mail uživatele:</span>
                     <span className="text-foreground font-mono">{selectedEvent.instructor}</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Time Slot:</span>
+                    <span className="text-muted-foreground">Rezervovaný čas:</span>
                     <span className="text-foreground font-semibold">
-                      {DAYS[selectedEvent.dayIndex]?.name || "Day"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
+                      {DAYS[selectedEvent.dayIndex]?.name || "Den"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
                     </span>
                   </div>
                   <div className="flex justify-between py-0.5">
-                    <span className="text-muted-foreground">Booking ID:</span>
+                    <span className="text-muted-foreground">ID rezervace:</span>
                     <span className="text-muted-foreground font-mono text-[10px] select-all max-w-[180px] truncate" title={selectedEvent.id}>
                       {selectedEvent.id}
                     </span>
@@ -1354,16 +1417,16 @@ export default function CalendarView({
 
             {bookingType === "event" && selectedEvent && (
               <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-2">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">Class Program</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">Program lekce</p>
                 <h4 className="text-sm font-bold text-foreground">{selectedEvent.name}</h4>
                 
                 <div className="grid grid-cols-2 gap-2 mt-4 pt-2 border-t border-border text-xs">
                   <div>
-                    <span className="text-muted-foreground block">Instructor:</span>
+                    <span className="text-muted-foreground block">Lektor / Trenér:</span>
                     <span className="text-foreground font-medium">{selectedEvent.instructor}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block">Room:</span>
+                    <span className="text-muted-foreground block">Místnost:</span>
                     <span className="text-foreground font-medium">{selectedEvent.room}</span>
                   </div>
                 </div>
@@ -1376,7 +1439,7 @@ export default function CalendarView({
                 <div className="space-y-4 mb-6 bg-secondary p-4 rounded-xl border border-border">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold border-b border-border pb-1.5 mb-2 flex items-center gap-1.5">
                     <Calendar size={14} className="text-tenant-primary" />
-                    Custom Field Reservation
+                    Rezervace hrací plochy
                   </p>
    
                   {/* Resource Selector Dropdown if multiple exist */}
@@ -1392,7 +1455,7 @@ export default function CalendarView({
                     
                     return (
                       <div>
-                        <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Select Area/Field</label>
+                        <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Vyberte plochu/sektor</label>
                         <select
                           value={customResourceId}
                           onChange={(e) => {
@@ -1410,7 +1473,7 @@ export default function CalendarView({
                                 disabled={!available}
                                 className={!available ? "text-muted-foreground/60 line-through bg-muted" : ""}
                               >
-                                {res.name} {!available ? "(Occupied / Obsazeno)" : ""}
+                                {res.name} {!available ? "(Obsazeno)" : ""}
                               </option>
                             );
                           })}
@@ -1421,18 +1484,18 @@ export default function CalendarView({
    
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <span className="text-muted-foreground block font-semibold">Day:</span>
+                      <span className="text-muted-foreground block font-semibold">Den:</span>
                       <span className="text-foreground font-semibold">{DAYS[selectedDayIndex].name}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block font-semibold">Starts At:</span>
+                      <span className="text-muted-foreground block font-semibold">Začátek:</span>
                       <span className="text-foreground font-mono font-semibold">{selectedTimeStr}</span>
                     </div>
                   </div>
    
                   {/* Duration Picker */}
                   <div>
-                    <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Duration</label>
+                    <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Doba trvání</label>
                     <select
                       value={customDuration}
                       onChange={(e) => {
@@ -1443,12 +1506,12 @@ export default function CalendarView({
                     >
                       {[0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].map((val) => (
                         <option key={val} value={val}>
-                          {val === 0.5 ? "30 minutes" : `${val} hour${val > 1 ? "s" : ""}`}
+                          {formatDurationCzech(val)}
                         </option>
                       ))}
                       {![0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].includes(customDuration) && (
                         <option value={customDuration}>
-                          {customDuration} hours
+                          {formatDurationCzech(customDuration)}
                         </option>
                       )}
                     </select>
@@ -1457,7 +1520,7 @@ export default function CalendarView({
                   {!isCurrentSelectionAvailable && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] p-2.5 rounded-lg font-medium leading-normal flex items-start gap-1.5">
                       <AlertCircle size={13} className="text-red-500 shrink-0 mt-0.5" />
-                      <span>Selected area/field is not available for this time and duration due to an overlapping reservation.</span>
+                      <span>Vybraná plocha/sektor není v tomto čase a délce trvání k dispozici kvůli překrývající se rezervaci.</span>
                     </div>
                   )}
                 </div>
@@ -1465,14 +1528,13 @@ export default function CalendarView({
             })()}
 
             {/* Guest/Anonymous Booking Form fields */}
-            {/* Guest/Anonymous Booking Form fields */}
             {(!session || !session.user) && bookingType !== "admin_view" && (
               <div className="space-y-3 mb-6 p-4 bg-secondary rounded-xl border border-border text-xs">
                 <p className="font-semibold text-foreground border-b border-border pb-1.5 mb-2">
-                  Guest Reservation Details (Anonymous)
+                  Údaje o rezervaci pro hosta (anonymní)
                 </p>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Your Full Name</label>
+                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Vaše celé jméno</label>
                   <input
                     type="text"
                     required
@@ -1482,11 +1544,11 @@ export default function CalendarView({
                       setModalError(null);
                     }}
                     className="input-field text-xs py-1.5"
-                    placeholder="e.g. John Doe"
+                    placeholder="např. Jan Novák"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Email Address</label>
+                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">E-mailová adresa</label>
                   <input
                     type="email"
                     required
@@ -1496,7 +1558,7 @@ export default function CalendarView({
                       setModalError(null);
                     }}
                     className="input-field text-xs py-1.5"
-                    placeholder="e.g. john@example.com"
+                    placeholder="např. jan.novak@email.cz"
                   />
                 </div>
               </div>
@@ -1508,14 +1570,14 @@ export default function CalendarView({
                   <div className="h-10 w-10 rounded-full bg-tenant-primary/10 flex items-center justify-center animate-bounce">
                     <Check size={20} />
                   </div>
-                  <span className="text-sm font-semibold text-foreground">Reservation Confirmed!</span>
+                  <span className="text-sm font-semibold text-foreground">Rezervace byla úspěšně potvrzena!</span>
                 </div>
                 <button
                   type="button"
                   onClick={closeBookingModalAndRefresh}
                   className="btn-tenant w-full py-2 text-xs text-white font-semibold shadow-sm"
                 >
-                  Zavřít / Close
+                  Zavřít
                 </button>
               </div>
             ) : bookingType === "admin_view" && selectedEvent ? (
@@ -1527,13 +1589,13 @@ export default function CalendarView({
                   }}
                   className="btn-secondary flex-1 py-2 text-xs font-semibold"
                 >
-                  Close
+                  Zavřít
                 </button>
                 <button
                   onClick={() => {
                     setConfirmModal({
-                      title: "Cancel Reservation",
-                      message: "Are you sure you want to cancel this reservation?",
+                      title: "Zrušit rezervaci",
+                      message: "Opravdu chcete zrušit tuto rezervaci?",
                       onConfirm: async () => {
                         try {
                           const res = await fetch(`/api/bookings?bookingId=${selectedEvent.id}`, {
@@ -1542,8 +1604,8 @@ export default function CalendarView({
                           if (res.ok) {
                             setNotification({
                               type: "success",
-                              title: "Reservation Cancelled",
-                              message: "Reservation cancelled successfully!",
+                              title: "Rezervace zrušena",
+                              message: "Rezervace byla úspěšně zrušena!",
                               onClose: () => {
                                 setBookingType(null);
                                 setSelectedEvent(null);
@@ -1554,16 +1616,16 @@ export default function CalendarView({
                             const data = await res.json();
                             setNotification({
                               type: "error",
-                              title: "Cancellation Failed",
-                              message: "Error cancelling booking: " + (data.error || "Unknown error")
+                              title: "Zrušení selhalo",
+                              message: "Chyba při rušení rezervace: " + (data.error || "Neznámá chyba")
                             });
                           }
                         } catch (err) {
                           console.error(err);
                           setNotification({
                             type: "error",
-                            title: "Error",
-                            message: "Failed to connect to the server."
+                            title: "Chyba",
+                            message: "Nepodařilo se připojit k serveru."
                           });
                         }
                       }
@@ -1571,7 +1633,7 @@ export default function CalendarView({
                   }}
                   className="btn-danger-filled flex-1 py-2 text-xs font-bold"
                 >
-                  Cancel Booking
+                  Zrušit rezervaci
                 </button>
               </div>
             ) : (() => {
@@ -1591,7 +1653,7 @@ export default function CalendarView({
                     }}
                     className="btn-secondary flex-1 py-2 text-xs"
                   >
-                    Cancel
+                    Zrušit
                   </button>
                   <button
                     onClick={handleBooking}
@@ -1600,7 +1662,7 @@ export default function CalendarView({
                       !isCurrentSelectionAvailable ? "opacity-45 cursor-not-allowed" : ""
                     }`}
                   >
-                    Confirm Reservation
+                    Potvrdit rezervaci
                   </button>
                 </div>
               );
@@ -1613,8 +1675,8 @@ export default function CalendarView({
         isOpen={confirmModal !== null}
         title={confirmModal?.title || ""}
         message={confirmModal?.message || ""}
-        confirmLabel="Confirm"
-        cancelLabel="Cancel"
+        confirmLabel="Potvrdit"
+        cancelLabel="Zrušit"
         onCancel={() => setConfirmModal(null)}
         onConfirm={async () => {
           if (confirmModal) {

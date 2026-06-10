@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
 
-    // Check daily booking duration limit (Max 2 hours / 120 minutes)
+    // Check daily booking duration limit (Max 4 hours / 240 minutes)
     const dailyBookings = await prisma.booking.findMany({
       where: {
         tenantId,
@@ -226,14 +226,14 @@ export async function POST(request: NextRequest) {
 
     const newDurationMin = Math.round((reservedTo.getTime() - reservedFrom.getTime()) / 60000);
 
-    if (dailyMinutes + newDurationMin > 120) {
+    if (dailyMinutes + newDurationMin > 240) {
       return makeErrorResponse(
         "DAILY_LIMIT_EXCEEDED",
-        `Překročili jste denní limit rezervací (2 hodiny). Dnes již máte rezervováno ${Math.round(dailyMinutes)} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+        `Překročili jste denní limit rezervací (4 hodiny). Dnes již máte rezervováno ${Math.round(dailyMinutes)} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
       );
     }
 
-    // Check weekly booking duration limit (Max 4 hours / 240 minutes)
+    // Check weekly booking duration limit (Max 20 hours / 1200 minutes)
     const weeklyBookings = await prisma.booking.findMany({
       where: {
         tenantId,
@@ -250,10 +250,10 @@ export async function POST(request: NextRequest) {
       return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
     }, 0);
 
-    if (weeklyMinutes + newDurationMin > 240) {
+    if (weeklyMinutes + newDurationMin > 1200) {
       return makeErrorResponse(
         "WEEKLY_LIMIT_EXCEEDED",
-        `Překročili jste týdenní limit rezervací (4 hodiny). Tento týden již máte rezervováno ${Math.round(weeklyMinutes)} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+        `Překročili jste týdenní limit rezervací (20 hodin). Tento týden již máte rezervováno ${Math.round(weeklyMinutes)} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
       );
     }
 

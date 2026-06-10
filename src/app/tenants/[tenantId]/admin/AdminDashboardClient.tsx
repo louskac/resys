@@ -1572,6 +1572,39 @@ export default function AdminDashboardClient({
                   <option value="SEAT">SEAT (Seat / Spot)</option>
                   <option value="COURSE_PROGRAM">COURSE_PROGRAM (Regular Class / Program)</option>
                 </select>
+                <div className="mt-2 p-3 bg-secondary/50 rounded-xl border border-border text-[11px] leading-relaxed text-muted-foreground space-y-2 select-none">
+                  <span className="font-bold text-foreground block">💡 Jak se typ SPACE zobrazuje na veřejném webu?</span>
+                  <span>
+                    V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
+                  </span>
+                  <div className="space-y-1 pt-1">
+                    <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
+                    <ul className="list-disc list-inside space-y-0.5 pl-1">
+                      <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
+                      <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu "1/2" či "sektor").</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-secondary px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-secondary px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
+                    <ol className="list-decimal list-inside space-y-1 pl-1">
+                      <li>
+                        <strong>Možnost 2 (Formát hry):</strong> Např. <em>"Fotbal 11v11"</em> pro celou plochu a <em>"Malý fotbal (5v5 / 7v7)"</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
+                      </li>
+                      <li>
+                        <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>"Jednorázový pronájem"</em>, <em>"Dlouhodobý trénink"</em> nebo <em>"Turnajový slot"</em>. Vhodné, pokud nabízíte různé obchodní modely.
+                      </li>
+                      <li>
+                        <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>"Fotbalové hřiště"</em>, <em>"Tenisový kurt"</em>, <em>"Beachvolejbal"</em> nebo <em>"Dráha"</em>. Užitečné pro multi-sportovní areály.
+                      </li>
+                      <li>
+                        <strong>Možnost 5 (Účel plochy):</strong> Např. <em>"Zápasová plocha"</em> (s osvětlením a pevnými brankami) vs. <em>"Tréninková plocha"</em> (s přenosnými brankami).
+                      </li>
+                      <li>
+                        <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-secondary px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
+                      </li>
+                    </ol>
+                  </div>
+                </div>
               </div>
 
               <div>

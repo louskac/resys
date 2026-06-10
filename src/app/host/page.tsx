@@ -26,6 +26,17 @@ interface Tenant {
 
 export default function HostConsole() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
+
+  const getTenantUrl = (tenantId: string) => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return `http://${tenantId}.localhost${port ? `:${port}` : ""}`;
+      }
+    }
+    return `/tenants/${tenantId}`;
+  };
   const [loading, setLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Partial<Tenant> | null>(null);
@@ -300,7 +311,7 @@ export default function HostConsole() {
 
                   <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 border-border pt-3 sm:pt-0 pl-2">
                     <Link
-                      href={`http://${tenant.id}.localhost:3000`}
+                      href={getTenantUrl(tenant.id)}
                       target="_blank"
                       className="btn-outline flex items-center gap-1 text-xs font-semibold py-1.5 px-3"
                     >

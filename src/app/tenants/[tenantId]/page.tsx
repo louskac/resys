@@ -76,7 +76,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     return `${year}-${month}-${day}`;
   };
 
-  let targetDate = new Date("2026-06-08T00:00:00");
+  let targetDate = new Date();
   if (date) {
     const parsed = new Date(`${date}T00:00:00`);
     if (!isNaN(parsed.getTime())) {
@@ -192,13 +192,39 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   }
 
   // Simple mapping of resource type for Czech UI readability
-  const getResourceTypeName = (type: string) => {
+  const getResourceTypeName = (type: string, vertical: string, name: string, parentId: string | null, siblingsCount: number) => {
+    if (vertical === "SPORTS_GROUND") {
+      switch (type) {
+        case "SPACE": 
+          // Default to Option 1: Differentiate by Size/Scale (Full vs. Half vs. Third Field)
+          const nameLower = name.toLowerCase();
+          if (parentId !== null || nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
+            if (siblingsCount === 3) return "Třetina hřiště";
+            if (siblingsCount === 2) return "Polovina hřiště";
+            return "Polovina hřiště"; // default fallback for sector structures
+          }
+          return "Celé hřiště";
+        case "SEAT": return "Místo k sezení";
+        case "COURSE_PROGRAM": return "Trénink / Lekce";
+        default: return type;
+      }
+    }
     switch (type) {
       case "SPACE": return "Kapacitní lekce";
       case "SEAT": return "Sedadlo";
       case "COURSE_PROGRAM": return "Pravidelný program";
       default: return type;
     }
+  };
+
+  // Helper to format capacity count with correct Czech inflection
+  const formatCapacity = (capacity: number, vertical: string) => {
+    if (vertical === "SPORTS_GROUND") {
+      return capacity === 1 ? "1 skupina" : `${capacity} skupiny`;
+    }
+    if (capacity === 1) return "1 místo";
+    if (capacity >= 2 && capacity <= 4) return `${capacity} místa`;
+    return `${capacity} míst`;
   };
 
   // Helper to resolve root resource ID
@@ -219,7 +245,11 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       : resAttrs.price 
         ? `${resAttrs.price} Kč` 
         : "Dle dohody";
-    const timeText = firstRule ? `${firstRule.startTime} - ${firstRule.endTime}` : "Dle dohody";
+    
+    // Fallback to tenant operating hours if no specific schedule rule exists
+    const timeText = firstRule 
+      ? `${firstRule.startTime} - ${firstRule.endTime}` 
+      : `${openTime} - ${closeTime}`;
 
     // Find parent resource name if parentId exists
     let parentName = "";
@@ -231,11 +261,16 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       }
     }
 
+    // Count sibling resources sharing the same parent to determine sector size ratio
+    const siblingsCount = parentId 
+      ? tenant.resources.filter(r => (r.attributes as Record<string, unknown>)?.parentId === parentId).length
+      : 0;
+
     return {
       id: resource.id,
       name: resource.name,
-      type: getResourceTypeName(resource.type),
-      capacity: resource.maxCapacity,
+      type: getResourceTypeName(resource.type, tenant.vertical, resource.name, parentId || null, siblingsCount),
+      capacity: formatCapacity(resource.maxCapacity, tenant.vertical),
       price: priceText,
       time: timeText,
       surface: (resAttrs.surface as string) || "",
@@ -243,6 +278,10 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       room: (resAttrs.room as string) || "",
       instructor: (resAttrs.instructor as string) || "",
       parentName,
+      priceLabel: tenant.vertical === "SPORTS_GROUND" ? "Cena pronájmu" : "Vstupné",
+      parentLabel: tenant.vertical === "SPORTS_GROUND" ? "Součást plochy" : "Součást celku",
+      roomLabel: tenant.vertical === "SPORTS_GROUND" ? "Místnost" : "Učebna",
+      instructorLabel: tenant.vertical === "SPORTS_GROUND" ? "Trenér" : "Lektor",
     };
   });
 
@@ -267,7 +306,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-foreground text-sm leading-tight">{data.name}</span>
-              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide mt-0.5">{data.verticalName} Portal</span>
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide mt-0.5">{data.verticalName}</span>
             </div>
           </div>
 
@@ -291,7 +330,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
                 className="btn-tenant text-xs py-1.5 px-3.5 flex items-center gap-2 rounded-lg font-semibold shadow-sm"
               >
-                Sign In with OneiD
+                Přihlásit se přes OneiD
               </Link>
             )}
           </div>
@@ -306,7 +345,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             <div className="mb-1">
               <h3 className="text-base font-bold text-foreground flex items-center gap-2 select-none">
                 <span className="h-2.5 w-2.5 rounded-full bg-tenant-primary animate-pulse" />
-                Weekly Schedule & Program Slots
+                Týdenní rozvrh a obsazenost
               </h3>
             </div>
             <CalendarView 
@@ -322,7 +361,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               closeTime={closeTime}
               openingHours={attributes.openingHours}
               weekStart={formatLocalDate(monday)}
-              activeDate={date || formatLocalDate(monday)}
+              activeDate={date || formatLocalDate(targetDate)}
             />
           </div>
  
@@ -342,10 +381,12 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                   {data.verticalName}
                 </span>
                 <h2 className="text-xl font-extrabold text-foreground mb-2 leading-snug">
-                  Welcome to {data.name}
+                  Vítejte v {data.name}
                 </h2>
                 <p className="text-muted-foreground text-xs leading-relaxed">
-                  {tagline}. Select a program below to check details, check capacity slots, and secure your booking.
+                  {tenant.vertical === "SPORTS_GROUND" 
+                    ? `${tagline}. Vyberte si plochu nebo sektor níže, prohlédněte si detaily a obsazenost v kalendáři a rezervujte si svůj termín.`
+                    : `${tagline}. Vyberte si program níže, prohlédněte si detaily, volnou kapacitu a rezervujte si své místo.`}
                 </p>
               </div>
             </div>
@@ -354,12 +395,12 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2 select-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary" />
-                Available Programs & Classes
+                {tenant.vertical === "SPORTS_GROUND" ? "Dostupné plochy a sektory" : "Dostupné programy a lekce"}
               </h3>
               
               {resourcesList.length === 0 ? (
                 <div className="card p-6 text-center text-muted-foreground text-xs font-medium">
-                  No resources or program slots are currently configured.
+                  Prozatím nebyly nastaveny žádné plochy ani lekce.
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -387,21 +428,21 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                 <div className="flex items-center justify-between py-0.5">
                                   <span className="flex items-center gap-2">
                                     <Clock size={13} className="text-tenant-primary" />
-                                    <span>Time slot</span>
+                                    <span>Dostupný čas</span>
                                   </span>
                                   <span className="text-foreground font-semibold">{res.time}</span>
                                 </div>
                                 <div className="flex items-center justify-between py-0.5">
                                   <span className="flex items-center gap-2">
                                     <Users size={13} className="text-tenant-primary" />
-                                    <span>Capacity</span>
+                                    <span>Kapacita</span>
                                   </span>
-                                  <span className="text-foreground font-semibold">{res.capacity} slots</span>
+                                  <span className="text-foreground font-semibold">{res.capacity}</span>
                                 </div>
                                 <div className="flex items-center justify-between py-0.5">
                                   <span className="flex items-center gap-2">
                                     <CreditCard size={13} className="text-tenant-primary" />
-                                    <span>Admission</span>
+                                    <span>{res.priceLabel}</span>
                                   </span>
                                   <span className="text-tenant-primary font-bold">{res.price}</span>
                                 </div>
@@ -410,7 +451,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                   <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
                                     <span className="flex items-center gap-2 shrink-0">
                                       <Layers size={13} className="text-tenant-primary" />
-                                      <span>Surface</span>
+                                      <span>Povrch</span>
                                     </span>
                                     <span className="text-foreground font-semibold text-right">{res.surface}</span>
                                   </div>
@@ -420,7 +461,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                   <div className="flex items-start justify-between py-0.5 gap-4">
                                     <span className="flex items-center gap-2 shrink-0">
                                       <Wrench size={13} className="text-tenant-primary" />
-                                      <span>Equipment</span>
+                                      <span>Vybavení</span>
                                     </span>
                                     <span className="text-foreground font-semibold text-right leading-relaxed">{res.equipment}</span>
                                   </div>
@@ -430,7 +471,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                   <div className="flex items-start justify-between py-0.5 gap-4">
                                     <span className="flex items-center gap-2 shrink-0">
                                       <GitMerge size={13} className="text-tenant-primary" />
-                                      <span>Parent Area</span>
+                                      <span>{res.parentLabel}</span>
                                     </span>
                                     <span className="text-foreground font-semibold text-right">{res.parentName}</span>
                                   </div>
@@ -440,7 +481,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                   <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
                                     <span className="flex items-center gap-2 shrink-0">
                                       <MapPin size={13} className="text-tenant-primary" />
-                                      <span>Room</span>
+                                      <span>{res.roomLabel}</span>
                                     </span>
                                     <span className="text-foreground font-semibold text-right">{res.room}</span>
                                   </div>
@@ -450,7 +491,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                                   <div className="flex items-start justify-between py-0.5 gap-4">
                                     <span className="flex items-center gap-2 shrink-0">
                                       <User size={13} className="text-tenant-primary" />
-                                      <span>Instructor</span>
+                                      <span>{res.instructorLabel}</span>
                                     </span>
                                     <span className="text-foreground font-semibold text-right">{res.instructor}</span>
                                   </div>
@@ -459,18 +500,15 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                             </div>
 
                             {session ? (
-                              <button
-                                className="btn-outline w-full py-1.5 text-xs rounded-lg cursor-not-allowed opacity-60"
-                                disabled
-                              >
-                                Active Session Booked
-                              </button>
+                              <div className="text-center py-2 text-xs font-semibold text-tenant-primary bg-tenant-primary/10 border border-tenant-primary/20 rounded-lg select-none">
+                                Pro rezervaci klikněte do kalendáře
+                              </div>
                             ) : (
                               <Link
                                 href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
                                 className="btn-secondary w-full py-1.5 text-center text-xs block rounded-lg font-semibold"
                               >
-                                Sign in to Reserve
+                                Přihlásit se pro rezervaci
                               </Link>
                             )}
                           </div>
@@ -487,7 +525,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
 
       {/* Mini Footer */}
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground bg-card transition-colors">
-        <p>This is a standalone portal powered by ReSys SaaS. Connected via secure SSO.</p>
+        <p>Tento portál využívá systém ReSys. Zabezpečené přihlášení přes SSO.</p>
       </footer>
     </div>
   );
