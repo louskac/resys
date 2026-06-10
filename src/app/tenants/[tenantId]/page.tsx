@@ -104,6 +104,9 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     where: { id: tenantId },
     include: {
       resources: {
+        orderBy: {
+          name: "asc",
+        },
         include: {
           scheduleRules: true,
         },

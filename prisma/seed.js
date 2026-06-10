@@ -47,6 +47,7 @@ async function main() {
         openTime: "08:00",
         closeTime: "22:00", // Extends to 22:00 for evening rentals with lighting
         adminEmails: ["josef.novak@deepvision.cz"],
+        bannerImage: "/uploads/umelka-banner.jpg",
       }
     },
   });
@@ -133,6 +134,70 @@ async function main() {
         equipment: "Tréninkové branky",
       },
     },
+  });
+
+  const hriste2 = await prisma.resource.create({
+    data: {
+      tenantId: umelka.id,
+      name: "Hřiště 2",
+      type: "SPACE",
+      maxCapacity: 10,
+      attributes: {
+        room: "",
+        surface: "Umělá tráva 3. generace",
+        equipment: "Osvětlení, přenosné branky",
+        instructor: ""
+      }
+    }
+  });
+
+  const sektorAlfa = await prisma.resource.create({
+    data: {
+      tenantId: umelka.id,
+      name: "Sektor Alfa",
+      type: "SPACE",
+      maxCapacity: 10,
+      attributes: {
+        room: "",
+        surface: "Umělá tráva 3. generace",
+        parentId: hriste2.id,
+        equipment: "Menší přenosné branky",
+        instructor: ""
+      }
+    }
+  });
+
+  const sektorBeta = await prisma.resource.create({
+    data: {
+      tenantId: umelka.id,
+      name: "Sektro Beta",
+      type: "SPACE",
+      maxCapacity: 10,
+      attributes: {
+        room: "",
+        surface: "Umělá tráva 3. generace",
+        parentId: hriste2.id,
+        equipment: "Menší přenosné branky",
+        instructor: ""
+      }
+    }
+  });
+
+  const sektorGamma = await prisma.resource.create({
+    data: {
+      tenantId: umelka.id,
+      name: "Sektor Gamma",
+      type: "SPACE",
+      maxCapacity: 10,
+      attributes: {
+        room: "",
+        price: "100",
+        surface: "Umělá tráva 3. generace",
+        parentId: hriste2.id,
+        equipment: "Menší přenosné branky",
+        instructor: ""
+      }
+    }
   });
 
   console.log("Seeded bookable resources.");
@@ -248,6 +313,38 @@ async function main() {
   // 7. Seed Confirmed Bookings for Umělka (to match the screenshot calendar events)
   // Target week starts Monday, June 8, 2026.
   const seedBookings = [
+    // Tuesday, June 9: Sektor Alfa (10:00 - 11:30)
+    {
+      resourceId: sektorAlfa.id,
+      userName: "Sektor Alfa",
+      userEmail: "alfa-team@seznam.cz",
+      from: "2026-06-09T10:00:00",
+      to: "2026-06-09T11:30:00",
+    },
+    // Wednesday, June 10: Sektro Beta (11:00 - 12:00)
+    {
+      resourceId: sektorBeta.id,
+      userName: "Sektro Beta",
+      userEmail: "beta-team@seznam.cz",
+      from: "2026-06-10T11:00:00",
+      to: "2026-06-10T12:00:00",
+    },
+    // Wednesday, June 10: Sektor Gamma (12:30 - 14:00)
+    {
+      resourceId: sektorGamma.id,
+      userName: "Sektor Gamma",
+      userEmail: "gamma-team@seznam.cz",
+      from: "2026-06-10T12:30:00",
+      to: "2026-06-10T14:00:00",
+    },
+    // Thursday, June 11: Hřiště 2 (18:00 - 20:00)
+    {
+      resourceId: hriste2.id,
+      userName: "Hřiště 2",
+      userEmail: "vecerni-fotbal@seznam.cz",
+      from: "2026-06-11T18:00:00",
+      to: "2026-06-11T20:00:00",
+    },
     // 1. Tuesday, June 9: Sektor A (8:00 - 9:00)
     {
       resourceId: sektorA.id,

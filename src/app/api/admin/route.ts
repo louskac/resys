@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     const tenants = await prisma.tenant.findMany({
       include: {
         resources: {
+          orderBy: {
+            name: "asc",
+          },
           include: {
             scheduleRules: true,
           },
