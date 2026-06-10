@@ -234,41 +234,31 @@ export default function CalendarView({
     return mon;
   };
 
+  const ALL_WEEK_DAYS = Array.from({ length: 7 }, (_, i) => {
+    const monday = getMondayOfDate(baseDate);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dayNamesAbbr = ["ne", "po", "út", "st", "čt", "pá", "so"];
+    const dayIndex = d.getDay();
+    const label = `${dayNamesAbbr[dayIndex]} ${d.getDate()}. ${d.getMonth() + 1}.`;
+    const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const fullNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
+    return {
+      label,
+      key: keys[dayIndex],
+      name: fullNames[dayIndex],
+      date: d,
+      dbDayIndex: i
+    };
+  });
+
   const DAYS = viewMode === "day"
-    ? [(() => {
-        const d = new Date(baseDate);
-        const dayNamesAbbr = ["ne", "po", "út", "st", "čt", "pá", "so"];
-        const dayIndex = d.getDay();
-        const label = `${dayNamesAbbr[dayIndex]} ${d.getDate()}. ${d.getMonth() + 1}.`;
-        const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-        const fullNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
-        const monday = getMondayOfDate(d);
-        const diffDays = Math.round((d.getTime() - monday.getTime()) / (24 * 60 * 60 * 1000));
-        return {
-          label,
-          key: keys[dayIndex],
-          name: fullNames[dayIndex],
-          date: d,
-          dbDayIndex: diffDays
-        };
-      })()]
-    : Array.from({ length: 7 }, (_, i) => {
-        const monday = getMondayOfDate(baseDate);
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        const dayNamesAbbr = ["ne", "po", "út", "st", "čt", "pá", "so"];
-        const dayIndex = d.getDay();
-        const label = `${dayNamesAbbr[dayIndex]} ${d.getDate()}. ${d.getMonth() + 1}.`;
-        const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-        const fullNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
-        return {
-          label,
-          key: keys[dayIndex],
-          name: fullNames[dayIndex],
-          date: d,
-          dbDayIndex: i
-        };
-      });
+    ? (() => {
+        const dayIndex = baseDate.getDay();
+        const dbDayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+        return [ALL_WEEK_DAYS[dbDayIndex]];
+      })()
+    : ALL_WEEK_DAYS;
 
   const handlePrevWeek = () => {
     const prev = new Date(baseDate);
@@ -1548,7 +1538,7 @@ export default function CalendarView({
                   <div className="flex justify-between py-0.5 border-b border-border/40">
                     <span className="text-muted-foreground">Rezervovaný čas:</span>
                     <span className="text-foreground font-semibold">
-                      {DAYS[selectedEvent.dayIndex]?.name || "Den"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
+                      {ALL_WEEK_DAYS[selectedEvent.dayIndex]?.name || "Den"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
                     </span>
                   </div>
                   <div className="flex justify-between py-0.5">
@@ -1631,7 +1621,7 @@ export default function CalendarView({
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <span className="text-muted-foreground block font-semibold">Den:</span>
-                      <span className="text-foreground font-semibold">{DAYS[selectedDayIndex].name}</span>
+                      <span className="text-foreground font-semibold">{ALL_WEEK_DAYS[selectedDayIndex]?.name || ""}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-semibold">Začátek:</span>
