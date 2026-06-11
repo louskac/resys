@@ -23,11 +23,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!tenantId || dayIndex === undefined) {
-      return makeErrorResponse("MISSING_PARAMETER", "Missing tenantId or dayIndex");
+      return makeErrorResponse("MISSING_PARAMETER", "Chybí povinný identifikátor poskytovatele (tenantId) nebo index dne (dayIndex).");
     }
 
     if (typeof dayIndex !== "number" || dayIndex < 0 || dayIndex > 6) {
-      return makeErrorResponse("INVALID_DAY_INDEX", "Day index must be a number between 0 and 6.");
+      return makeErrorResponse("INVALID_DAY_INDEX", "Index dne musí být číslo mezi 0 (pondělí) a 6 (neděle).");
     }
 
     let userName = "";
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       oneidUserId = (session.user as any).id || "unknown";
     } else {
       if (!guestName || !guestEmail) {
-        return makeErrorResponse("MISSING_PARAMETER", "Please enter your name and email to proceed with guest booking.");
+        return makeErrorResponse("MISSING_PARAMETER", "Pro dokončení rezervace jako host zadejte prosím své jméno a e-mail.");
       }
       userName = guestName;
       userEmail = guestEmail;
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           });
 
           if (!rule || rule.resource.tenantId !== tenantId) {
-            throw new Error("RESOURCE_NOT_FOUND");
+            throw new Error("SCHEDULE_RULE_NOT_FOUND");
           }
 
           finalResourceId = rule.resourceId;
@@ -297,17 +297,20 @@ export async function POST(request: NextRequest) {
       });
     } catch (error: any) {
       const msg = error.message || "";
+      if (msg === "SCHEDULE_RULE_NOT_FOUND") {
+        return makeErrorResponse("SCHEDULE_RULE_NOT_FOUND", "Vybraná lekce nebo časový slot programu nebyly nalezeny. Zkuste prosím obnovit stránku.");
+      }
       if (msg === "RESOURCE_NOT_FOUND") {
-        return makeErrorResponse("RESOURCE_NOT_FOUND", "Invalid schedule rule selection.");
+        return makeErrorResponse("RESOURCE_NOT_FOUND", "Vybraná sportovní plocha nebo sektor nebyly nalezeny. Zkuste prosím obnovit stránku.");
       }
       if (msg === "CAPACITY_EXCEEDED") {
         return makeErrorResponse("CAPACITY_EXCEEDED", "Tato lekce / program je již plně obsazen.");
       }
       if (msg === "MISSING_PARAMETER") {
-        return makeErrorResponse("MISSING_PARAMETER", "Missing parameters for custom booking");
+        return makeErrorResponse("MISSING_PARAMETER", "Chybí povinné parametry pro dokončení ad-hoc rezervace.");
       }
       if (msg === "TENANT_NOT_FOUND") {
-        return makeErrorResponse("TENANT_NOT_FOUND", "Tenant not found");
+        return makeErrorResponse("TENANT_NOT_FOUND", "Poskytovatel služeb (tenant) nebyl nalezen.");
       }
       if (msg === "INVALID_TIME_FORMAT") {
         return makeErrorResponse("INVALID_TIME_FORMAT", "Čas začátku a konce musí být ve formátu HH:MM.");
@@ -332,23 +335,23 @@ export async function POST(request: NextRequest) {
         const [, dailyMinutes, newDurationMin] = msg.split(":");
         return makeErrorResponse(
           "DAILY_LIMIT_EXCEEDED",
-          `Překročili jste denní limit rezervací (4 hodiny). Dnes již máte rezervováno ${dailyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+          `Překročili jste denní limit rezervací (max. 4 hodiny). Dnes již máte rezervováno ${dailyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
         );
       }
       if (msg.startsWith("WEEKLY_LIMIT_EXCEEDED:")) {
         const [, weeklyMinutes, newDurationMin] = msg.split(":");
         return makeErrorResponse(
           "WEEKLY_LIMIT_EXCEEDED",
-          `Překročili jste týdenní limit rezervací (20 hodin). Tento týden již máte rezervováno ${weeklyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+          `Překročili jste týdenní limit rezervací (max. 20 hodin). Tento týden již máte rezervováno ${weeklyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
         );
       }
 
       console.error("Booking API error:", error);
-      return makeErrorResponse("DATABASE_ERROR", "Internal Server Error or Database transaction fail.", {}, 500);
+      return makeErrorResponse("DATABASE_ERROR", "Nastala neočekávaná chyba při komunikaci s databází. Zkuste to prosím znovu.", {}, 500);
     }
   } catch (error: any) {
     console.error("Booking API outer error:", error);
-    return makeErrorResponse("DATABASE_ERROR", "Internal Server Error or Database transaction fail.", {}, 500);
+    return makeErrorResponse("DATABASE_ERROR", "Nastala neočekávaná chyba při zpracování požadavku. Zkuste to prosím znovu.", {}, 500);
   }
 }
 

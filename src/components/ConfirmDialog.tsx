@@ -19,26 +19,26 @@ export default function ConfirmDialog({
   message,
   onConfirm,
   onCancel,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel"
+  confirmLabel = "Potvrdit",
+  cancelLabel = "Zrušit"
 }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
-      <div className="bg-card border border-border max-w-sm w-full p-6 rounded-2xl shadow-2xl relative transition-colors duration-200 text-xs text-left">
-        <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-          <AlertCircle className="text-amber-500" size={18} />
+    <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
+      <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-6 rounded-3xl shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-xs text-left">
+        <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-3.5 flex items-center gap-2 select-none">
+          <AlertCircle className="text-amber-500 dark:text-amber-400 bg-amber-500/10 p-0.5 rounded-full" size={18} />
           {title}
         </h3>
-        <p className="text-muted-foreground leading-relaxed mb-6 whitespace-pre-line">
+        <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 whitespace-pre-line font-medium">
           {message}
         </p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="btn-secondary flex-1 py-2 text-xs font-semibold"
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-colors"
           >
             {cancelLabel}
           </button>
@@ -47,7 +47,7 @@ export default function ConfirmDialog({
             onClick={async () => {
               await onConfirm();
             }}
-            className="btn-danger-filled flex-1 py-2 text-xs font-bold"
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-[0_4px_12px_rgba(225,29,72,0.2)] transition-colors"
           >
             {confirmLabel}
           </button>

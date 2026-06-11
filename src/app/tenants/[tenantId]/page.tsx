@@ -9,6 +9,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { Clock, Users, CreditCard, Layers, Wrench, GitMerge, MapPin, User } from "lucide-react";
 import TenantBanner from "@/components/TenantBanner";
+import LoginModal from "@/components/LoginModal";
+import ResourceCard from "@/components/ResourceCard";
 
 interface PageProps {
   params: Promise<{
@@ -38,6 +40,7 @@ interface TenantAttributes {
   closeTime?: string;
   adminEmails?: string[];
   bannerImage?: string;
+  bannerPosition?: string;
   openingHours?: {
     dayOfWeek: number;
     openTime: string;
@@ -103,6 +106,20 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   nextMonday.setUTCDate(monday.getUTCDate() + 7);
   const session = await getServerSession(authOptions);
 
+  let userBookingsCount = 0;
+  if (session && session.user?.email) {
+    userBookingsCount = await prisma.booking.count({
+      where: {
+        tenantId,
+        userEmail: session.user.email,
+        status: "CONFIRMED",
+        reservedFrom: {
+          gte: new Date(),
+        },
+      },
+    });
+  }
+
   // Fetch tenant and its resources/rules/bookings from PostgreSQL
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
@@ -143,6 +160,17 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   }
   const openTime = attributes.openTime || "08:00";
   const closeTime = attributes.closeTime || "18:00";
+
+  const czechFormattedDate = (() => {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    const formatted = new Date().toLocaleDateString("cs-CZ", options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  })();
 
   const calendarEvents: CalendarEvent[] = [];
 
@@ -198,342 +226,312 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     });
   }
 
-  // Simple mapping of resource type for Czech UI readability
-  const getResourceTypeName = (type: string, vertical: string, name: string, parentId: string | null, siblingsCount: number) => {
-    if (vertical === "SPORTS_GROUND") {
-      switch (type) {
-        case "SPACE": 
-          // Default to Option 1: Differentiate by Size/Scale (Full vs. Half vs. Third Field)
-          const nameLower = name.toLowerCase();
-          if (parentId !== null || nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
-            if (siblingsCount === 3) return "Třetina hřiště";
-            if (siblingsCount === 2) return "Polovina hřiště";
-            return "Polovina hřiště"; // default fallback for sector structures
-          }
-          return "Celé hřiště";
-        case "SEAT": return "Místo k sezení";
-        case "COURSE_PROGRAM": return "Trénink / Lekce";
-        default: return type;
-      }
+  const isOpenNow = (() => {
+    try {
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+      const [openH, openM] = openTime.split(":").map(Number);
+      const [closeH, closeM] = closeTime.split(":").map(Number);
+      const startMin = openH * 60 + openM;
+      const endMin = closeH * 60 + closeM;
+      return currentMin >= startMin && currentMin < endMin;
+    } catch {
+      return true;
     }
-    switch (type) {
-      case "SPACE": return "Kapacitní lekce";
-      case "SEAT": return "Sedadlo";
-      case "COURSE_PROGRAM": return "Pravidelný program";
-      default: return type;
-    }
-  };
-
-  // Helper to format capacity count with correct Czech inflection
-  const formatCapacity = (capacity: number, vertical: string) => {
-    if (vertical === "SPORTS_GROUND") {
-      return capacity === 1 ? "1 skupina" : `${capacity} skupiny`;
-    }
-    if (capacity === 1) return "1 místo";
-    if (capacity >= 2 && capacity <= 4) return `${capacity} místa`;
-    return `${capacity} míst`;
-  };
-
-  // Helper to resolve root resource ID
-  const getRootResourceId = (resId: string): string => {
-    const res = tenant.resources.find(r => r.id === resId);
-    const parentId = (res?.attributes as Record<string, unknown>)?.parentId as string | undefined;
-    if (!parentId) return resId;
-    return getRootResourceId(parentId);
-  };
-
-  // List of flat resources to render in cards at bottom
-  const resourcesList = tenant.resources.map((resource) => {
-    // Find the first rule price/time or default
-    const firstRule = resource.scheduleRules[0];
-    const resAttrs = (resource.attributes as Record<string, unknown>) || {};
-    const priceText = firstRule 
-      ? `${firstRule.price} Kč` 
-      : resAttrs.price 
-        ? `${resAttrs.price} Kč` 
-        : "Dle dohody";
-    
-    // Fallback to tenant operating hours if no specific schedule rule exists
-    const timeText = firstRule 
-      ? `${firstRule.startTime} - ${firstRule.endTime}` 
-      : `${openTime} - ${closeTime}`;
-
-    // Find parent resource name if parentId exists
-    let parentName = "";
-    const parentId = resAttrs.parentId as string | undefined;
-    if (parentId) {
-      const parentRes = tenant.resources.find(r => r.id === parentId);
-      if (parentRes) {
-        parentName = parentRes.name;
-      }
-    }
-
-    // Count sibling resources sharing the same parent to determine sector size ratio
-    const siblingsCount = parentId 
-      ? tenant.resources.filter(r => (r.attributes as Record<string, unknown>)?.parentId === parentId).length
-      : 0;
-
-    return {
-      id: resource.id,
-      name: resource.name,
-      type: getResourceTypeName(resource.type, tenant.vertical, resource.name, parentId || null, siblingsCount),
-      capacity: formatCapacity(resource.maxCapacity, tenant.vertical),
-      price: priceText,
-      time: timeText,
-      surface: (resAttrs.surface as string) || "",
-      equipment: (resAttrs.equipment as string) || "",
-      room: (resAttrs.room as string) || "",
-      instructor: (resAttrs.instructor as string) || "",
-      parentName,
-      priceLabel: tenant.vertical === "SPORTS_GROUND" ? "Cena pronájmu" : "Vstupné",
-      parentLabel: tenant.vertical === "SPORTS_GROUND" ? "Součást plochy" : "Součást celku",
-      roomLabel: tenant.vertical === "SPORTS_GROUND" ? "Místnost" : "Učebna",
-      instructorLabel: tenant.vertical === "SPORTS_GROUND" ? "Trenér" : "Lektor",
-    };
-  });
-
-  // Group resources by their root resource name
-  const groupedResources: Record<string, typeof resourcesList> = {};
-  resourcesList.forEach(res => {
-    const rootId = getRootResourceId(res.id);
-    const rootName = tenant.resources.find(r => r.id === rootId)?.name || "Standalone";
-    if (!groupedResources[rootName]) {
-      groupedResources[rootName] = [];
-    }
-    groupedResources[rootName].push(res);
-  });
+  })();
 
   return (
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
-      <header className="border-b border-border bg-card sticky top-0 z-40 transition-colors shadow-sm">
+      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-40 transition-all shadow-md shadow-slate-100/5 dark:shadow-black/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-tenant-primary flex items-center justify-center font-bold text-white text-md shadow-sm shadow-tenant-primary/15 transition-transform hover:scale-105 select-none">
-              {tenantId[0].toUpperCase()}
-            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 500 500"
+              className="h-9 w-9 transition-transform hover:scale-105 select-none shrink-0"
+              fill="none"
+            >
+              <defs>
+                <linearGradient id="resysGradientHeader" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7000FF" />
+                  <stop offset="50%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#3B82F6" />
+                </linearGradient>
+                <linearGradient id="slotGradientHeader" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00F5FF" />
+                  <stop offset="100%" stopColor="#3B82F6" />
+                </linearGradient>
+                <filter id="subtleGlowHeader" x="-15%" y="-15%" width="130%" height="130%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="16" floodColor="#7000FF" floodOpacity="0.35" />
+                </filter>
+              </defs>
+              <g filter="url(#subtleGlowHeader)">
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M 110 150 L 155 105 H 315 C 385 105 405 145 405 205 C 405 255 380 285 325 295 L 385 395 H 320 L 265 305 H 175 V 395 H 120 V 170 L 110 150 Z M 175 160 V 255 H 275 C 325 255 345 235 345 205 C 345 175 325 160 275 160 H 175 Z"
+                  fill="url(#resysGradientHeader)"
+                />
+                <g>
+                  {/* Row 1 */}
+                  <rect x="290" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="312" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="334" y="325" width="10" height="10" rx="2.5" fill="url(#slotGradientHeader)" />
+                  <rect x="356" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+
+                  {/* Row 2 */}
+                  <rect x="301" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientHeader)" />
+                  <rect x="323" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="345" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="367" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientHeader)" />
+
+                  {/* Row 3 */}
+                  <rect x="312" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="334" y="365" width="10" height="10" rx="2.5" fill="url(#slotGradientHeader)" />
+                  <rect x="356" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="378" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                </g>
+              </g>
+            </svg>
             <div className="flex flex-col">
               <span className="font-bold text-foreground text-sm leading-tight">{data.name}</span>
               <span className="text-[10px] text-muted-foreground font-semibold tracking-wide mt-0.5">{data.verticalName}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Middle Header Widgets */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Czech Formatted Date */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-slate-500 dark:text-zinc-400 text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-zinc-500 shrink-0" />
+              <span>{czechFormattedDate}</span>
+            </div>
+
+            {/* Status Pill (Open/Closed) */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+              <span className={`h-1.5 w-1.5 rounded-full shadow-lg shrink-0 animate-pulse ${isOpenNow ? "bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-amber-500 shadow-[0_0_8px_#F59E0B]"}`} />
+              <span className={isOpenNow ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                {isOpenNow ? "Nyní otevřeno" : "Zavřeno"}
+              </span>
+            </div>
+          </div>
+
+          {/* Integrated Glass Control Dock */}
+          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
             <ThemeToggle />
+            
+            <span className="h-6 w-px bg-slate-200/50 dark:bg-[#1F1F35] mx-1 shrink-0" />
+            
             {session ? (
-              <div className="flex items-center gap-3 bg-secondary/45 border border-border rounded-lg py-1.5 pl-3 pr-1.5 shadow-sm">
-                <div className="flex items-center gap-2.5">
-                  <div className="hidden sm:flex flex-col text-right">
-                    <span className="text-xs font-semibold text-foreground leading-none">{session.user?.name}</span>
-                    <span className="text-[9px] text-muted-foreground mt-1">{session.user?.email}</span>
+              <div className="flex items-center gap-3 pl-2 pr-1 py-0.5">
+                {/* Active reservations counter */}
+                {userBookingsCount > 0 && (
+                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-tenant-primary/10 dark:bg-tenant-primary/15 border border-tenant-primary/20 text-tenant-primary dark:text-purple-400 rounded-xl text-[9px] font-extrabold uppercase tracking-wider select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse shrink-0" />
+                    <span>{userBookingsCount} {userBookingsCount === 1 ? "rezervace" : userBookingsCount < 5 ? "rezervace" : "rezervací"}</span>
                   </div>
-                  <div className="h-7 w-7 rounded bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 flex items-center justify-center font-bold text-xs select-none">
-                    {session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                )}
+                
+                <div className="hidden sm:flex flex-col text-right">
+                  <div className="flex items-center gap-1.5 justify-end">
+                    {session.user?.email === "admin@deepvision.cz" && (
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
+                        Správce
+                      </span>
+                    )}
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{session.user?.name}</span>
                   </div>
+                  <span className="text-[9px] text-slate-500 dark:text-zinc-400 mt-1 leading-none">{session.user?.email}</span>
                 </div>
+                
+                {/* Avatar with gradient matching brand colors */}
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5">
+                  {session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                </div>
+                
                 <LogoutButton />
               </div>
             ) : (
-              <Link
-                href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
-                className="btn-tenant text-xs py-1.5 px-3.5 flex items-center gap-2 rounded-lg font-semibold shadow-sm"
-              >
-                Přihlásit se přes OneiD
-              </Link>
+              <div className="pl-1 pr-0.5 py-0.5 flex items-center">
+                <Link
+                  href="?login=true"
+                  className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 flex items-center gap-2 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
+                >
+                  Přihlásit se přes OneiD
+                </Link>
+              </div>
             )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
-          {/* Left Column - Calendar (main area on desktop, stacked second on mobile) */}
-          <div className="space-y-6 order-2 lg:order-1">
-            <div className="mb-1">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2 select-none">
-                <span className="h-2.5 w-2.5 rounded-full bg-tenant-primary animate-pulse" />
-                Týdenní rozvrh a obsazenost
-              </h3>
-            </div>
-            <CalendarView 
-              tenantId={tenantId} 
-              initialEvents={calendarEvents} 
-              session={session}
-              resources={tenant.resources.map(r => ({ 
-                id: r.id, 
-                name: r.name,
-                parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
-              }))}
-              openTime={openTime}
-              closeTime={closeTime}
-              openingHours={attributes.openingHours}
-              weekStart={formatUTCDate(monday)}
-              activeDate={date || formatUTCDate(targetDate)}
-            />
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 md:grid-cols-2 gap-6 lg:block lg:flow-root">
+        
+        {/* Calendar Container */}
+        <div className="col-span-1 md:col-span-2 order-2 lg:order-none lg:float-left lg:w-[calc(100%-390px)] lg:mr-6 lg:mb-6">
+          <div className="mb-2.5 pl-1">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2 select-none">
+              <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
+              Týdenní rozvrh a obsazenost
+            </h3>
           </div>
- 
-          {/* Right Column - Hero Info & Programs (sidebar on desktop, stacked first on mobile) */}
-          <div className="space-y-6 order-1 lg:order-2">
-            {/* Hero Banner Card */}
-            <div className="card relative p-0 overflow-hidden bg-card border-border hover:border-tenant-primary/30 transition-all shadow-sm group">
-              <TenantBanner 
-                src={attributes.bannerImage} 
-                alt="Tenant Banner" 
-                heightClass="h-44"
-                className="border-b border-border"
-                fallbackText={data.name || "Welcome"}
-              />
-              <div className="p-6">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-tenant-primary mb-2 block select-none">
-                  {data.verticalName}
-                </span>
-                <h2 className="text-xl font-extrabold text-foreground mb-2 leading-snug">
-                  Vítejte v {data.name}
-                </h2>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  {tenant.vertical === "SPORTS_GROUND" 
-                    ? `${tagline}. Vyberte si plochu nebo sektor níže, prohlédněte si detaily a obsazenost v kalendáři a rezervujte si svůj termín.`
-                    : `${tagline}. Vyberte si program níže, prohlédněte si detaily, volnou kapacitu a rezervujte si své místo.`}
-                </p>
+          <CalendarView 
+            tenantId={tenantId} 
+            initialEvents={calendarEvents} 
+            session={session}
+            resources={tenant.resources.map(r => ({ 
+              id: r.id, 
+              name: r.name,
+              parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
+            }))}
+            openTime={openTime}
+            closeTime={closeTime}
+            openingHours={attributes.openingHours}
+            weekStart={formatUTCDate(monday)}
+            activeDate={date || formatUTCDate(targetDate)}
+          />
+        </div>
+
+        {/* Hero Banner Card */}
+        <div className="col-span-1 md:col-span-2 order-1 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 relative p-0 overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-md hover:border-tenant-primary/35 transition-all duration-300 shadow-slate-100/5 dark:shadow-black/10 group">
+          {/* Top border glowing highlight */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-tenant-gradient opacity-90 z-20" />
+          
+          <div className="relative overflow-hidden">
+            <TenantBanner 
+              src={attributes.bannerImage} 
+              alt="Tenant Banner" 
+              heightClass="h-48"
+              className="border-b border-slate-200/40 dark:border-[#1F1F35]/40"
+              fallbackText={data.name || "Welcome"}
+              objectPosition={attributes.bannerPosition || "center"}
+            />
+            {/* Floating Glass category badge */}
+            <span className="absolute top-4 left-4 z-10 backdrop-blur-md bg-black/40 dark:bg-black/60 border border-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 select-none transition-transform duration-300 hover:scale-105">
+              <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse" />
+              {data.verticalName}
+            </span>
+            
+            {/* Subtle soft overlay fade */}
+            <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/10 dark:from-[#0D0D15]/10 to-transparent pointer-events-none" />
+          </div>
+          
+          <div className="p-6">
+            {/* Dynamic Status / Hours Badge */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-3 select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Dnes otevřeno: {openTime} - {closeTime}
+            </span>
+            
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight mb-2.5 leading-snug">
+              Vítejte v {data.name}
+            </h2>
+            <p className="text-slate-600 dark:text-zinc-400 text-[11.5px] font-medium leading-relaxed">
+              {tenant.vertical === "SPORTS_GROUND" 
+                ? `${tagline}. Vyberte si plochu nebo sektor níže, prohlédněte si detaily a obsazenost v kalendáři a rezervujte si svůj termín.`
+                : `${tagline}. Vyberte si program níže, prohlédněte si detaily, volnou kapacitu a rezervujte si své místo.`}
+            </p>
+            
+            {/* Verified portal banner footer */}
+            <div className="mt-5 pt-4 border-t border-slate-200/40 dark:border-[#1F1F35]/40 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-400 font-medium select-none">
+              <div className="flex items-center gap-1.5">
+                <svg className="h-3.5 w-3.5 text-tenant-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Ověřený partner <strong>ReSys</strong></span>
               </div>
-            </div>
-
-            {/* Programs List Widget */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-2 select-none">
-                <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary" />
-                {tenant.vertical === "SPORTS_GROUND" ? "Dostupné plochy a sektory" : "Dostupné programy a lekce"}
-              </h3>
-              
-              {resourcesList.length === 0 ? (
-                <div className="card p-6 text-center text-muted-foreground text-xs font-medium">
-                  Prozatím nebyly nastaveny žádné plochy ani lekce.
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedResources).map(([groupName, items]) => (
-                    <div key={groupName} className="space-y-3">
-                      {Object.keys(groupedResources).length > 1 && (
-                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1 mt-4 select-none">
-                          {groupName}
-                        </h4>
-                      )}
-                      <div className="flex flex-col gap-4">
-                        {items.map((res) => (
-                          <div
-                            key={res.id}
-                            className="card p-5 border-l-4 border-l-tenant-primary hover:border-l-tenant-primary/80 transition-all flex flex-col justify-between group bg-card"
-                          >
-                            <div>
-                              <span className="text-[9px] px-2.5 py-0.5 rounded bg-tenant-primary/10 text-tenant-primary font-bold border border-tenant-primary/20 uppercase tracking-wider select-none">
-                                {res.type}
-                              </span>
-                              <h4 className="font-bold text-sm text-foreground mt-3.5 mb-2.5 group-hover:text-tenant-primary transition-colors">
-                                {res.name}
-                              </h4>
-                              <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                                <div className="flex items-center justify-between py-0.5">
-                                  <span className="flex items-center gap-2">
-                                    <Clock size={13} className="text-tenant-primary" />
-                                    <span>Dostupný čas</span>
-                                  </span>
-                                  <span className="text-foreground font-semibold">{res.time}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-0.5">
-                                  <span className="flex items-center gap-2">
-                                    <Users size={13} className="text-tenant-primary" />
-                                    <span>Kapacita</span>
-                                  </span>
-                                  <span className="text-foreground font-semibold">{res.capacity}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-0.5">
-                                  <span className="flex items-center gap-2">
-                                    <CreditCard size={13} className="text-tenant-primary" />
-                                    <span>{res.priceLabel}</span>
-                                  </span>
-                                  <span className="text-tenant-primary font-bold">{res.price}</span>
-                                </div>
-
-                                {res.surface && (
-                                  <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
-                                    <span className="flex items-center gap-2 shrink-0">
-                                      <Layers size={13} className="text-tenant-primary" />
-                                      <span>Povrch</span>
-                                    </span>
-                                    <span className="text-foreground font-semibold text-right">{res.surface}</span>
-                                  </div>
-                                )}
-
-                                {res.equipment && (
-                                  <div className="flex items-start justify-between py-0.5 gap-4">
-                                    <span className="flex items-center gap-2 shrink-0">
-                                      <Wrench size={13} className="text-tenant-primary" />
-                                      <span>Vybavení</span>
-                                    </span>
-                                    <span className="text-foreground font-semibold text-right leading-relaxed">{res.equipment}</span>
-                                  </div>
-                                )}
-
-                                {res.parentName && (
-                                  <div className="flex items-start justify-between py-0.5 gap-4">
-                                    <span className="flex items-center gap-2 shrink-0">
-                                      <GitMerge size={13} className="text-tenant-primary" />
-                                      <span>{res.parentLabel}</span>
-                                    </span>
-                                    <span className="text-foreground font-semibold text-right">{res.parentName}</span>
-                                  </div>
-                                )}
-
-                                {res.room && (
-                                  <div className="flex items-start justify-between py-0.5 gap-4 border-t border-border/50 pt-1.5 mt-1.5">
-                                    <span className="flex items-center gap-2 shrink-0">
-                                      <MapPin size={13} className="text-tenant-primary" />
-                                      <span>{res.roomLabel}</span>
-                                    </span>
-                                    <span className="text-foreground font-semibold text-right">{res.room}</span>
-                                  </div>
-                                )}
-
-                                {res.instructor && (
-                                  <div className="flex items-start justify-between py-0.5 gap-4">
-                                    <span className="flex items-center gap-2 shrink-0">
-                                      <User size={13} className="text-tenant-primary" />
-                                      <span>{res.instructorLabel}</span>
-                                    </span>
-                                    <span className="text-foreground font-semibold text-right">{res.instructor}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {session ? (
-                              <div className="text-center py-2 text-xs font-semibold text-tenant-primary bg-tenant-primary/10 border border-tenant-primary/20 rounded-lg select-none">
-                                Pro rezervaci klikněte do kalendáře
-                              </div>
-                            ) : (
-                              <Link
-                                href={`/api/auth/oneid/initiate?tenantId=${tenantId}`}
-                                className="btn-secondary w-full py-1.5 text-center text-xs block rounded-lg font-semibold"
-                              >
-                                Přihlásit se pro rezervaci
-                              </Link>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <span className="font-semibold text-slate-400 dark:text-zinc-500">
+                {tenant.vertical === "SPORTS_GROUND" ? "Sportoviště" : "Kurzy a lekce"}
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Section Heading for Cards */}
+        {tenant.resources.length > 0 && (
+          <div className="col-span-1 md:col-span-2 order-3 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-4 lg:mt-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2 select-none">
+              <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
+              {tenant.vertical === "SPORTS_GROUND" ? "Dostupné plochy a sektory" : "Dostupné programy a lekce"}
+            </h3>
+          </div>
+        )}
+
+        {/* Available Spaces Cards */}
+        {tenant.resources.map((res) => (
+          <ResourceCard
+            key={res.id}
+            resource={res as any}
+            vertical={tenant.vertical}
+            openTime={openTime}
+            closeTime={closeTime}
+            allResources={tenant.resources as any}
+            className="col-span-1 order-4 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 lg:h-[400px]"
+            footer={
+              session ? (
+                <div className="flex items-center justify-center gap-2 py-2 text-xs font-bold text-tenant-primary bg-tenant-primary/5 dark:bg-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 rounded-xl select-none">
+                  <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
+                  <span>Pro rezervaci klikněte do kalendáře</span>
+                </div>
+              ) : (
+                <Link
+                  href="?login=true"
+                  className="w-full py-2 text-center text-xs block rounded-xl font-bold bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-300/60 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer shadow-sm"
+                >
+                  Přihlásit se pro rezervaci
+                </Link>
+              )
+            }
+          />
+        ))}
+
       </main>
 
-      {/* Mini Footer */}
-      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground bg-card transition-colors">
-        <p>Tento portál využívá systém ReSys. Zabezpečené přihlášení přes SSO.</p>
+      {/* Footer */}
+      <footer className="border-t border-slate-200/40 dark:border-[#1F1F35]/40 py-12 text-slate-500 dark:text-zinc-400 text-xs bg-white/10 dark:bg-[#07070C]/20 transition-colors backdrop-blur-md">
+        <div className="max-w-4xl mx-auto px-6 flex flex-col items-center justify-center text-center gap-5">
+          {/* Brand/logo badge */}
+          <div className="flex items-center gap-2 select-none">
+            <span className="font-extrabold tracking-tight text-slate-800 dark:text-slate-200 text-sm">
+              Re<span className="text-tenant-primary">Sys</span>
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" title="Všechny systémy funkční" />
+            <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest pl-1">PORTÁL</span>
+          </div>
+          
+          <div className="flex flex-col items-center gap-1.5 text-slate-500 dark:text-zinc-400">
+            <p className="max-w-md leading-relaxed">
+              Tento rezervační portál využívá systém <span className="font-medium text-slate-700 dark:text-zinc-300">ReSys</span> pro správu ploch, lekcí a rezervací.
+            </p>
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+              Všechna data jsou chráněna a šifrována. Zabezpečené přihlášení přes SSO.
+            </p>
+          </div>
+          
+          <div className="h-px w-12 bg-slate-200 dark:bg-[#1F1F35]" />
+          
+          <div className="flex items-center gap-2.5 bg-slate-100/60 dark:bg-[#131322]/50 border border-slate-200/50 dark:border-[#2A2A40]/50 rounded-full py-1.5 px-4 text-[10px] font-semibold tracking-wide shadow-sm hover:border-slate-300 dark:hover:border-[#383857] transition-all">
+            <span className="text-slate-400 dark:text-zinc-500">Jednotné přihlášení:</span>
+            <a 
+              href="https://oneid.cz" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-tenant-primary hover:underline transition-colors flex items-center gap-1"
+            >
+              OneiD SSO
+              <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+          
+          <p className="text-[10px] text-slate-400 dark:text-zinc-600 mt-2">
+            © {new Date().getFullYear()} ReSys. Všechna práva vyhrazena.
+          </p>
+        </div>
       </footer>
+      <LoginModal tenantId={tenantId} />
     </div>
   );
 }

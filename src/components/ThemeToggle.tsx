@@ -29,21 +29,21 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-8 h-8 rounded-lg bg-secondary border border-border opacity-20" />
+      <div className="w-9 h-9 rounded-xl bg-white/20 dark:bg-[#131322]/20 border border-[#E2E2ED]/40 dark:border-[#1F1F2E]/40 opacity-20 animate-pulse" />
     );
   }
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-secondary hover:bg-muted border border-border text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center"
+      className="p-2.5 rounded-xl bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-300 hover:text-foreground border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-slate-300 dark:hover:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
       aria-label="Toggle Theme"
       title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
     >
       {theme === "light" ? (
-        <Moon size={15} className="transition-transform duration-200 rotate-0 hover:-rotate-12" />
+        <Moon size={15} className="transition-transform duration-250 rotate-0 hover:-rotate-12" />
       ) : (
-        <Sun size={15} className="transition-transform duration-200 rotate-0 hover:rotate-45" />
+        <Sun size={15} className="transition-transform duration-250 rotate-0 hover:rotate-45" />
       )}
     </button>
   );

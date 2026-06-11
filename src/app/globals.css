@@ -33,9 +33,9 @@
   --ring: oklch(0.48 0.18 270);
   
   /* Tenant variable placeholders - mapped to solid colors instead of gradients */
-  --tenant-primary: oklch(0.48 0.18 270);
-  --tenant-primary-hover: oklch(0.40 0.18 270);
-  --tenant-accent: oklch(0.48 0.18 270);
+  --tenant-primary: oklch(0.52 0.22 292);
+  --tenant-primary-hover: oklch(0.44 0.22 292);
+  --tenant-accent: oklch(0.52 0.22 292);
   --tenant-gradient: var(--tenant-primary);
 }
 
@@ -93,12 +93,19 @@
   --color-tenant-primary-hover: var(--tenant-primary-hover);
   --color-tenant-accent: var(--tenant-accent);
   
+  --font-geist-sans: "Geist", ui-sans-serif, system-ui;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @utility bg-tenant-gradient {
   background: var(--tenant-gradient) !important;
+}
+
+@utility content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 240px;
 }
 
 /* --- Base Rules --- */
@@ -309,13 +316,14 @@ body {
 
 /* Background stripes utility for past calendar slots */
 .bg-stripes-past {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    var(--border) 0px,
-    var(--border) 1px,
-    transparent 1px,
-    transparent 8px
-  );
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='12' x2='12' y2='0' stroke='%23E2E2ED' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-color: var(--secondary);
+}
+
+.dark .bg-stripes-past {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='12' x2='12' y2='0' stroke='%2327272A' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: repeat;
   background-color: var(--secondary);
 }
 
@@ -339,4 +347,41 @@ body {
 .btn-danger-filled:hover:not(:disabled) {
   background-color: oklch(0.55 0.18 15);
 }
+
+
+
+/* Cosmic Sapphire Theme Stripes (10px spacing, slate-violet/purple glow) */
+.bg-stripes-cosmic {
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='10' x2='10' y2='0' stroke='%23E9D5FF' stroke-width='0.8'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-color: #FAFAFC;
+}
+
+.dark .bg-stripes-cosmic {
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='10' x2='10' y2='0' stroke='%23271D3A' stroke-width='0.8'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-color: #09090E;
+}
+
+/* Cosmic Neon Shadows & Cards */
+.shadow-neon-glow {
+  box-shadow: 0 0 20px rgba(112, 0, 255, 0.12), 0 0 4px rgba(112, 0, 255, 0.06);
+}
+
+.dark .shadow-neon-glow {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.16), 0 0 5px rgba(139, 92, 246, 0.08);
+}
+
+.cosmic-card-light {
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(112, 0, 255, 0.06);
+}
+
+.cosmic-card-dark {
+  background-color: rgba(14, 14, 24, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(112, 0, 255, 0.14);
+}
+
 

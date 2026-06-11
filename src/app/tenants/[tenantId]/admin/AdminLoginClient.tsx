@@ -44,7 +44,7 @@ export default function AdminLoginClient({
       });
 
       if (result?.error) {
-        setError("Invalid admin username or password.");
+        setError("Neplatné uživatelské jméno nebo heslo administrátora.");
         setIsLoading(false);
       } else {
         // Save current path to localStorage so we redirect back after login
@@ -53,7 +53,7 @@ export default function AdminLoginClient({
       }
     } catch (err) {
       console.error("Credentials login error:", err);
-      setError("An unexpected error occurred during login.");
+      setError("Během přihlašování došlo k neočekávané chybě.");
       setIsLoading(false);
     }
   };
@@ -80,23 +80,23 @@ export default function AdminLoginClient({
             </div>
 
             <span className="text-[10px] px-2.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 font-bold uppercase tracking-wider mb-2">
-              Access Denied
+              Přístup odepřen
             </span>
 
             <h2 className="text-xl font-bold text-foreground mb-3">
-              Unauthorized Administrator
+              Neautorizovaný administrátor
             </h2>
 
             <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-              You are signed in as <span className="text-foreground font-semibold font-mono">{loggedInEmail}</span>. 
-              However, this account does not have administrator privileges for <span className="text-foreground font-semibold">{tenantName}</span>.
+              Jste přihlášeni jako <span className="text-foreground font-semibold font-mono">{loggedInEmail}</span>. 
+              Tento účet však nemá oprávnění administrátora pro <span className="text-foreground font-semibold">{tenantName}</span>.
             </p>
 
             <div className="w-full bg-secondary border border-border p-4 rounded-2xl mb-6 text-left text-[11px] text-muted-foreground space-y-2">
-              <p>💡 <strong>Note to Developers</strong>:</p>
+              <p><strong>Poznámka pro vývojáře</strong>:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground/80">
-                <li>Configure this email address in the tenant{"'"}s admin settings.</li>
-                <li>Or use a mock account ending with <code className="text-primary font-semibold">@deepvision.cz</code> to bypass checks locally.</li>
+                <li>Nakonfigurujte tuto e-mailovou adresu v nastavení administrace tenanta.</li>
+                <li>Nebo použijte testovací účet končící na <code className="text-primary font-semibold">@deepvision.cz</code> pro lokální obcházení kontrol.</li>
               </ul>
             </div>
 
@@ -105,14 +105,14 @@ export default function AdminLoginClient({
                 onClick={handleOneidLogin}
                 className="btn-secondary flex-1 py-2.5 text-xs font-semibold"
               >
-                Switch Account
+                Přepnout účet
               </button>
               <button
                 onClick={() => signOut({ callbackUrl: window.location.origin })}
                 className="btn-danger flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer select-none"
               >
                 <LogOut size={14} />
-                Sign Out
+                Odhlásit se
               </button>
             </div>
           </div>
@@ -142,11 +142,11 @@ export default function AdminLoginClient({
             {tenantName}
           </h2>
           <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-6 text-center">
-            Administrative Console
+            Administrační konzole
           </span>
 
           {error && (
-            <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-3 rounded-2xl mb-4 flex items-start gap-2">
+            <div className="w-full bg-red-500/10 border border-red-500/25 text-red-500 text-xs p-3 rounded-2xl mb-4 flex items-start gap-2">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -155,7 +155,7 @@ export default function AdminLoginClient({
           {/* Credentials Login Form */}
           <form onSubmit={handleCredentialsLogin} className="w-full space-y-4 text-xs mb-6">
             <div className="space-y-1">
-              <label className="block text-muted-foreground font-semibold">Admin Profile Login</label>
+              <label className="block text-muted-foreground font-semibold">Přihlášení profilu správce</label>
               <div className="relative flex items-center">
                 <User size={14} className="absolute left-3.5 text-muted-foreground" />
                 <input
@@ -171,7 +171,7 @@ export default function AdminLoginClient({
             </div>
 
             <div className="space-y-1">
-              <label className="block text-muted-foreground font-semibold">Password</label>
+              <label className="block text-muted-foreground font-semibold">Heslo</label>
               <div className="relative flex items-center">
                 <KeyRound size={14} className="absolute left-3.5 text-muted-foreground" />
                 <input
@@ -191,14 +191,14 @@ export default function AdminLoginClient({
               disabled={isLoading}
               className="btn-tenant w-full py-3 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isLoading ? "Přihlašování..." : "Přihlásit se"}
             </button>
           </form>
 
           {/* Separator */}
           <div className="w-full flex items-center gap-3 mb-6">
             <div className="h-px bg-border flex-1" />
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">or</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">nebo</span>
             <div className="h-px bg-border flex-1" />
           </div>
 
@@ -207,14 +207,14 @@ export default function AdminLoginClient({
             className="w-full py-2.5 border border-border hover:bg-secondary/40 text-foreground text-xs font-semibold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <ShieldCheck size={14} className="text-muted-foreground" />
-            Sign In with OneiD SSO
+            Přihlásit se přes OneiD SSO
           </button>
 
           <Link
             href="/"
             className="text-[11px] text-muted-foreground hover:text-foreground mt-6 transition-colors font-medium underline"
           >
-            Back to Public Portal
+            Zpět na veřejný portál
           </Link>
         </div>
       </div>

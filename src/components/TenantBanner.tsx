@@ -9,6 +9,7 @@ interface TenantBannerProps {
   className?: string;
   heightClass?: string;
   fallbackText?: string;
+  objectPosition?: string;
 }
 
 export default function TenantBanner({
@@ -16,7 +17,8 @@ export default function TenantBanner({
   alt = "Tenant Banner",
   className = "",
   heightClass = "h-44",
-  fallbackText = "Welcome"
+  fallbackText = "Welcome",
+  objectPosition = "center"
 }: TenantBannerProps) {
   const [imageError, setImageError] = useState(false);
 
@@ -54,6 +56,9 @@ export default function TenantBanner({
             alt={alt}
             onError={() => setImageError(true)}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            style={{ objectPosition }}
+            loading="eager"
+            {...({ fetchPriority: "high" } as Record<string, unknown>)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-50" />
         </>

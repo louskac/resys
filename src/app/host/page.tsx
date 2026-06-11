@@ -190,7 +190,7 @@ export default function HostConsole() {
 
   return (
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-200">
-      <header className="border-b border-border bg-card sticky top-0 z-50 transition-colors shadow-sm">
+      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-50 transition-all shadow-md shadow-slate-100/5 dark:shadow-black/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <svg
@@ -201,12 +201,16 @@ export default function HostConsole() {
             >
               <defs>
                 <linearGradient id="resysGradientInlineHost" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="50%" stopColor="#6366F1" />
-                  <stop offset="100%" stopColor="#14B8A6" />
+                  <stop offset="0%" stopColor="#7000FF" />
+                  <stop offset="50%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#3B82F6" />
+                </linearGradient>
+                <linearGradient id="slotGradientInlineHost" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00F5FF" />
+                  <stop offset="100%" stopColor="#3B82F6" />
                 </linearGradient>
                 <filter id="subtleGlowInlineHost" x="-15%" y="-15%" width="130%" height="130%">
-                  <feDropShadow dx="0" dy="12" stdDeviation="16" floodColor="#6366F1" floodOpacity="0.3" />
+                  <feDropShadow dx="0" dy="12" stdDeviation="16" floodColor="#7000FF" floodOpacity="0.35" />
                 </filter>
               </defs>
               <g filter="url(#subtleGlowInlineHost)">
@@ -216,23 +220,28 @@ export default function HostConsole() {
                   d="M 110 150 L 155 105 H 315 C 385 105 405 145 405 205 C 405 255 380 285 325 295 L 385 395 H 320 L 265 305 H 175 V 395 H 120 V 170 L 110 150 Z M 175 160 V 255 H 275 C 325 255 345 235 345 205 C 345 175 325 160 275 160 H 175 Z"
                   fill="url(#resysGradientInlineHost)"
                 />
-                <g fill="#FFFFFF" opacity="0.85">
-                  <rect x="290" y="325" width="10" height="10" rx="2.5" />
-                  <rect x="312" y="325" width="10" height="10" rx="2.5" />
-                  <rect x="334" y="325" width="10" height="10" rx="2.5" />
-                  <rect x="356" y="325" width="10" height="10" rx="2.5" />
-                  <rect x="301" y="345" width="10" height="10" rx="2.5" />
-                  <rect x="323" y="345" width="10" height="10" rx="2.5" />
-                  <rect x="345" y="345" width="10" height="10" rx="2.5" />
-                  <rect x="367" y="345" width="10" height="10" rx="2.5" />
-                  <rect x="312" y="365" width="10" height="10" rx="2.5" />
-                  <rect x="334" y="365" width="10" height="10" rx="2.5" />
-                  <rect x="356" y="365" width="10" height="10" rx="2.5" />
-                  <rect x="378" y="365" width="10" height="10" rx="2.5" />
+                <g>
+                  {/* Row 1 */}
+                  <rect x="290" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="312" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="334" y="325" width="10" height="10" rx="2.5" fill="url(#slotGradientInlineHost)" />
+                  <rect x="356" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+
+                  {/* Row 2 */}
+                  <rect x="301" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientInlineHost)" />
+                  <rect x="323" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="345" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="367" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientInlineHost)" />
+
+                  {/* Row 3 */}
+                  <rect x="312" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="334" y="365" width="10" height="10" rx="2.5" fill="url(#slotGradientInlineHost)" />
+                  <rect x="356" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
+                  <rect x="378" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
                 </g>
               </g>
             </svg>
-            <span className="font-bold text-lg tracking-tight text-foreground select-none">
+            <span className="font-bold text-lg tracking-tight text-foreground select-none bg-clip-text text-transparent bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-[#3B82F6]">
               ReSys SaaS Host Console
             </span>
           </div>
@@ -241,13 +250,13 @@ export default function HostConsole() {
             <button
               onClick={handleResetDb}
               disabled={isResetting}
-              className="btn-danger flex items-center gap-1.5 disabled:opacity-50 text-xs py-1.5 px-3.5 rounded-lg"
+              className="border border-rose-500/25 dark:border-rose-500/20 bg-rose-500/8 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 flex items-center gap-1.5 disabled:opacity-50 text-xs font-semibold py-1.5 px-3.5 rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-95 shadow-sm shadow-rose-500/5 cursor-pointer"
             >
               <RotateCcw size={12} className={isResetting ? "animate-spin" : ""} />
               {isResetting ? "Resetting..." : "Reset & Seed DB"}
             </button>
             <ThemeToggle />
-            <span className="text-[10px] px-2.5 py-1 rounded-full bg-secondary border border-border text-muted-foreground font-semibold tracking-wide select-none">
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#7000FF]/5 border border-[#7000FF]/25 text-[#7000FF] dark:text-[#A78BFA] font-semibold tracking-wide select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
               Superadmin Mode
             </span>
           </div>

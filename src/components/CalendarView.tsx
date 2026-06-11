@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock, ChevronDown, X } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
@@ -87,6 +87,134 @@ const formatDurationCzech = (val: number) => {
   if (val === 8) return "8 hodin";
   return `${val} hod.`;
 };
+
+const formatResourceTag = (name?: string) => {
+  if (!name) return "";
+  const clean = name.split(" (")[0];
+  return clean
+    .replace(/sektor\s+/i, "Sek. ")
+    .replace(/sector\s+/i, "Sek. ")
+    .replace(/celá plocha/i, "Plocha");
+};
+
+const sapphireV2StylesMap: Record<string, {
+  badgeBg: string;
+  themeClassOccupied: string;
+  themeClassFree: string;
+  textHex: string;
+  barColor: string;
+  glowColor: string;
+  colorName: string;
+}> = {
+  rose: {
+    badgeBg: "bg-rose-500/10 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/15 dark:border-rose-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-rose-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-rose-950 dark:text-rose-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-rose-500/40 dark:hover:border-rose-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-rose-950 dark:text-rose-200",
+    barColor: "bg-rose-500 shadow-[0_0_8px_#f43f5e]",
+    glowColor: "rgba(244,63,94,0.15)",
+    colorName: "rose"
+  },
+  amber: {
+    badgeBg: "bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/15 dark:border-amber-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-amber-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-amber-950 dark:text-amber-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-amber-500/40 dark:hover:border-amber-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-amber-955 dark:text-amber-200",
+    barColor: "bg-amber-500 shadow-[0_0_8px_#f59e0b]",
+    glowColor: "rgba(245,158,11,0.15)",
+    colorName: "amber"
+  },
+  emerald: {
+    badgeBg: "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/15 dark:border-emerald-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-emerald-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-emerald-950 dark:text-emerald-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-emerald-500/40 dark:hover:border-emerald-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-emerald-955 dark:text-emerald-200",
+    barColor: "bg-emerald-500 shadow-[0_0_8px_#10b981]",
+    glowColor: "rgba(16,185,129,0.15)",
+    colorName: "emerald"
+  },
+  orange: {
+    badgeBg: "bg-orange-500/10 dark:bg-orange-500/20 text-orange-850 dark:text-orange-300 border border-orange-500/15 dark:border-orange-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-orange-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-orange-955 dark:text-orange-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-orange-500/40 dark:hover:border-orange-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-orange-955 dark:text-orange-200",
+    barColor: "bg-orange-500 shadow-[0_0_8px_#f97316]",
+    glowColor: "rgba(249,115,22,0.15)",
+    colorName: "orange"
+  },
+  blue: {
+    badgeBg: "bg-blue-500/10 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/15 dark:border-blue-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-blue-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-blue-955 dark:text-blue-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-blue-500/40 dark:hover:border-blue-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-blue-955 dark:text-blue-200",
+    barColor: "bg-blue-500 shadow-[0_0_8px_#3b82f6]",
+    glowColor: "rgba(59,130,246,0.15)",
+    colorName: "blue"
+  },
+  violet: {
+    badgeBg: "bg-violet-500/10 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-500/15 dark:border-violet-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-violet-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-violet-955 dark:text-[#A78BFA] shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-violet-500/40 dark:hover:border-violet-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-violet-955 dark:text-[#A78BFA]",
+    barColor: "bg-violet-500 shadow-[0_0_8px_#8b5cf6]",
+    glowColor: "rgba(139,92,246,0.15)",
+    colorName: "violet"
+  },
+  indigo: {
+    badgeBg: "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 border border-indigo-500/15 dark:border-indigo-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-indigo-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-indigo-955 dark:text-[#A78BFA] shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-indigo-500/40 dark:hover:border-indigo-400/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-indigo-955 dark:text-[#A78BFA]",
+    barColor: "bg-indigo-500 shadow-[0_0_8px_#6366f1]",
+    glowColor: "rgba(99,102,241,0.15)",
+    colorName: "indigo"
+  },
+  cyan: {
+    badgeBg: "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-500/15 dark:border-cyan-500/10 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-cyan-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-cyan-955 dark:text-cyan-200 shadow-sm rounded-2xl hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-cyan-500/40 dark:hover:border-cyan-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-2xl",
+    textHex: "text-cyan-955 dark:text-cyan-200",
+    barColor: "bg-cyan-500 shadow-[0_0_8px_#06b6d4]",
+    glowColor: "rgba(6,182,212,0.15)",
+    colorName: "cyan"
+  }
+};
+
+
+interface SwitcherOption<T> {
+  value: T;
+  label: string;
+}
+
+interface UnifiedSwitcherProps<T> {
+  options: SwitcherOption<T>[];
+  activeValue: T;
+  onChange: (value: T) => void;
+}
+
+function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherProps<T>) {
+  return (
+    <div className="flex flex-wrap gap-2 p-1 bg-slate-200/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md rounded-2xl border border-[#CBD5E1]/20 dark:border-[#1F1F2E] w-fit shadow-inner">
+      {options.map((option) => {
+        const isActive = activeValue === option.value;
+        return (
+          <button
+            key={String(option.value)}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              isActive
+                ? "bg-white dark:bg-[#1B1B2E] border border-[#E2E2ED] dark:border-[#2A2A3E]/60 text-[#7000FF] dark:text-[#A78BFA] shadow-sm scale-[1.02]"
+                : "border border-transparent bg-white/40 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-450 hover:text-[#7000FF] dark:hover:text-[#A78BFA]"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function CalendarView({ 
   tenantId, 
@@ -213,6 +341,8 @@ export default function CalendarView({
     setGuestEmail("");
     setModalError(null);
     setIsPending(false);
+    setIsAreaDropdownOpen(false);
+    setIsDurationDropdownOpen(false);
     router.refresh();
   };
 
@@ -518,99 +648,45 @@ export default function CalendarView({
       return false;
     })();
 
-    // Sector Palettes (Vibrant)
-    const getRosePalette = () => ({
-      badgeBg: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
-      themeClass: isOccupied
-        ? `bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 border-l-4 border-l-rose-600 text-rose-800 dark:text-rose-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-rose-500 text-foreground hover:border-rose-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-rose-700 dark:text-rose-300",
-      barColor: "bg-rose-500"
-    });
+    const getSapphireV2Palette = (colorName: string) => {
+      const colorsMap: Record<string, string> = {
+        rose: "rose", amber: "amber", emerald: "emerald", orange: "orange",
+        blue: "blue", violet: "violet", indigo: "indigo", cyan: "cyan"
+      };
+      const c = colorsMap[colorName] || "indigo";
+      const config = sapphireV2StylesMap[c];
 
-    const getAmberPalette = () => ({
-      badgeBg: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300",
-      themeClass: isOccupied
-        ? `bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 border-l-4 border-l-amber-600 text-amber-800 dark:text-amber-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-amber-500 text-foreground hover:border-amber-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-amber-700 dark:text-amber-300",
-      barColor: "bg-amber-500"
-    });
-
-    const getEmeraldPalette = () => ({
-      badgeBg: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
-      themeClass: isOccupied
-        ? `bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 border-l-4 border-l-emerald-600 text-emerald-800 dark:text-emerald-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-emerald-500 text-foreground hover:border-emerald-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-emerald-700 dark:text-emerald-300",
-      barColor: "bg-emerald-500"
-    });
-
-    const getOrangePalette = () => ({
-      badgeBg: "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300",
-      themeClass: isOccupied
-        ? `bg-orange-50/90 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 border-l-4 border-l-orange-600 text-orange-800 dark:text-orange-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-orange-500 text-foreground hover:border-orange-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-orange-700 dark:text-orange-300",
-      barColor: "bg-orange-500"
-    });
-
-    // Pitch Palettes (Cool tones)
-    const getBluePalette = () => ({
-      badgeBg: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
-      themeClass: isOccupied
-        ? `bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 border-l-4 border-l-blue-600 text-blue-800 dark:text-blue-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-blue-500 text-foreground hover:border-blue-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-blue-700 dark:text-blue-300",
-      barColor: "bg-blue-500"
-    });
-
-    const getVioletPalette = () => ({
-      badgeBg: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
-      themeClass: isOccupied
-        ? `bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900/50 border-l-4 border-l-violet-600 text-violet-800 dark:text-violet-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-violet-500 text-foreground hover:border-violet-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-violet-700 dark:text-violet-300",
-      barColor: "bg-violet-500"
-    });
-
-    const getIndigoPalette = () => ({
-      badgeBg: "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300",
-      themeClass: isOccupied
-        ? `bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 border-l-4 border-l-indigo-600 text-indigo-800 dark:text-indigo-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-indigo-500 text-foreground hover:border-indigo-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-indigo-700 dark:text-indigo-300",
-      barColor: "bg-indigo-500"
-    });
-
-    const getCyanPalette = () => ({
-      badgeBg: "bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300",
-      themeClass: isOccupied
-        ? `bg-cyan-50/90 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-900/50 border-l-4 border-l-cyan-600 text-cyan-800 dark:text-cyan-400 ${cursorClass}`
-        : `bg-card border border-border border-l-4 border-l-cyan-500 text-foreground hover:border-cyan-500/40 hover:scale-[1.005] transition-all shadow-sm ${cursorClass}`,
-      textHex: "text-cyan-700 dark:text-cyan-300",
-      barColor: "bg-cyan-500"
-    });
+      return {
+        badgeBg: config.badgeBg,
+        themeClass: isOccupied
+          ? `${config.themeClassOccupied} ${cursorClass}`
+          : `${config.themeClassFree} ${cursorClass}`,
+        textHex: config.textHex,
+        barColor: config.barColor,
+        glowColor: config.glowColor,
+        colorName: config.colorName
+      };
+    };
 
     // Explicit mappings for common sectors to maintain layout colors
     if (nameLower.includes("sektor a") || nameLower.includes("sector a")) {
-      return getRosePalette();
+      return getSapphireV2Palette("rose");
     }
     if (nameLower.includes("sektor b") || nameLower.includes("sector b") || nameLower.includes("sektro beta") || nameLower.includes("sector beta")) {
-      return getAmberPalette();
+      return getSapphireV2Palette("amber");
     }
     if (nameLower.includes("sektor c") || nameLower.includes("sector c") || nameLower.includes("sektor gamma") || nameLower.includes("sector gamma")) {
-      return getEmeraldPalette();
+      return getSapphireV2Palette("emerald");
     }
 
     const hash = nameLower.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
 
     if (isSector) {
-      const sectorPalettes = [getRosePalette, getAmberPalette, getEmeraldPalette, getOrangePalette];
-      return sectorPalettes[hash % sectorPalettes.length]();
+      const colors = ["rose", "amber", "emerald", "orange"];
+      return getSapphireV2Palette(colors[hash % colors.length]);
     } else {
-      const pitchPalettes = [getBluePalette, getVioletPalette, getIndigoPalette, getCyanPalette];
-      return pitchPalettes[hash % pitchPalettes.length]();
+      const colors = ["blue", "violet", "indigo", "cyan"];
+      return getSapphireV2Palette(colors[hash % colors.length]);
     }
   };
 
@@ -707,6 +783,8 @@ export default function CalendarView({
   const [selectedTimeStr, setSelectedTimeStr] = useState<string>("");
   const [customResourceId, setCustomResourceId] = useState<string>("");
   const [customDuration, setCustomDuration] = useState<number>(1.0); // 1 hour default
+  const [isAreaDropdownOpen, setIsAreaDropdownOpen] = useState(false);
+  const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false);
 
   // Guest booking form states
   const [guestName, setGuestName] = useState("");
@@ -955,20 +1033,20 @@ export default function CalendarView({
   };
 
   return (
-    <div className="card p-6 shadow-sm relative transition-colors">
+    <div className="p-6 bg-[#FAFAFD] dark:bg-[#060608] text-slate-800 dark:text-slate-100 border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl relative transition-all duration-300 font-sans shadow-2xl">
       {/* Calendar Header Control */}
-      <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 mb-6 border-b border-border pb-4">
+      <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 mb-6 border-b border-[#E2E2ED]/60 dark:border-[#1F1F2E] pb-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
             <button 
               onClick={handlePrevWeek}
-              className="p-2 rounded-lg bg-secondary hover:bg-muted text-foreground border border-border transition-all flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-xl bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-[#7000FF]/30 dark:hover:border-[#A78BFA]/30 hover:scale-105 shadow-sm shadow-[#7000FF]/5 transition-all flex items-center justify-center cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={handleNextWeek}
-              className="p-2 rounded-lg bg-secondary hover:bg-muted text-foreground border border-border transition-all flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-xl bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-[#7000FF]/30 dark:hover:border-[#A78BFA]/30 hover:scale-105 shadow-sm shadow-[#7000FF]/5 transition-all flex items-center justify-center cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
@@ -977,59 +1055,44 @@ export default function CalendarView({
           {!isCurrent && (
             <button 
               onClick={handleToday}
-              className="px-3 py-1.5 rounded-lg bg-tenant-primary/10 border border-tenant-primary/20 hover:bg-tenant-primary/15 text-tenant-primary transition-all text-xs font-bold cursor-pointer"
+              className="px-4 py-1.5 rounded-xl bg-[#7000FF]/10 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] border border-[#7000FF]/30 dark:border-[#7000FF]/40 hover:bg-[#7000FF]/20 dark:hover:bg-[#7000FF]/25 hover:scale-105 shadow-sm transition-all text-xs font-bold cursor-pointer backdrop-blur-sm"
             >
               Dnes
             </button>
           )}
 
           {/* Day/Week/Month Switcher */}
-          <div className="flex bg-secondary p-1 rounded-xl border border-border">
-            {(["day", "week", "month"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-                  viewMode === mode
-                    ? "bg-card text-foreground shadow-sm font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {mode === "day" ? "Den" : mode === "week" ? "Týden" : "Měsíc"}
-              </button>
-            ))}
-          </div>
+          <UnifiedSwitcher<"day" | "week" | "month">
+            options={[
+              { value: "day", label: "Den" },
+              { value: "week", label: "Týden" },
+              { value: "month", label: "Měsíc" }
+            ]}
+            activeValue={viewMode}
+            onChange={setViewMode}
+          />
 
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 select-none">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#7000FF]/8 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#C084FC] border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
             {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
           </span>
         </div>
         
-        <h2 className="text-xl font-extrabold text-foreground tracking-tight xl:text-right">
+        <h2 className="text-xl font-extrabold tracking-tight xl:text-right bg-clip-text text-transparent bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-indigo-500 dark:from-[#A78BFA] dark:via-[#C084FC] dark:to-indigo-400">
           {headerTitle}
         </h2>
       </div>
 
       {/* Root Resource Selector (if multiple roots exist) */}
       {rootResources.length > 1 && (
-        <div className="flex flex-wrap gap-2 mb-4 p-1 bg-secondary/60 rounded-xl border border-border/50 w-fit">
-          {rootResources.map((root) => {
-            const isActive = activeRootId === root.id;
-            return (
-              <button
-                key={root.id}
-                type="button"
-                onClick={() => selectRoot(root.id)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-card border border-border/40 shadow-sm text-tenant-primary"
-                    : "border border-transparent hover:bg-muted/40 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {root.name}
-              </button>
-            );
-          })}
+        <div className="mb-4">
+          <UnifiedSwitcher<string>
+            options={rootResources.map((root) => ({
+              value: root.id,
+              label: root.name
+            }))}
+            activeValue={activeRootId}
+            onChange={selectRoot}
+          />
         </div>
       )}
 
@@ -1040,32 +1103,18 @@ export default function CalendarView({
         
         const activeRoot = resources.find(r => r.id === activeRootId);
         return (
-          <div className="flex flex-wrap gap-2 mb-6 border-b border-border/50 pb-4">
-            <button
-              type="button"
-              onClick={() => selectResource(activeRootId)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                selectedResourceId === activeRootId
-                  ? "bg-tenant-primary/10 border-tenant-primary/25 text-tenant-primary"
-                  : "bg-secondary border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Vše ({activeRoot?.name || "Vše"})
-            </button>
-            {children.map((child) => (
-              <button
-                key={child.id}
-                type="button"
-                onClick={() => selectResource(child.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                  selectedResourceId === child.id
-                    ? "bg-tenant-primary/10 border-tenant-primary/25 text-tenant-primary"
-                    : "bg-secondary border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {child.name}
-              </button>
-            ))}
+          <div className="mb-6">
+            <UnifiedSwitcher<string>
+              options={[
+                { value: activeRootId, label: `Vše (${activeRoot?.name || "Vše"})` },
+                ...children.map((child) => ({
+                  value: child.id,
+                  label: child.name
+                }))
+              ]}
+              activeValue={selectedResourceId}
+              onChange={selectResource}
+            />
           </div>
         );
       })()}
@@ -1073,11 +1122,11 @@ export default function CalendarView({
       {/* Main Grid View */}
       <div className="overflow-x-auto">
         {viewMode !== "month" ? (
-          <div className="min-w-[760px] border border-border rounded-xl overflow-hidden bg-card">
+          <div className="min-w-[760px] border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl overflow-hidden bg-[#FAFAFD] dark:bg-[#07070C]">
             
             {/* Header Row */}
-            <div className={`grid ${viewMode === "day" ? "grid-cols-[75px_1fr]" : "grid-cols-[75px_repeat(7,_1fr)]"} border-b border-border bg-secondary relative z-10`}>
-              <div className="p-2.5 text-center font-mono text-[10px] text-muted-foreground border-r border-border/80 flex items-center justify-center select-none">
+            <div className={`grid ${viewMode === "day" ? "grid-cols-[75px_1fr]" : "grid-cols-[75px_repeat(7,_1fr)]"} border-b bg-[#F5F5FA] dark:bg-[#151522] relative z-10 border-[#E2E2ED] dark:border-[#1F1F2E]`}>
+              <div className="p-2.5 text-center font-mono text-[10px] text-muted-foreground border-r border-[#E2E2ED] dark:border-[#1F1F2E] flex items-center justify-center select-none">
                 Čas
               </div>
               {DAYS.map((day) => {
@@ -1100,12 +1149,12 @@ export default function CalendarView({
                 return (
                   <div
                     key={day.key}
-                    className={`p-2.5 text-center font-semibold text-xs border-r border-border/80 flex flex-col items-center justify-center gap-0.5 ${
+                    className={`p-2.5 text-center font-semibold text-xs border-r border-[#E2E2ED] dark:border-[#1F1F2E] flex flex-col items-center justify-center gap-0.5 ${
                       isToday 
-                        ? "text-tenant-primary bg-tenant-primary/5 font-bold" 
+                        ? "text-[#7000FF] dark:text-[#A78BFA] bg-[#7000FF]/5 dark:bg-[#A78BFA]/5 font-bold" 
                         : isPastDay 
                           ? "text-muted-foreground/50 opacity-60" 
-                          : "text-foreground"
+                          : "text-slate-700 dark:text-slate-355"
                     }`}
                   >
                     <span>{day.label}</span>
@@ -1126,11 +1175,11 @@ export default function CalendarView({
             >
               
               {/* Column 1: Time scale labels */}
-              <div className="flex flex-col border-r border-border/80 bg-secondary/35 relative z-10">
+              <div className="flex flex-col border-r border-[#E2E2ED] dark:border-[#1F1F2E] bg-slate-100/25 dark:bg-[#07070C]/35 relative z-10">
                 {TIME_SLOTS.map((time) => (
                   <div
                     key={time}
-                    className="h-[60px] border-b border-border/30 flex items-center justify-center font-mono text-[10px] text-muted-foreground"
+                    className="h-[60px] border-b border-[#E2E2ED]/30 dark:border-[#1F1F2E]/30 flex items-center justify-center font-mono text-[10px] text-slate-500/70 dark:text-slate-400/60"
                   >
                     {time}
                   </div>
@@ -1168,7 +1217,7 @@ export default function CalendarView({
                 return (
                   <div
                     key={day.key}
-                    className="relative border-r border-border/50 flex flex-col z-20 hover:z-30"
+                    className="relative border-r border-[#E2E2ED]/50 dark:border-[#1F1F2E]/50 flex flex-col z-20 hover:z-30"
                     style={{ height: `${totalHeightPx}px` }}
                   >
                     {/* Current Time Indicator Line (Now Line) */}
@@ -1197,18 +1246,18 @@ export default function CalendarView({
                           onMouseDown={(e) => !isDisabled && handleCellMouseDown(e, day.dbDayIndex, timeIdx)}
                           onMouseEnter={() => !isDisabled && handleCellMouseEnter(day.dbDayIndex, timeIdx)}
                           onMouseUp={!isDisabled ? commitDragSelection : undefined}
-                          className={`h-[60px] border-b border-border/30 relative group transition-all duration-150 ${
+                          className={`h-[60px] relative group transition-all duration-150 ${
                             isDisabled 
-                              ? "bg-stripes-past opacity-70 cursor-not-allowed"
+                              ? "bg-stripes-cosmic border-b border-[#E2E2ED] dark:border-[#1F1F2E] cursor-not-allowed"
                               : isHighlighted 
-                                ? "bg-tenant-primary/20 border-x border-tenant-primary/45 cursor-pointer" 
-                                : "hover:bg-secondary/70 cursor-pointer"
+                                ? "bg-[#7000FF]/15 dark:bg-[#7000FF]/25 border border-[#7000FF] shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
+                                : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
                           }`}
                         >
                           {/* Hover select block */}
                           {!isDragging && !isDisabled && (
-                            <div className="absolute inset-0 flex items-center justify-center transition-all">
-                              <span className="text-[9px] font-bold text-tenant-primary opacity-0 group-hover:opacity-100 transition-all">
+                            <div className="absolute inset-0 flex items-center justify-center transition-all pointer-events-none">
+                              <span className="px-3 py-1.5 rounded-xl text-[9px] font-extrabold text-[#7000FF] dark:text-[#C084FC] bg-white/80 dark:bg-[#131322]/60 border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
                                 + Rezervovat
                               </span>
                             </div>
@@ -1232,7 +1281,7 @@ export default function CalendarView({
                           const isPastEvent = isEventInPast(event.dayIndex, event.startHour, event.durationHours);
 
                           const cardThemeClass = isPastEvent 
-                            ? "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed hover:scale-100 hover:z-10 border-l-4 border-l-zinc-300 dark:border-l-zinc-700"
+                            ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
                             : styles.themeClass;
 
                           const badgeBgClass = isPastEvent 
@@ -1247,7 +1296,15 @@ export default function CalendarView({
                                 height: `${heightVal - (isShort ? 4 : 8)}px`,
                                 left: event.left,
                                 width: event.width,
+                                ...(!isPastEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
                               }}
+                              onMouseMove={!isPastEvent ? (e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const y = e.clientY - rect.top;
+                                e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                              } : undefined}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isPastEvent) return;
@@ -1274,8 +1331,8 @@ export default function CalendarView({
                                 setSelectedEvent(event);
                                 setBookingType("event");
                               }}
-                              className={`absolute pointer-events-auto rounded-xl border shadow-sm flex flex-col transition-all duration-200 backdrop-blur-sm group/card hover:z-40 ${cardThemeClass} ${
-                                isPastEvent ? "" : "hover:scale-[1.015]"
+                              className={`absolute pointer-events-auto rounded-2xl border flex flex-col transition-all duration-250 backdrop-blur-sm group/card hover:z-40 ${cardThemeClass} ${
+                                isPastEvent ? "" : "hover:scale-[1.015] hover:shadow-neon-glow transition-all duration-300 ease-out"
                               } ${
                                 isShort 
                                   ? "p-1.5 justify-start gap-0.5" 
@@ -1284,8 +1341,16 @@ export default function CalendarView({
                                     : "p-2.5 justify-between"
                               }`}
                             >
+                              {!isPastEvent && (
+                                <div 
+                                  className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[inherit] z-0"
+                                  style={{
+                                    background: `radial-gradient(100px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--glow-color), transparent 80%)`
+                                  }}
+                                />
+                              )}
                               {isExtremelyNarrow ? (
-                                <div className="flex flex-col items-center justify-between h-full w-full overflow-hidden text-center py-0.5">
+                                <div className="flex flex-col items-center justify-between h-full w-full overflow-hidden text-center py-0.5 relative z-10">
                                   <span className="text-[7.5px] font-mono font-bold tracking-tighter opacity-90 block leading-none">
                                     {formatHourString(event.startHour).split(":")[0]}
                                   </span>
@@ -1301,7 +1366,7 @@ export default function CalendarView({
                                   )}
                                 </div>
                               ) : isShort ? (
-                                <div className="flex flex-col h-full justify-center overflow-hidden">
+                                <div className="flex flex-col h-full justify-center overflow-hidden relative z-10">
                                   <div className="flex items-center justify-between gap-1 leading-none">
                                     <span className="text-[8px] font-mono opacity-90 block shrink-0">
                                       {formatHourString(event.startHour)}
@@ -1317,19 +1382,24 @@ export default function CalendarView({
                                   </h4>
                                 </div>
                               ) : (
-                                <>
+                                <div className="flex flex-col h-full justify-between w-full overflow-hidden relative z-10">
                                   <div className="overflow-hidden">
                                     <div className="flex items-center justify-between gap-1 mb-1">
                                       <span className="text-[9px] font-mono opacity-80 block truncate">
                                         {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
                                       </span>
                                       {!isNarrow && (selectedResourceId === "" || event.resourceId !== selectedResourceId) && event.resourceName && (
-                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase select-none ${badgeBgClass}`}>
-                                          {event.resourceName.split(" (")[0]}
+                                        <span className={`text-[7px] font-bold px-1 py-0.5 rounded uppercase select-none shrink truncate min-w-0 max-w-[45%] whitespace-nowrap ${badgeBgClass}`}>
+                                          {formatResourceTag(event.resourceName)}
                                         </span>
                                       )}
                                     </div>
-                                    <h4 className="font-bold text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate">
+                                    <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
+                                      isPastEvent
+                                        ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
+                                        : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
+                                    }`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
                                       {event.isOccupied ? (isAdmin ? event.name : "Obsazeno") : event.name}
                                     </h4>
                                   </div>
@@ -1352,7 +1422,7 @@ export default function CalendarView({
                                       )}
                                     </div>
                                   )}
-                                </>
+                                </div>
                               )}
 
                               {/* Premium Floating Details Tooltip on Hover */}
@@ -1364,17 +1434,33 @@ export default function CalendarView({
                                 
                                 const getResourceColor = (resourceName: string) => {
                                    return getResourceStyles(resourceName).barColor;
-                                 };
+                                  };
+
+                                const tooltipBorderClass = (() => {
+                                  const color = (styles as any).colorName || "indigo";
+                                  const borderClasses: Record<string, string> = {
+                                    rose: "border-rose-500/25 dark:border-rose-500/20",
+                                    amber: "border-amber-500/25 dark:border-amber-500/20",
+                                    emerald: "border-emerald-500/25 dark:border-emerald-500/20",
+                                    orange: "border-orange-500/25 dark:border-orange-500/20",
+                                    blue: "border-blue-500/25 dark:border-blue-500/20",
+                                    violet: "border-violet-500/25 dark:border-violet-500/20",
+                                    indigo: "border-indigo-500/25 dark:border-indigo-500/20",
+                                    cyan: "border-cyan-500/25 dark:border-cyan-500/20",
+                                  };
+                                  return borderClasses[color] || "border-indigo-500/25 dark:border-indigo-500/20";
+                                })();
+
+                                const tooltipClass = `absolute left-1/2 -translate-x-1/2 w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-2xl border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`;
 
                                 return (
-                                  <div className={`absolute left-1/2 -translate-x-1/2 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md text-zinc-900 dark:text-zinc-50 text-xs p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/85 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-200 ease-out z-50 space-y-3.5 select-none pl-6 ${tooltipPositionClass}`}>
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl ${getResourceColor(event.resourceName || "")}`} />
-                                    
-                                    <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 pb-2.5">
-                                      <span className={`font-bold text-[9px] uppercase tracking-wider ${styles.textHex}`}>
+                                  <div className={tooltipClass}>
+                                    <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
+                                      <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${styles.barColor}`} />
                                         {event.resourceName || "Sport field"}
                                       </span>
-                                      <span className="text-[9px] font-mono text-zinc-500 dark:text-zinc-400">
+                                      <span className="text-[9px] font-mono text-zinc-500 dark:text-slate-400">
                                         {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
                                       </span>
                                     </div>
@@ -1383,7 +1469,7 @@ export default function CalendarView({
                                         {event.isOccupied ? (isAdmin ? event.name : "Obsazeno") : event.name}
                                       </h4>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/50 text-[10px]">
+                                    <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200/40 dark:border-zinc-800/50 text-[10px]">
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Místnost/Povrch</span>
                                         <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{event.room}</span>
@@ -1391,7 +1477,7 @@ export default function CalendarView({
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Status/Kontakt</span>
                                         <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">
-                                          {event.isOccupied ? (isAdmin ? `${event.name} (${event.instructor})` : "Obsazeno") : event.instructor}
+                                          {event.isOccupied ? (isAdmin ? `${event.name} ({event.instructor})` : "Obsazeno") : event.instructor}
                                         </span>
                                       </div>
                                     </div>
@@ -1412,10 +1498,13 @@ export default function CalendarView({
           </div>
         ) : (
           /* Month View Grid */
-          <div className="border border-border rounded-xl overflow-hidden bg-card p-4">
+          <div className="border border-[#ECECF3] dark:border-[#1F1F2E] rounded-3xl bg-[#FAFAFD] dark:bg-[#07070C] p-6 shadow-neon-glow">
             <div className="grid grid-cols-7 gap-2">
               {["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].map((d) => (
-                <div key={d} className="text-center font-bold text-[10px] text-muted-foreground uppercase py-1.5">
+                <div 
+                  key={d} 
+                  className="text-center py-1.5 uppercase font-bold text-[10px] font-sans font-extrabold tracking-widest text-[#7000FF] dark:text-[#A78BFA]"
+                >
                   {d}
                 </div>
               ))}
@@ -1457,19 +1546,22 @@ export default function CalendarView({
                         router.push(`${pathname}?${params.toString()}`);
                         setViewMode("day");
                       }}
-                      className={`h-16 rounded-xl border p-2 flex flex-col justify-between transition-all hover:scale-[1.03] text-left cursor-pointer ${
-                        isToday
-                          ? "border-tenant-primary bg-tenant-primary/5 font-bold"
-                          : isCurrentMonth
-                            ? "border-border bg-secondary/25 hover:bg-secondary/60 text-foreground"
-                            : "border-border/40 bg-secondary/10 opacity-40 hover:bg-secondary/30 text-muted-foreground"
-                      }`}
+                      className={`h-16 rounded-2xl p-2 flex flex-col justify-between transition-all hover:scale-[1.03] text-left cursor-pointer ${(() => {
+                        if (isToday) {
+                          return "border border-[#7000FF] dark:border-[#A78BFA] bg-[#7000FF]/15 dark:bg-[#7000FF]/10 text-[#7000FF] dark:text-[#A78BFA] font-extrabold shadow-[inset_0_0_12px_rgba(112,0,255,0.15),0_0_15px_rgba(112,0,255,0.25)]";
+                        }
+                        if (isCurrentMonth) {
+                          return "border border-[#ECECF3] dark:border-[#1F1F2E] bg-white dark:bg-[#0B0B0F]/45 hover:border-[#7000FF] dark:hover:border-[#A78BFA] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.08),0_4px_12px_rgba(112,0,255,0.06)] hover:bg-[#7000FF]/[0.01] dark:hover:bg-[#7000FF]/[0.02] text-slate-800 dark:text-slate-350 shadow-sm transition-all duration-200";
+                        } else {
+                          return "border border-dashed border-[#ECECF3]/40 dark:border-[#1F1F2E]/40 bg-transparent opacity-25 cursor-not-allowed text-slate-500";
+                        }
+                      })()}`}
                     >
                       <span className="text-[10px]">{d.getDate()}</span>
                       {dayEventsCount > 0 && (
                         <div className="flex gap-1 items-center">
-                          <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary" />
-                          <span className="text-[8px] text-tenant-primary font-bold">
+                          <span className="h-1 w-1 rounded-full bg-[#7000FF] dark:bg-[#A78BFA] shadow-[0_0_4px_#7000FF]" />
+                          <span className="text-[8px] font-bold text-[#7000FF] dark:text-[#C084FC]">
                             {dayEventsCount} {dayEventsCount === 1 ? "rezervace" : dayEventsCount >= 2 && dayEventsCount <= 4 ? "rezervace" : "rezervací"}
                           </span>
                         </div>
@@ -1485,65 +1577,93 @@ export default function CalendarView({
 
       {/* Interactive Booking Modal */}
       {bookingType && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-card border border-border max-w-md w-full p-6 rounded-2xl shadow-2xl relative transition-colors duration-200">
-            <h3 className="text-base font-bold text-foreground mb-2">
+        <div 
+          onClick={() => {
+            setIsAreaDropdownOpen(false);
+            setIsDurationDropdownOpen(false);
+          }}
+          className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isAreaDropdownOpen) setIsAreaDropdownOpen(false);
+              if (isDurationDropdownOpen) setIsDurationDropdownOpen(false);
+            }}
+            className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-md w-full p-6 rounded-3xl shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300"
+          >
+            {/* Elegant Corner Close Button */}
+            <button
+              onClick={() => {
+                setBookingType(null);
+                setSelectedEvent(null);
+                setSelectedDayIndex(null);
+                setGuestName("");
+                setGuestEmail("");
+                setModalError(null);
+              }}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <X size={16} />
+            </button>
+
+            <h3 className="text-xl font-bold bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-[#3B82F6] bg-clip-text text-transparent mb-1 font-sans">
               {bookingType === "admin_view" ? "Detaily rezervace" : "Nová rezervace"}
             </h3>
             {!isBooked && (
-              <p className="text-xs text-muted-foreground mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
                 {bookingType === "admin_view" ? "Administrátorská správa této rezervace:" : "Potvrďte termín nebo upravte parametry níže:"}
               </p>
             )}
 
             {!isBooked && modalError && (
-              <div className="mb-4 bg-red-500/10 border border-red-500/25 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-2 duration-150">
-                <AlertCircle size={14} className="mt-0.5 text-red-500 shrink-0" />
-                <div className="flex-1 space-y-0.5">
-                  <p className="font-bold uppercase tracking-wide text-[9px] opacity-75">
+              <div className="mb-5 bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 dark:border-rose-500/15 p-4 rounded-2xl flex items-start gap-3 text-xs text-rose-600 dark:text-rose-450 shadow-[0_4px_12px_rgba(244,63,94,0.06)] animate-in fade-in slide-in-from-top-2 duration-200">
+                <AlertCircle size={15} className="mt-0.5 text-rose-500 dark:text-rose-400 shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="font-extrabold uppercase tracking-widest text-[9px] text-rose-500 dark:text-rose-400 font-sans">
                     {modalError.code.replace(/_/g, " ")}
                   </p>
-                  <p className="font-medium leading-relaxed">
+                  <p className="font-semibold leading-relaxed mt-0.5">
                     {modalError.message}
                   </p>
                 </div>
                 <button 
                   onClick={() => setModalError(null)}
-                  className="text-red-500 hover:text-red-700 dark:hover:text-red-300 font-bold ml-1 transition-colors"
+                  className="text-rose-450 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-350 transition-colors p-1 rounded-full hover:bg-rose-500/10"
                 >
-                  ×
+                  <X size={13} />
                 </button>
               </div>
             )}
 
             {!isBooked && bookingType === "admin_view" && selectedEvent && (
-              <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-3">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold border-b border-border pb-1.5 flex items-center gap-1.5 font-sans">
-                  <ShieldCheck size={14} className="text-tenant-primary" />
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-2xl border border-slate-200/60 dark:border-[#2A2A40] mb-6 space-y-3.5">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 flex items-center gap-1.5 font-sans tracking-wider">
+                  <ShieldCheck size={14} className="text-[#7000FF] dark:text-[#A78BFA]" />
                   Detaily rezervované lekce / plochy
                 </p>
-                <div className="text-xs space-y-2">
-                  <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Plocha / Lekce:</span>
-                    <span className="text-foreground font-semibold">{selectedEvent.resourceName}</span>
+                <div className="text-xs space-y-2.5">
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
+                    <span className="text-slate-400 dark:text-slate-500">Plocha / Lekce:</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.resourceName}</span>
                   </div>
-                  <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Rezervoval:</span>
-                    <span className="text-foreground font-semibold">{selectedEvent.name}</span>
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
+                    <span className="text-slate-400 dark:text-slate-500">Rezervoval:</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.name}</span>
                   </div>
-                  <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">E-mail uživatele:</span>
-                    <span className="text-foreground font-mono">{selectedEvent.instructor}</span>
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
+                    <span className="text-slate-400 dark:text-slate-500">E-mail uživatele:</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-mono font-medium">{selectedEvent.instructor}</span>
                   </div>
-                  <div className="flex justify-between py-0.5 border-b border-border/40">
-                    <span className="text-muted-foreground">Rezervovaný čas:</span>
-                    <span className="text-foreground font-semibold">
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
+                    <span className="text-slate-400 dark:text-slate-500">Rezervovaný čas:</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold text-right">
                       {ALL_WEEK_DAYS[selectedEvent.dayIndex]?.name || "Den"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
                     </span>
                   </div>
                   <div className="flex justify-between py-0.5">
-                    <span className="text-muted-foreground">ID rezervace:</span>
-                    <span className="text-muted-foreground font-mono text-[10px] select-all max-w-[180px] truncate" title={selectedEvent.id}>
+                    <span className="text-slate-400 dark:text-slate-500">ID rezervace:</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[10px] select-all max-w-[180px] truncate" title={selectedEvent.id}>
                       {selectedEvent.id}
                     </span>
                   </div>
@@ -1552,18 +1672,18 @@ export default function CalendarView({
             )}
 
             {!isBooked && bookingType === "event" && selectedEvent && (
-              <div className="bg-secondary p-4 rounded-xl border border-border mb-6 space-y-2">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">Program lekce</p>
-                <h4 className="text-sm font-bold text-foreground">{selectedEvent.name}</h4>
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-2xl border border-slate-200/60 dark:border-[#2A2A40] mb-6 space-y-2.5">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 font-sans tracking-wider">Program lekce</p>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedEvent.name}</h4>
                 
-                <div className="grid grid-cols-2 gap-2 mt-4 pt-2 border-t border-border text-xs">
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-200/40 dark:border-zinc-800/50 text-xs">
                   <div>
-                    <span className="text-muted-foreground block">Lektor / Trenér:</span>
-                    <span className="text-foreground font-medium">{selectedEvent.instructor}</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-medium uppercase tracking-wider mb-0.5">Lektor / Trenér:</span>
+                    <span className="text-slate-700 dark:text-slate-350 font-semibold">{selectedEvent.instructor}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block">Místnost:</span>
-                    <span className="text-foreground font-medium">{selectedEvent.room}</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-medium uppercase tracking-wider mb-0.5">Místnost:</span>
+                    <span className="text-slate-700 dark:text-slate-350 font-semibold">{selectedEvent.room}</span>
                   </div>
                 </div>
               </div>
@@ -1572,9 +1692,9 @@ export default function CalendarView({
             {!isBooked && bookingType === "custom" && selectedDayIndex !== null && (() => {
               const isCurrentSelectionAvailable = isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration);
               return (
-                <div className="space-y-4 mb-6 bg-secondary p-4 rounded-xl border border-border">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold border-b border-border pb-1.5 mb-2 flex items-center gap-1.5">
-                    <Calendar size={14} className="text-tenant-primary" />
+                <div className="space-y-4 mb-6 bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-2xl border border-slate-200/60 dark:border-[#2A2A40]">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
+                    <Calendar size={14} className="text-[#7000FF] dark:text-[#A78BFA]" />
                     Rezervace hrací plochy
                   </p>
    
@@ -1589,72 +1709,138 @@ export default function CalendarView({
                       return getRoot(res.id) === activeRootId;
                     });
                     
+                    const activeResource = dropdownResources.find(res => res.id === customResourceId);
+
                     return (
                       <div>
-                        <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Vyberte plochu/sektor</label>
-                        <select
-                          value={customResourceId}
-                          onChange={(e) => {
-                            setCustomResourceId(e.target.value);
-                            setModalError(null);
-                          }}
-                          className="select-field text-xs py-1.5"
-                        >
-                          {dropdownResources.map((res) => {
-                            const available = isResourceAvailable(res.id, selectedDayIndex, selectedTimeStr, customDuration);
-                            return (
-                              <option 
-                                key={res.id} 
-                                value={res.id}
-                                disabled={!available}
-                                className={!available ? "text-muted-foreground/60 line-through bg-muted" : ""}
-                              >
-                                {res.name} {!available ? "(Obsazeno)" : ""}
-                              </option>
-                            );
-                          })}
-                        </select>
+                        <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vyberte plochu/sektor</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsAreaDropdownOpen(!isAreaDropdownOpen);
+                              setIsDurationDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                          >
+                            <span>
+                              {activeResource ? activeResource.name : "Vyberte plochu/sektor"}
+                            </span>
+                            <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isAreaDropdownOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          
+                          {isAreaDropdownOpen && (
+                            <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+                              {dropdownResources.map((res) => {
+                                const available = isResourceAvailable(res.id, selectedDayIndex, selectedTimeStr, customDuration);
+                                const isSelected = res.id === customResourceId;
+                                return (
+                                  <button
+                                    key={res.id}
+                                    type="button"
+                                    disabled={!available}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCustomResourceId(res.id);
+                                      setIsAreaDropdownOpen(false);
+                                      setModalError(null);
+                                    }}
+                                    className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                                      !available 
+                                        ? "text-slate-400/40 dark:text-slate-650/40 line-through cursor-not-allowed bg-slate-50/20 dark:bg-slate-900/10" 
+                                        : isSelected
+                                          ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                                          : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                    }`}
+                                  >
+                                    <span>{res.name}</span>
+                                    {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                    {!available && <span className="text-[9px] opacity-75 font-normal italic">(Obsazeno)</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })()}
    
-                  <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <span className="text-muted-foreground block font-semibold">Den:</span>
-                      <span className="text-foreground font-semibold">{ALL_WEEK_DAYS[selectedDayIndex]?.name || ""}</span>
+                      <span className="text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider mb-0.5 text-[10px]">Den:</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-semibold">{ALL_WEEK_DAYS[selectedDayIndex]?.name || ""}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block font-semibold">Začátek:</span>
-                      <span className="text-foreground font-mono font-semibold">{selectedTimeStr}</span>
+                      <span className="text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider mb-0.5 text-[10px]">Začátek:</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono font-semibold">{selectedTimeStr}</span>
                     </div>
                   </div>
    
                   {/* Duration Picker */}
                   <div>
-                    <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Doba trvání</label>
-                    <select
-                      value={customDuration}
-                      onChange={(e) => {
-                        setCustomDuration(parseFloat(e.target.value));
-                        setModalError(null);
-                      }}
-                      className="select-field text-xs py-1.5"
-                    >
-                      {[0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].map((val) => (
-                        <option key={val} value={val}>
-                          {formatDurationCzech(val)}
-                        </option>
-                      ))}
-                      {![0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].includes(customDuration) && (
-                        <option value={customDuration}>
-                          {formatDurationCzech(customDuration)}
-                        </option>
+                    <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Doba trvání</label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDurationDropdownOpen(!isDurationDropdownOpen);
+                          setIsAreaDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                      >
+                        <span>{formatDurationCzech(customDuration)}</span>
+                        <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isDurationDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      
+                      {isDurationDropdownOpen && (
+                        <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+                          {[0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].map((val) => {
+                            const isSelected = val === customDuration;
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCustomDuration(val);
+                                  setIsDurationDropdownOpen(false);
+                                  setModalError(null);
+                                }}
+                                className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                                  isSelected
+                                    ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                                    : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                }`}
+                              >
+                                <span>{formatDurationCzech(val)}</span>
+                                {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                              </button>
+                            );
+                          })}
+                          {![0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0].includes(customDuration) && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsDurationDropdownOpen(false);
+                                setModalError(null);
+                              }}
+                              className="w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                            >
+                              <span>{formatDurationCzech(customDuration)}</span>
+                              <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                            </button>
+                          )}
+                        </div>
                       )}
-                    </select>
+                    </div>
                   </div>
 
                   {!isCurrentSelectionAvailable && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] p-2.5 rounded-lg font-medium leading-normal flex items-start gap-1.5">
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-550 dark:text-red-400 text-[10px] p-3 rounded-xl font-medium leading-normal flex items-start gap-1.5">
                       <AlertCircle size={13} className="text-red-500 shrink-0 mt-0.5" />
                       <span>Vybraná plocha/sektor není v tomto čase a délce trvání k dispozici kvůli překrývající se rezervaci.</span>
                     </div>
@@ -1665,8 +1851,8 @@ export default function CalendarView({
 
             {/* Guest/Anonymous Booking Form fields */}
             {!isBooked && (!session || !session.user || isAdmin) && bookingType !== "admin_view" && (
-              <div className="space-y-3 mb-6 p-4 bg-secondary rounded-xl border border-border text-xs">
-                <div className="font-semibold text-foreground border-b border-border pb-1.5 mb-2 flex items-center justify-between flex-wrap gap-2">
+              <div className="space-y-4 mb-6 p-5 bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md rounded-2xl border border-slate-200/60 dark:border-[#2A2A40] text-xs">
+                <div className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center justify-between flex-wrap gap-2">
                   <span>
                     {isAdmin 
                       ? "Údaje o zákazníkovi, pro kterého rezervujete" 
@@ -1674,13 +1860,13 @@ export default function CalendarView({
                     }
                   </span>
                   {isAdmin && (
-                    <span className="bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400 px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider border border-amber-500/20">
+                    <span className="bg-[#7000FF]/15 text-[#7000FF] dark:bg-[#A78BFA]/15 dark:text-[#A78BFA] px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider border border-[#7000FF]/25">
                       Admin vstup
                     </span>
                   )}
                 </div>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1 font-bold uppercase tracking-wider">
                     {isAdmin ? "Jméno a příjmení zákazníka" : "Vaše celé jméno"}
                   </label>
                   <input
@@ -1691,12 +1877,12 @@ export default function CalendarView({
                       setGuestName(e.target.value);
                       setModalError(null);
                     }}
-                    className="input-field text-xs py-1.5"
+                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-250 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
                     placeholder={isAdmin ? "např. Jan Novák" : "např. Jan Novák"}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1 font-bold uppercase tracking-wider">
                     {isAdmin ? "E-mailová adresa zákazníka" : "E-mailová adresa"}
                   </label>
                   <input
@@ -1707,7 +1893,7 @@ export default function CalendarView({
                       setGuestEmail(e.target.value);
                       setModalError(null);
                     }}
-                    className="input-field text-xs py-1.5"
+                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-250 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
                     placeholder={isAdmin ? "např. jan.novak@email.cz" : "např. jan.novak@email.cz"}
                   />
                 </div>
@@ -1715,17 +1901,17 @@ export default function CalendarView({
             )}
 
             {isBooked ? (
-              <div className="flex flex-col items-center justify-center py-4 text-tenant-primary gap-4">
+              <div className="flex flex-col items-center justify-center py-4 text-[#7000FF] dark:text-[#A78BFA] gap-4">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-tenant-primary/10 flex items-center justify-center animate-bounce">
-                    <Check size={20} />
+                  <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-bounce shadow-neon-glow">
+                    <Check size={24} className="text-[#7000FF] dark:text-[#A78BFA]" />
                   </div>
-                  <span className="text-sm font-semibold text-foreground">Rezervace byla úspěšně potvrzena!</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Rezervace byla úspěšně potvrzena!</span>
                 </div>
                 <button
                   type="button"
                   onClick={closeBookingModalAndRefresh}
-                  className="btn-tenant w-full py-2 text-xs text-white font-semibold shadow-sm"
+                  className="w-full py-2.5 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200"
                 >
                   Zavřít
                 </button>
@@ -1737,7 +1923,7 @@ export default function CalendarView({
                     setBookingType(null);
                     setSelectedEvent(null);
                   }}
-                  className="btn-secondary flex-1 py-2 text-xs font-semibold"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 border border-slate-200/40 dark:border-slate-700/40 transition-colors"
                 >
                   Zavřít
                 </button>
@@ -1781,7 +1967,7 @@ export default function CalendarView({
                       }
                     });
                   }}
-                  className="btn-danger-filled flex-1 py-2 text-xs font-bold"
+                  className="btn-danger-filled flex-1 py-2.5 rounded-xl text-xs font-bold"
                 >
                   Zrušit rezervaci
                 </button>
@@ -1802,20 +1988,18 @@ export default function CalendarView({
                       setModalError(null);
                     }}
                     disabled={isPending}
-                    className={`btn-secondary flex-1 py-2 text-xs ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-300 border border-slate-200/40 dark:border-[#2A2A40] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Zrušit
                   </button>
                   <button
                     onClick={handleBooking}
                     disabled={!isCurrentSelectionAvailable || isPending}
-                    className={`btn-tenant flex-1 py-2 text-xs text-white flex items-center justify-center gap-1.5 ${
-                      (!isCurrentSelectionAvailable || isPending) ? "opacity-45 cursor-not-allowed" : ""
-                    }`}
+                    className="flex-1 py-2.5 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none"
                   >
                     {isPending ? (
                       <>
-                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Rezervuje se...
                       </>
                     ) : (

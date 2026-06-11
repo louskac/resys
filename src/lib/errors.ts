@@ -13,7 +13,8 @@ export type ErrorCode =
   | "UNKNOWN_ERROR"
   | "INVALID_DAY_INDEX"
   | "INVALID_TIME_FORMAT"
-  | "PAST_BOOKING_NOT_ALLOWED";
+  | "PAST_BOOKING_NOT_ALLOWED"
+  | "SCHEDULE_RULE_NOT_FOUND";
 
 export interface ApiErrorResponse {
   status: "error";

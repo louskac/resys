@@ -33,12 +33,12 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
       name: displayName,
       verticalName: "Pronájem hřišť",
       tagline: "Zažijte nefalšovanou fotbalovou zábavu i bez přírodní trávy. Pronájem hřiště s umělým trávníkem 3. generace s certifikací FIFA.",
-      primary: "oklch(0.48 0.18 270)",
-      primaryHover: "oklch(0.40 0.18 270)",
+      primary: "oklch(0.52 0.22 292)", // A rich, vibrant purple/violet
+      primaryHover: "oklch(0.44 0.22 292)",
       primaryForeground: "#ffffff",
-      accent: "oklch(0.58 0.16 270)",
-      gradientStart: "oklch(0.48 0.18 270)",
-      gradientEnd: "oklch(0.35 0.15 290)",
+      accent: "oklch(0.60 0.18 292)",
+      gradientStart: "oklch(0.52 0.22 292)",
+      gradientEnd: "oklch(0.38 0.18 310)",
     };
   }
   

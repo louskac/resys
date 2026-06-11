@@ -80,11 +80,17 @@ export async function POST(request: NextRequest) {
       // --- TENANT ADMIN PORTAL ACTIONS ---
       case "resource_upsert": {
         const { id, tenantId, name, type, maxCapacity, attributes } = data;
-        const resource = await prisma.resource.upsert({
-          where: { id: id || "temp-uuid-placeholder-non-existent" },
-          update: { name, type, maxCapacity, attributes },
-          create: { tenantId, name, type, maxCapacity, attributes },
-        });
+        let resource;
+        if (id) {
+          resource = await prisma.resource.update({
+            where: { id },
+            data: { name, type, maxCapacity, attributes },
+          });
+        } else {
+          resource = await prisma.resource.create({
+            data: { tenantId, name, type, maxCapacity, attributes },
+          });
+        }
         return NextResponse.json({ status: "success", resource });
       }
 
@@ -206,17 +212,23 @@ export async function POST(request: NextRequest) {
           tokenHashUpdate = { tokenHash: hashed };
         }
 
-        const device = await prisma.checkinDevice.upsert({
-          where: { id: id || "temp-uuid-placeholder-non-existent" },
-          update: { name, active, ...tokenHashUpdate },
-          create: { 
-            id: id || undefined, 
-            tenantId, 
-            name, 
-            tokenHash: token ? crypto.createHash("sha256").update(token).digest("hex") : crypto.createHash("sha256").update("default_tok_" + Math.random()).digest("hex"), 
-            active: active ?? true 
-          },
-        });
+        let device;
+        if (id) {
+          device = await prisma.checkinDevice.update({
+            where: { id },
+            data: { name, active, ...tokenHashUpdate },
+          });
+        } else {
+          device = await prisma.checkinDevice.create({
+            data: { 
+              id: id || undefined, 
+              tenantId, 
+              name, 
+              tokenHash: token ? crypto.createHash("sha256").update(token).digest("hex") : crypto.createHash("sha256").update("default_tok_" + Math.random()).digest("hex"), 
+              active: active ?? true 
+            },
+          });
+        }
         return NextResponse.json({ status: "success", device });
       }
 
