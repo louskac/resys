@@ -11,6 +11,7 @@ import { Clock, Users, CreditCard, Layers, Wrench, GitMerge, MapPin, User } from
 import TenantBanner from "@/components/TenantBanner";
 import LoginModal from "@/components/LoginModal";
 import ResourceCard from "@/components/ResourceCard";
+import AIAssistant from "@/components/AIAssistant";
 
 interface PageProps {
   params: Promise<{
@@ -532,6 +533,15 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         </div>
       </footer>
       <LoginModal tenantId={tenantId} />
+      <AIAssistant 
+        tenantId={tenantId} 
+        resources={tenant.resources.map(r => ({ 
+          id: r.id, 
+          name: r.name,
+          parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
+        }))}
+        initialEvents={calendarEvents}
+      />
     </div>
   );
 }

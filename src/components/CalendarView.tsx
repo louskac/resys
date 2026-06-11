@@ -796,6 +796,23 @@ export default function CalendarView({
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void | Promise<void> } | null>(null);
   const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; title: string; message: string; onClose?: () => void } | null>(null);
 
+  // AI Assistant custom states
+  const [highlightedSlot, setHighlightedSlot] = useState<{
+    resourceId?: string;
+    dayIndex: number;
+    startHour: number;
+    duration: number;
+  } | null>(null);
+
+  const [draftBooking, setDraftBooking] = useState<{
+    resourceId: string;
+    dayIndex: number;
+    startHour: number;
+    duration: number;
+    userName: string;
+    userEmail?: string;
+  } | null>(null);
+
   // Drag selection states
   const [dragStartSlot, setDragStartSlot] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
   const [dragCurrentSlot, setDragCurrentSlot] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
@@ -910,16 +927,33 @@ export default function CalendarView({
     return timeVal < openVal || timeVal >= closeVal;
   }, [openingHours]);
 
-  const events = selectedResourceId
-    ? (initialEvents || []).filter((e) => {
-        if (e.resourceId === selectedResourceId) return true;
-        if (e.isOccupied) {
-          const conflictingIds = getConflictingResourceIds(selectedResourceId);
-          return conflictingIds.includes(e.resourceId);
-        }
-        return false;
-      })
-    : (initialEvents || []);
+  const events = [
+    ...selectedResourceId
+      ? (initialEvents || []).filter((e) => {
+          if (e.resourceId === selectedResourceId) return true;
+          if (e.isOccupied) {
+            const conflictingIds = getConflictingResourceIds(selectedResourceId);
+            return conflictingIds.includes(e.resourceId);
+          }
+          return false;
+        })
+      : (initialEvents || []),
+    ...(draftBooking && (!selectedResourceId || draftBooking.resourceId === selectedResourceId || getConflictingResourceIds(selectedResourceId).includes(draftBooking.resourceId))
+      ? [{
+          id: "draft-booking-id",
+          name: draftBooking.userName || "Návrh rezervace",
+          room: "",
+          instructor: "Draft",
+          dayIndex: draftBooking.dayIndex,
+          startHour: draftBooking.startHour,
+          durationHours: draftBooking.duration,
+          resourceId: draftBooking.resourceId,
+          isOccupied: true,
+          resourceName: resources.find(r => r.id === draftBooking.resourceId)?.name || "Plocha",
+          isDraft: true
+        } as CalendarEvent]
+      : [])
+  ];
 
   const formatHourString = (hour: number) => {
     const hh = Math.floor(hour);
@@ -1031,6 +1065,92 @@ export default function CalendarView({
       setIsPending(false);
     }
   };
+
+  // AI Assistant Custom DOM event listeners
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ date: string }>;
+      if (customEvent.detail && customEvent.detail.date) {
+        const dateStr = customEvent.detail.date;
+        const params = new URLSearchParams(window.location.search);
+        params.set("date", dateStr);
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    };
+
+    const handleSelectRes = (e: Event) => {
+      const customEvent = e as CustomEvent<{ resourceId: string }>;
+      if (customEvent.detail && customEvent.detail.resourceId) {
+        const resId = customEvent.detail.resourceId;
+        const res = resources.find(r => r.id === resId);
+        if (res) {
+          selectResource(resId);
+          if (res.parentId) {
+            selectRoot(res.parentId);
+          } else {
+            selectRoot(resId);
+          }
+        }
+      }
+    };
+
+    const handleHighlight = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        resourceId?: string;
+        dayIndex: number;
+        startHour: number;
+        duration: number;
+      } | null>;
+      setHighlightedSlot(customEvent.detail);
+    };
+
+    const handleSetDraft = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        resourceId: string;
+        dayIndex: number;
+        startHour: number;
+        duration: number;
+        userName: string;
+        userEmail?: string;
+      } | null>;
+      setDraftBooking(customEvent.detail);
+      if (customEvent.detail) {
+        setCustomResourceId(customEvent.detail.resourceId);
+        setSelectedDayIndex(customEvent.detail.dayIndex);
+        setSelectedTimeStr(formatHourString(customEvent.detail.startHour));
+        setCustomDuration(customEvent.detail.duration);
+        setGuestName(customEvent.detail.userName);
+        if (customEvent.detail.userEmail) {
+          setGuestEmail(customEvent.detail.userEmail);
+        }
+      }
+    };
+
+    const handleTriggerModal = (e: Event) => {
+      const customEvent = e as CustomEvent<{ type: "custom" | "event" | null }>;
+      setBookingType(customEvent.detail.type);
+    };
+
+    const handlePerformBooking = async () => {
+      await handleBooking();
+    };
+
+    window.addEventListener("assistant-navigate-date", handleNavigate);
+    window.addEventListener("assistant-select-resource", handleSelectRes);
+    window.addEventListener("assistant-highlight-slot", handleHighlight);
+    window.addEventListener("assistant-set-draft", handleSetDraft);
+    window.addEventListener("assistant-trigger-modal", handleTriggerModal);
+    window.addEventListener("assistant-perform-booking", handlePerformBooking);
+
+    return () => {
+      window.removeEventListener("assistant-navigate-date", handleNavigate);
+      window.removeEventListener("assistant-select-resource", handleSelectRes);
+      window.removeEventListener("assistant-highlight-slot", handleHighlight);
+      window.removeEventListener("assistant-set-draft", handleSetDraft);
+      window.removeEventListener("assistant-trigger-modal", handleTriggerModal);
+      window.removeEventListener("assistant-perform-booking", handlePerformBooking);
+    };
+  }, [resources, pathname, router, formatHourString, handleBooking]);
 
   return (
     <div className="p-6 bg-[#FAFAFD] dark:bg-[#060608] text-slate-800 dark:text-slate-100 border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl relative transition-all duration-300 font-sans shadow-2xl">
@@ -1240,6 +1360,14 @@ export default function CalendarView({
                         timeIdx >= Math.min(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex) &&
                         timeIdx <= Math.max(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex);
 
+                      const [sh, sm] = time.split(":").map(Number);
+                      const slotDec = sh + sm / 60;
+                      const isHighlightedByAssistant = highlightedSlot &&
+                        highlightedSlot.dayIndex === day.dbDayIndex &&
+                        (!highlightedSlot.resourceId || highlightedSlot.resourceId === selectedResourceId) &&
+                        slotDec >= highlightedSlot.startHour &&
+                        slotDec < (highlightedSlot.startHour + highlightedSlot.duration);
+
                       return (
                         <div
                           key={time}
@@ -1251,7 +1379,9 @@ export default function CalendarView({
                               ? "bg-stripes-cosmic border-b border-[#E2E2ED] dark:border-[#1F1F2E] cursor-not-allowed"
                               : isHighlighted 
                                 ? "bg-[#7000FF]/15 dark:bg-[#7000FF]/25 border border-[#7000FF] shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
-                                : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
+                                : isHighlightedByAssistant
+                                  ? "bg-purple-500/20 dark:bg-purple-500/35 border-y-2 border-dashed border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer z-10"
+                                  : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
                           }`}
                         >
                           {/* Hover select block */}
@@ -1279,14 +1409,19 @@ export default function CalendarView({
                           const isExtremelyNarrow = isWeekView && event.totalLanes && event.totalLanes >= 3;
                           const isShort = event.durationHours <= 0.5;
                           const isPastEvent = isEventInPast(event.dayIndex, event.startHour, event.durationHours);
+                          const isDraftEvent = (event as any).isDraft;
 
-                          const cardThemeClass = isPastEvent 
-                            ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
-                            : styles.themeClass;
+                          const cardThemeClass = isDraftEvent
+                            ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-dashed border-purple-500/85 text-purple-950 dark:text-purple-200 shadow-md shadow-purple-500/5 cursor-pointer rounded-2xl animate-pulse"
+                            : isPastEvent 
+                              ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
+                              : styles.themeClass;
 
-                          const badgeBgClass = isPastEvent 
-                            ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
-                            : styles.badgeBg;
+                          const badgeBgClass = isDraftEvent
+                            ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase"
+                            : isPastEvent 
+                              ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
+                              : styles.badgeBg;
 
                           return (
                             <div
@@ -1296,9 +1431,9 @@ export default function CalendarView({
                                 height: `${heightVal - (isShort ? 4 : 8)}px`,
                                 left: event.left,
                                 width: event.width,
-                                ...(!isPastEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
+                                ...(!isPastEvent && !isDraftEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
                               }}
-                              onMouseMove={!isPastEvent ? (e) => {
+                              onMouseMove={!isPastEvent && !isDraftEvent ? (e) => {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 const x = e.clientX - rect.left;
                                 const y = e.clientY - rect.top;
@@ -1308,6 +1443,10 @@ export default function CalendarView({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isPastEvent) return;
+                                if (isDraftEvent) {
+                                  setBookingType("custom");
+                                  return;
+                                }
                                 if (event.isOccupied) {
                                   if (isAdmin) {
                                     setSelectedEvent(event);
@@ -1332,7 +1471,7 @@ export default function CalendarView({
                                 setBookingType("event");
                               }}
                               className={`absolute pointer-events-auto rounded-2xl border flex flex-col transition-all duration-250 backdrop-blur-sm group/card hover:z-40 ${cardThemeClass} ${
-                                isPastEvent ? "" : "hover:scale-[1.015] hover:shadow-neon-glow transition-all duration-300 ease-out"
+                                isPastEvent || isDraftEvent ? "" : "hover:scale-[1.015] hover:shadow-neon-glow transition-all duration-300 ease-out"
                               } ${
                                 isShort 
                                   ? "p-1.5 justify-start gap-0.5" 
@@ -1341,7 +1480,7 @@ export default function CalendarView({
                                     : "p-2.5 justify-between"
                               }`}
                             >
-                              {!isPastEvent && (
+                              {!isPastEvent && !isDraftEvent && (
                                 <div 
                                   className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[inherit] z-0"
                                   style={{
@@ -1378,7 +1517,7 @@ export default function CalendarView({
                                     )}
                                   </div>
                                   <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
-                                    {event.isOccupied ? (isAdmin ? event.name : "Obsazeno") : event.name}
+                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : "Obsazeno")) : event.name}
                                   </h4>
                                 </div>
                               ) : (
@@ -1395,28 +1534,34 @@ export default function CalendarView({
                                       )}
                                     </div>
                                     <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
-                                      isPastEvent
-                                        ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
-                                        : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
+                                      isDraftEvent
+                                        ? "font-extrabold text-[10px] md:text-[11px] text-purple-800 dark:text-purple-300"
+                                        : isPastEvent
+                                          ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
+                                          : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
-                                      {event.isOccupied ? (isAdmin ? event.name : "Obsazeno") : event.name}
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : "Obsazeno")) : event.name}
                                     </h4>
                                   </div>
                                   
-                                  {!isNarrow && (!event.isOccupied || isAdmin) ? (
+                                  {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent) ? (
                                     <div className="text-[9px] opacity-80 leading-tight truncate">
                                       <p className="font-semibold text-[9px] truncate">
-                                        {event.isOccupied ? (isAdmin ? event.instructor : "Obsazeno") : `Lektor: ${event.instructor}`}
+                                        {event.isOccupied ? (isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : "Obsazeno")) : `Lektor: ${event.instructor}`}
                                       </p>
                                       <p className="text-[8px] opacity-75 truncate">
-                                        {event.isOccupied ? "Rezervováno" : `Místnost: ${event.room}`}
+                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : "Rezervováno") : `Místnost: ${event.room}`}
                                       </p>
                                     </div>
                                   ) : (
                                     <div className="flex justify-end items-center opacity-70 mt-1">
                                       {event.isOccupied ? (
-                                        <Lock size={10} />
+                                        isDraftEvent ? (
+                                          <span className="text-[8px] font-bold text-purple-500">?</span>
+                                        ) : (
+                                          <Lock size={10} />
+                                        )
                                       ) : (
                                         <Calendar size={10} />
                                       )}
@@ -1466,18 +1611,18 @@ export default function CalendarView({
                                     </div>
                                     <div>
                                       <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-50 break-words leading-snug">
-                                        {event.isOccupied ? (isAdmin ? event.name : "Obsazeno") : event.name}
+                                        {event.isOccupied ? (isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : "Obsazeno")) : event.name}
                                       </h4>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200/40 dark:border-zinc-800/50 text-[10px]">
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Místnost/Povrch</span>
-                                        <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{event.room}</span>
+                                        <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{isDraftEvent ? "Vybraná plocha" : event.room}</span>
                                       </div>
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Status/Kontakt</span>
                                         <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">
-                                          {event.isOccupied ? (isAdmin ? `${event.name} ({event.instructor})` : "Obsazeno") : event.instructor}
+                                          {event.isOccupied ? (isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : "Obsazeno")) : event.instructor}
                                         </span>
                                       </div>
                                     </div>
