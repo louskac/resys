@@ -67,24 +67,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     }
   }, [session]);
 
-  // Listen to conflict status reported by the calendar view
-  useEffect(() => {
-    const handleConflictStatus = (e: Event) => {
-      const customEvent = e as CustomEvent<{ hasConflict: boolean; conflictMessage: string | null }>;
-      if (customEvent.detail) {
-        setConsoleState(prev => ({
-          ...prev,
-          hasConflict: customEvent.detail.hasConflict,
-          conflictMessage: customEvent.detail.conflictMessage
-        }));
-      }
-    };
-
-    window.addEventListener("assistant-conflict-status", handleConflictStatus);
-    return () => {
-      window.removeEventListener("assistant-conflict-status", handleConflictStatus);
-    };
-  }, []);
+  // Conflict status listener was unified into the central event sync useEffect below
 
   const lastInputWasVoiceRef = useRef(false);
   const isVoiceOutputEnabledRef = useRef(isVoiceOutputEnabled);
@@ -213,6 +196,122 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     utterance.lang = isCzech ? "cs-CZ" : "en-US";
     window.speechSynthesis.speak(utterance);
   };
+
+  // Synchronize URL resource parameter to consoleState
+  useEffect(() => {
+    const activeResSlug = searchParams.get("resource") || "";
+    if (activeResSlug) {
+      const activeRes = resources.find(r => 
+        r.id === activeResSlug || 
+        r.name.toLowerCase().replace(/\s+/g, "-").includes(activeResSlug.split("-")[0])
+      );
+      if (activeRes) {
+        setConsoleState(prev => {
+          if (prev.resourceId === activeRes.id && prev.resourceName === activeRes.name) {
+            return prev;
+          }
+          return {
+            ...prev,
+            resourceId: activeRes.id,
+            resourceName: activeRes.name
+          };
+        });
+      }
+    }
+  }, [searchParams, resources]);
+
+  // Central event listener synchronization between AI Assistant and Calendar View
+  useEffect(() => {
+    const handleConflictStatus = (e: Event) => {
+      const customEvent = e as CustomEvent<{ hasConflict: boolean; conflictMessage: string | null }>;
+      if (customEvent.detail) {
+        setConsoleState(prev => ({
+          ...prev,
+          hasConflict: customEvent.detail.hasConflict,
+          conflictMessage: customEvent.detail.conflictMessage
+        }));
+      }
+    };
+
+    const handleBookingSuccess = () => {
+      setIsLoading(false);
+      setMessages(prev => {
+        // Prevent duplicate success messages
+        if (prev.length > 0 && prev[prev.length - 1].content.includes("Rezervace byla úspěšně potvrzena")) {
+          return prev;
+        }
+        return [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Rezervace byla úspěšně potvrzena! Zavírám asistenta..."
+          }
+        ];
+      });
+      speakText("Rezervace byla úspěšně potvrzena!");
+      
+      setTimeout(() => {
+        setConsoleState({
+          resourceId: null,
+          resourceName: null,
+          dayIndex: null,
+          startHour: null,
+          duration: null,
+          userName: session?.user?.name || null,
+          userEmail: session?.user?.email || null,
+          hasConflict: false,
+          conflictMessage: null,
+          suggestedAlternativeTime: null,
+          suggestedAlternativeResourceId: null,
+          recurrencePattern: "none",
+          recurrenceCount: null
+        });
+        window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
+      }, 1000);
+      
+      setTimeout(() => {
+        setIsOpen(false);
+      }, 2500);
+    };
+
+    const handleBookingError = (e: Event) => {
+      setIsLoading(false);
+      const customEvent = e as CustomEvent<{ message: string }>;
+      const errorMsg = customEvent.detail?.message || "Rezervaci se nepodařilo potvrdit.";
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `Omlouvám se, nepodařilo se dokončit rezervaci: ${errorMsg}`
+        }
+      ]);
+      speakText(`Nepodařilo se dokončit rezervaci. ${errorMsg}`);
+    };
+
+    const handleBookingCancelled = () => {
+      setConsoleState(prev => ({
+        ...prev,
+        dayIndex: null,
+        startHour: null,
+        duration: null,
+        hasConflict: false,
+        conflictMessage: null
+      }));
+      window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
+    };
+
+    window.addEventListener("assistant-conflict-status", handleConflictStatus);
+    window.addEventListener("assistant-booking-success", handleBookingSuccess);
+    window.addEventListener("assistant-booking-error", handleBookingError);
+    window.addEventListener("assistant-booking-cancelled", handleBookingCancelled);
+
+    return () => {
+      window.removeEventListener("assistant-conflict-status", handleConflictStatus);
+      window.removeEventListener("assistant-booking-success", handleBookingSuccess);
+      window.removeEventListener("assistant-booking-error", handleBookingError);
+      window.removeEventListener("assistant-booking-cancelled", handleBookingCancelled);
+    };
+  }, [session, speakText]);
 
   const handleMicClick = () => {
     console.log("handleMicClick: isListening =", isListening, "mediaRecorder =", mediaRecorderRef.current);
@@ -383,12 +482,14 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     const currentBookingsContext = initialEvents
       .filter(e => e.isOccupied)
       .map(e => ({
+        id: e.id,
         resourceId: e.resourceId,
         resourceName: e.resourceName || resources.find(r => r.id === e.resourceId)?.name || "Plocha",
         dayIndex: e.dayIndex,
         startHour: e.startHour,
         durationHours: e.durationHours,
-        name: e.name
+        name: e.name,
+        instructor: e.instructor
       }));
 
     try {
@@ -580,29 +681,98 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
         break;
       }
       case "confirm_current_booking":
+        setIsLoading(true);
         window.dispatchEvent(new CustomEvent("assistant-perform-booking"));
-        setTimeout(() => {
-          setConsoleState({
-            resourceId: null,
-            resourceName: null,
-            dayIndex: null,
-            startHour: null,
-            duration: null,
-            userName: null,
-            userEmail: null,
-            hasConflict: false,
-            conflictMessage: null,
-            suggestedAlternativeTime: null,
-            suggestedAlternativeResourceId: null,
-            recurrencePattern: "none",
-            recurrenceCount: null
-          });
-          window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
-        }, 1000);
-        setTimeout(() => {
-          setIsOpen(false);
-        }, 3000);
         break;
+      case "cancel_booking": {
+        const { bookingId, cancelSeries } = args;
+        setIsLoading(true);
+        fetch(`/api/bookings?bookingId=${bookingId}&cancelSeries=${!!cancelSeries}`, {
+          method: "DELETE"
+        })
+        .then(async (res) => {
+          if (res.ok) {
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: "Rezervace byla úspěšně zrušena. Stránka se nyní obnoví."
+            }]);
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            const data = await res.json();
+            throw new Error(data.error || "Chyba při rušení");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: `Omlouvám se, zrušení rezervace se nezdařilo: ${err.message}`
+          }]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+        break;
+      }
+      case "reschedule_booking": {
+        const { bookingId, resourceId, dayIndex, startHour, duration } = args;
+        setIsLoading(true);
+        
+        let startTime: string | undefined;
+        let endTime: string | undefined;
+        if (startHour !== undefined) {
+          const formatDecimalToTime = (decimal: number) => {
+            const h = Math.floor(decimal);
+            const m = Math.round((decimal % 1) * 60);
+            return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          };
+          startTime = formatDecimalToTime(startHour);
+          if (duration !== undefined) {
+            endTime = formatDecimalToTime(startHour + duration);
+          } else {
+            endTime = formatDecimalToTime(startHour + 1);
+          }
+        }
+
+        fetch("/api/bookings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookingId,
+            resourceId,
+            dayIndex,
+            startTime,
+            endTime
+          })
+        })
+        .then(async (res) => {
+          if (res.ok) {
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: "Rezervace byla úspěšně změněna. Stránka se nyní obnoví."
+            }]);
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            const data = await res.json();
+            throw new Error(data.error || "Chyba při úpravě");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: `Omlouvám se, změna rezervace se nezdařila: ${err.message}`
+          }]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+        break;
+      }
     }
   };
 
@@ -616,35 +786,8 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
   };
 
   const handleManualConfirm = () => {
+    setIsLoading(true);
     window.dispatchEvent(new CustomEvent("assistant-perform-booking"));
-    setMessages(prev => [
-      ...prev,
-      {
-        role: "assistant",
-        content: "Rezervace byla úspěšně potvrzena! Zavírám asistenta..."
-      }
-    ]);
-    setTimeout(() => {
-      setConsoleState({
-        resourceId: null,
-        resourceName: null,
-        dayIndex: null,
-        startHour: null,
-        duration: null,
-        userName: null,
-        userEmail: null,
-        hasConflict: false,
-        conflictMessage: null,
-        suggestedAlternativeTime: null,
-        suggestedAlternativeResourceId: null,
-        recurrencePattern: "none",
-        recurrenceCount: null
-      });
-      window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
-    }, 1000);
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 2500);
   };
 
   // Helper date mappings

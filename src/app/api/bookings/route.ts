@@ -439,7 +439,8 @@ export async function DELETE(request: NextRequest) {
 
     const isAuthorized = 
       adminEmails.includes(userEmail) || 
-      userEmail.endsWith("@deepvision.cz");
+      userEmail.endsWith("@deepvision.cz") ||
+      booking.userEmail === userEmail;
 
     if (!isAuthorized) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -463,6 +464,255 @@ export async function DELETE(request: NextRequest) {
   } catch (error: any) {
     console.error("Delete booking error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return makeErrorResponse("UNAUTHORIZED", "Nejste přihlášen(a).", {}, 401);
+    }
+
+    const body = await request.json();
+    const { 
+      bookingId,
+      resourceId, 
+      dayIndex, 
+      startTime, 
+      endTime, 
+      weekStart
+    } = body;
+
+    if (!bookingId) {
+      return makeErrorResponse("MISSING_PARAMETER", "Chybí identifikátor rezervace (bookingId).");
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { tenant: true },
+    });
+
+    if (!booking) {
+      return makeErrorResponse("RESOURCE_NOT_FOUND", "Rezervace nebyla nalezena.");
+    }
+
+    const userEmail = session.user.email || "";
+    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || ["josef.novak@deepvision.cz"];
+
+    const isAuthorized = 
+      adminEmails.includes(userEmail) || 
+      userEmail.endsWith("@deepvision.cz") ||
+      booking.userEmail === userEmail;
+
+    if (!isAuthorized) {
+      return makeErrorResponse("UNAUTHORIZED", "Nemáte oprávnění k úpravě této rezervace.", {}, 403);
+    }
+
+    // Determine target values, fallback to existing booking's time/day/resource
+    const finalResourceId = resourceId || booking.resourceId;
+    
+    // Get existing start hour and day index from the existing reservedFrom
+    const existingDayIndex = (booking.reservedFrom.getUTCDay() === 0) ? 6 : booking.reservedFrom.getUTCDay() - 1;
+    const finalDayIndex = dayIndex !== undefined ? dayIndex : existingDayIndex;
+
+    // Format existing time to HH:MM if not provided
+    const formatTime = (date: Date) => {
+      const h = String(date.getUTCHours()).padStart(2, "0");
+      const m = String(date.getUTCMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    };
+    
+    const finalStartTime = startTime || formatTime(booking.reservedFrom);
+    const finalEndTime = endTime || formatTime(booking.reservedTo);
+
+    // Get week start from request, or calculate from booking.reservedFrom
+    let finalWeekStart = weekStart;
+    if (!finalWeekStart) {
+      const tempDate = new Date(booking.reservedFrom);
+      const day = tempDate.getUTCDay();
+      const diff = tempDate.getUTCDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(tempDate.setUTCDate(diff));
+      finalWeekStart = monday.toISOString().split("T")[0];
+    }
+
+    const startOfWeek = new Date(`${finalWeekStart}T00:00:00.000Z`);
+    const targetDate = new Date(startOfWeek);
+    targetDate.setUTCDate(startOfWeek.getUTCDate() + finalDayIndex);
+
+    const [startHourStr, startMinStr] = finalStartTime.split(":");
+    const [endHourStr, endMinStr] = finalEndTime.split(":");
+
+    const reservedFrom = new Date(targetDate);
+    reservedFrom.setUTCHours(parseInt(startHourStr, 10), parseInt(startMinStr, 10), 0, 0);
+
+    const reservedTo = new Date(targetDate);
+    reservedTo.setUTCHours(parseInt(endHourStr, 10), parseInt(endMinStr, 10), 0, 0);
+
+    if (reservedFrom >= reservedTo) {
+      return makeErrorResponse("INVALID_TIME_RANGE", "Čas začátku musí předcházet času konce.");
+    }
+
+    if (reservedFrom < new Date()) {
+      return makeErrorResponse("PAST_BOOKING_NOT_ALLOWED", "Rezervaci nelze přesunout do minulosti.");
+    }
+
+    // Tenant check and operating hours check
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: booking.tenantId },
+      include: { resources: true },
+    });
+
+    if (!tenant) {
+      return makeErrorResponse("TENANT_NOT_FOUND", "Poskytovatel služeb nebyl nalezen.");
+    }
+
+    // Validate operating hours
+    const attrs = (tenant.attributes as any) || {};
+    const openTime = attrs.openTime || "08:00";
+    const closeTime = attrs.closeTime || "18:00";
+
+    const [openH, openM] = openTime.split(":").map(Number);
+    const [closeH, closeM] = closeTime.split(":").map(Number);
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+
+    const [startH, startM] = finalStartTime.split(":").map(Number);
+    const [endH, endM] = finalEndTime.split(":").map(Number);
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+
+    if (startMinutes < openMinutes || endMinutes > closeMinutes) {
+      return makeErrorResponse(
+        "OPERATING_HOURS_EXCEEDED",
+        `Rezervaci lze přesunout pouze do provozní doby (${openTime} – ${closeTime}).`
+      );
+    }
+
+    // Overlap checks
+    const tenantResources = tenant.resources;
+    const getAncestors = (id: string): string[] => {
+      const res = tenantResources.find((r: any) => r.id === id);
+      const parentId = (res?.attributes as any)?.parentId;
+      if (!parentId) return [];
+      return [parentId, ...getAncestors(parentId)];
+    };
+
+    const getDescendants = (id: string): string[] => {
+      const children = tenantResources.filter((r: any) => (r.attributes as any)?.parentId === id);
+      const childIds = children.map((c: any) => c.id);
+      const grandchildIds = childIds.flatMap((cid: any) => getDescendants(cid));
+      return [...childIds, ...grandchildIds];
+    };
+
+    const conflictingResourceIds = [
+      finalResourceId,
+      ...getAncestors(finalResourceId),
+      ...getDescendants(finalResourceId),
+    ];
+
+    // Check overlaps, ignoring this booking's ID!
+    const overlapping = await prisma.booking.findFirst({
+      where: {
+        id: { not: bookingId },
+        resourceId: { in: conflictingResourceIds },
+        status: "CONFIRMED",
+        OR: [
+          {
+            reservedFrom: { lt: reservedTo },
+            reservedTo: { gt: reservedFrom },
+          },
+        ],
+      },
+    });
+
+    if (overlapping) {
+      return makeErrorResponse("OVERLAP_CONFLICT", `Vybraný sportovní areál / sektor je v danou dobu již obsazen.`);
+    }
+
+    // Check daily booking duration limit (Max 4 hours / 240 minutes)
+    const startOfDay = new Date(reservedFrom);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(reservedFrom);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const dailyBookings = await prisma.booking.findMany({
+      where: {
+        id: { not: bookingId },
+        tenantId: booking.tenantId,
+        userEmail: booking.userEmail,
+        status: "CONFIRMED",
+        reservedFrom: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    const dailyMinutes = dailyBookings.reduce((sum, b) => {
+      return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
+    }, 0);
+
+    const newDurationMin = Math.round((reservedTo.getTime() - reservedFrom.getTime()) / 60000);
+
+    if (dailyMinutes + newDurationMin > 240) {
+      return makeErrorResponse(
+        "DAILY_LIMIT_EXCEEDED",
+        `Překročili jste denní limit rezervací (max. 4 hodiny). Dne ${targetDate.toISOString().split("T")[0]} již máte rezervováno ${dailyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+      );
+    }
+
+    // Check weekly booking duration limit (Max 20 hours / 1200 minutes)
+    const occStartOfWeek = new Date(startOfWeek);
+    const endOfWeek = new Date(occStartOfWeek);
+    endOfWeek.setUTCDate(occStartOfWeek.getUTCDate() + 6);
+    endOfWeek.setUTCHours(23, 59, 59, 999);
+
+    const weeklyBookings = await prisma.booking.findMany({
+      where: {
+        id: { not: bookingId },
+        tenantId: booking.tenantId,
+        userEmail: booking.userEmail,
+        status: "CONFIRMED",
+        reservedFrom: {
+          gte: occStartOfWeek,
+          lte: endOfWeek,
+        },
+      },
+    });
+
+    const weeklyMinutes = weeklyBookings.reduce((sum, b) => {
+      return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
+    }, 0);
+
+    if (weeklyMinutes + newDurationMin > 1200) {
+      return makeErrorResponse(
+        "WEEKLY_LIMIT_EXCEEDED",
+        `Překročili jste týdenní limit rezervací (max. 20 hodin). V týdnu s datem ${finalWeekStart} již máte rezervováno ${weeklyMinutes} minut a tato rezervace by přidala dalších ${newDurationMin} minut.`
+      );
+    }
+
+    // Update the booking
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        resourceId: finalResourceId,
+        reservedFrom,
+        reservedTo,
+      },
+    });
+
+    // Trigger real-time updates
+    await triggerBookingUpdate(booking.tenantId);
+    sendSSEUpdate(booking.tenantId);
+
+    return NextResponse.json({
+      status: "success",
+      message: "Rezervace byla úspěšně změněna.",
+    });
+  } catch (error: any) {
+    console.error("Modify booking error:", error);
+    return makeErrorResponse("DATABASE_ERROR", "Nastala neočekávaná chyba. Zkuste to prosím znovu.", {}, 500);
   }
 }
 

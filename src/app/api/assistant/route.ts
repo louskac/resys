@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
     const bookingsContext = (existingBookings || []).map((b: any) => {
       const dayNames = ["Pondělí/Monday", "Úterý/Tuesday", "Středa/Wednesday", "Čtvrtek/Thursday", "Pátek/Friday", "Sobota/Saturday", "Neděle/Sunday"];
       const dayLabel = dayNames[b.dayIndex] || `Day ${b.dayIndex}`;
-      return `- Resource: "${b.resourceName || 'Plocha'}" (ID: ${b.resourceId}) on ${dayLabel} (dayIndex: ${b.dayIndex}) from ${formatDecimalHour(b.startHour)} to ${formatDecimalHour(b.startHour + b.durationHours)} (Reserved by: ${b.name || 'Private'})`;
+      const isUserBooking = loggedInUser?.email && b.instructor === loggedInUser.email;
+      const ownerLabel = isUserBooking ? `The logged-in user (email: ${loggedInUser.email})` : (b.name || 'Private');
+      return `- Booking ID: "${b.id}" on Resource: "${b.resourceName || 'Plocha'}" (ID: ${b.resourceId}) on ${dayLabel} (dayIndex: ${b.dayIndex}) from ${formatDecimalHour(b.startHour)} to ${formatDecimalHour(b.startHour + b.durationHours)} (Reserved by: ${ownerLabel})`;
     }).join("\n");
 
     const systemPrompt = `You are a warm, highly professional, and extremely intelligent AI concierge reservation assistant for the ReSys booking portal.
@@ -59,8 +61,14 @@ ${bookingsContext || "- No bookings, calendar is completely free!"}
 4. STEP-BY-STEP ONBOARDING (ONE QUESTION AT A TIME):
    - Never ask for multiple missing parameters in a single response.
    - Follow this strict parameter sequence: Resource (Plocha) ➔ Day (Datum) ➔ Time/Duration (Čas) ➔ Client Name (Klient).
+   - If the user selects/asks for "polovina", "polovinu", "half", or "half a pitch", DO NOT ask them to choose Sektor A or Sektor B. Instead:
+     - Check the list of existing confirmed bookings for the requested time/day:
+       - If Sektor A has an overlap/conflict, select Sektor B.
+       - If Sektor B has an overlap/conflict, select Sektor A.
+       - If both are free (or if the date/time is not yet resolved), select Sektor A by default.
+     - Proceed directly with the chosen resource (Sektor A or Sektor B) and call 'propose_draft_booking' or 'report_booking_status' with this resource selected, without asking the user to make a choice.
    - If the user says "Chci si rezervovat umělku" or makes a general request:
-     - Greet them warmly and ask ONLY for the resource first, listing only the main choices: "Rád vám s rezervací pomohu. Chcete Celou plochu, nebo jen polovinu (Sektor A či Sektor B)?"
+     - Greet them warmly and ask ONLY for the resource first, listing only the main choices: "Rád vám s rezervací pomohu. Chcete Celou plochu, nebo jen polovinu?"
    - Once the resource is chosen, ask ONLY for the day: "Na jaký den byste si přál rezervaci?" (Suggest concrete options: e.g. "dnešek", "zítřek", "pondělí").
    - Once the day is chosen, ask ONLY for the time and duration: "V kolik hodin byste chtěl začít a na jak dlouho to bude?" (Suggest a free slot if visible).
    - Once the time is chosen:
@@ -75,6 +83,9 @@ ${bookingsContext || "- No bookings, calendar is completely free!"}
 7. CONFIRMATION: Wait for explicit user confirmation before calling 'confirm_current_booking'.
 8. STATE SYNC: Call 'report_booking_status' only when a booking parameter (resource, day, start hour, duration, or client name) is newly resolved, updated, or if there is a conflict. If no parameters have been resolved or changed in this turn, do not call this tool.
 9. RECURRING RESERVATIONS: If the user mentions that they want the booking to repeat or be recurring (e.g., 'každý týden', 'každé dva týdny', 'opakovat', 'každý měsíc'), set the recurrencePattern ('weekly', 'bi-weekly', 'monthly') and recurrenceCount (default to 4 if not specified by user). If they don't mention recurrence, default to 'none' for pattern and null for count. Pass these parameters in propose_draft_booking and report_booking_status.
+10. RESCHEDULING & CANCELLATION:
+   - If the user asks to cancel, delete, or remove their booking, identify their booking ID from the confirmed bookings list (where they are the owner, e.g. "Reserved by: The logged-in user") and call the 'cancel_booking' tool.
+   - If the user asks to reschedule, move, or change their booking, identify their booking ID, resolve the new parameters (resource, day index, start hour, duration), and call the 'reschedule_booking' tool.
 
 === TOOLS ===
 You have access to function calling tools to control the user's browser screen in real-time. Use them proactively!`;
@@ -242,6 +253,54 @@ You have access to function calling tools to control the user's browser screen i
                   description: "The number of total recurrences to create, including the initial one, e.g. 4."
                 }
               }
+            }
+          },
+          {
+            name: "cancel_booking",
+            description: "Cancels or deletes an existing booking. Use when user explicitly asks to cancel or remove their reservation.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                bookingId: {
+                  type: "STRING",
+                  description: "The unique ID of the booking to cancel."
+                },
+                cancelSeries: {
+                  type: "BOOLEAN",
+                  description: "If true, cancels all bookings in the recurrence group/series. Default is false."
+                }
+              },
+              required: ["bookingId"]
+            }
+          },
+          {
+            name: "reschedule_booking",
+            description: "Reschedules or moves an existing booking to a new day, time, duration, or resource.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                bookingId: {
+                  type: "STRING",
+                  description: "The unique ID of the booking to reschedule."
+                },
+                resourceId: {
+                  type: "STRING",
+                  description: "The ID of the new resource (optional)."
+                },
+                dayIndex: {
+                  type: "INTEGER",
+                  description: "The new day index: 0 (Monday) to 6 (Sunday) (optional)."
+                },
+                startHour: {
+                  type: "NUMBER",
+                  description: "The new start hour in decimal, e.g. 14.5 for 14:30 (optional)."
+                },
+                duration: {
+                  type: "NUMBER",
+                  description: "The new duration of the booking in hours, e.g. 1.5 (optional)."
+                }
+              },
+              required: ["bookingId"]
             }
           }
         ]

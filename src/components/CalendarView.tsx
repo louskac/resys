@@ -791,6 +791,8 @@ export default function CalendarView({
   const [recurrencePattern, setRecurrencePattern] = useState<"none" | "weekly" | "bi-weekly" | "monthly">("none");
   const [recurrenceCount, setRecurrenceCount] = useState<number>(4);
 
+  const isSelectedEventMyBooking = !!(selectedEvent && session?.user?.email && selectedEvent.instructor === session.user.email);
+
   // Guest booking form states
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -1060,26 +1062,35 @@ export default function CalendarView({
 
       if (!res.ok) {
         const err = await res.json();
+        const errorMsg = err.message || "Failed to confirm reservation.";
         setModalError({
           code: err.code || "UNKNOWN_ERROR",
-          message: err.message || "Failed to confirm reservation."
+          message: errorMsg
         });
         setIsPending(false);
+        window.dispatchEvent(new CustomEvent("assistant-booking-error", {
+          detail: { message: errorMsg }
+        }));
         return;
       }
 
       setIsBooked(true);
+      window.dispatchEvent(new CustomEvent("assistant-booking-success"));
       const timer = setTimeout(() => {
         closeBookingModalAndRefresh();
       }, 2000);
       bookingTimeoutRef.current = timer;
     } catch (e) {
       console.error(e);
+      const errorMsg = "Error connecting to the server. Please check your network connection.";
       setModalError({
         code: "CONNECTION_FAILED",
-        message: "Error connecting to the server. Please check your network connection."
+        message: errorMsg
       });
       setIsPending(false);
+      window.dispatchEvent(new CustomEvent("assistant-booking-error", {
+        detail: { message: errorMsg }
+      }));
     }
   };
 
@@ -1439,15 +1450,15 @@ export default function CalendarView({
                         </div>
                       );
                     })}
-
-                    {/* Absolute Event Overlays container */}
+{/* Absolute Event Overlays container */}
                     <div className="absolute inset-0 pointer-events-none">
                       {(() => {
                         const visualEvents = layoutDayEvents(dayEvents);
                         return visualEvents.map((event) => {
                           const topOffset = (event.startHour - startHourOffset) * HOUR_HEIGHT;
                           const heightVal = event.durationHours * HOUR_HEIGHT;
-                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin);
+                          const isMyBooking = !!(session?.user?.email && event.instructor === session.user.email);
+                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin || isMyBooking);
                           const isWeekView = viewMode === "week";
                           const isNarrow = isWeekView && event.totalLanes && event.totalLanes > 1;
                           const isExtremelyNarrow = isWeekView && event.totalLanes && event.totalLanes >= 3;
@@ -1492,7 +1503,7 @@ export default function CalendarView({
                                   return;
                                 }
                                 if (event.isOccupied) {
-                                  if (isAdmin) {
+                                  if (isAdmin || isMyBooking) {
                                     setSelectedEvent(event);
                                     setBookingType("admin_view");
                                     return;
@@ -1561,7 +1572,7 @@ export default function CalendarView({
                                     )}
                                   </div>
                                   <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
-                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : "Obsazeno")) : event.name}
+                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : (isMyBooking ? "Moje rezervace" : "Obsazeno"))) : event.name}
                                   </h4>
                                 </div>
                               ) : (
@@ -1585,17 +1596,17 @@ export default function CalendarView({
                                           : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
                                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
-                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : "Obsazeno")) : event.name}
+                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : (isMyBooking ? "Moje rezervace" : "Obsazeno"))) : event.name}
                                     </h4>
                                   </div>
                                   
-                                  {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent) ? (
+                                  {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent || isMyBooking) ? (
                                     <div className="text-[9px] opacity-80 leading-tight truncate">
                                       <p className="font-semibold text-[9px] truncate">
-                                        {event.isOccupied ? (isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : "Obsazeno")) : `Lektor: ${event.instructor}`}
+                                        {event.isOccupied ? (isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : (isMyBooking ? event.name : "Obsazeno"))) : `Lektor: ${event.instructor}`}
                                       </p>
                                       <p className="text-[8px] opacity-75 truncate">
-                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : "Rezervováno") : `Místnost: ${event.room}`}
+                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : (isMyBooking ? "Vaše rezervace" : "Rezervováno")) : `Místnost: ${event.room}`}
                                       </p>
                                     </div>
                                   ) : (
@@ -1675,7 +1686,7 @@ export default function CalendarView({
                                     </div>
                                     <div>
                                       <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-50 break-words leading-snug">
-                                        {event.isOccupied ? (isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : "Obsazeno")) : event.name}
+                                        {event.isOccupied ? (isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : (isMyBooking ? `Moje rezervace (${event.name})` : "Obsazeno"))) : event.name}
                                       </h4>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200/40 dark:border-zinc-800/50 text-[10px]">
@@ -1686,7 +1697,7 @@ export default function CalendarView({
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Status/Kontakt</span>
                                         <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">
-                                          {event.isOccupied ? (isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : "Obsazeno")) : event.instructor}
+                                          {event.isOccupied ? (isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : (isMyBooking ? `Moje rezervace (${event.instructor})` : "Obsazeno"))) : event.instructor}
                                         </span>
                                       </div>
                                     </div>
@@ -1810,6 +1821,7 @@ export default function CalendarView({
                 setGuestName("");
                 setGuestEmail("");
                 setModalError(null);
+                window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
               }}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
             >
@@ -1817,11 +1829,15 @@ export default function CalendarView({
             </button>
 
             <h3 className="text-xl font-bold bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-[#3B82F6] bg-clip-text text-transparent mb-1 font-sans">
-              {bookingType === "admin_view" ? "Detaily rezervace" : "Nová rezervace"}
+              {bookingType === "admin_view" 
+                ? (isAdmin ? "Detaily rezervace" : "Detaily mé rezervace") 
+                : "Nová rezervace"}
             </h3>
             {!isBooked && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-                {bookingType === "admin_view" ? "Administrátorská správa této rezervace:" : "Potvrďte termín nebo upravte parametry níže:"}
+                {bookingType === "admin_view" 
+                  ? (isAdmin ? "Administrátorská správa této rezervace:" : "Správa vaší rezervace:") 
+                  : "Potvrďte termín nebo upravte parametry níže:"}
               </p>
             )}
 
@@ -2300,6 +2316,7 @@ export default function CalendarView({
                       setGuestName("");
                       setGuestEmail("");
                       setModalError(null);
+                      window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
                     }}
                     disabled={isPending}
                     className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-300 border border-slate-200/40 dark:border-[#2A2A40] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
