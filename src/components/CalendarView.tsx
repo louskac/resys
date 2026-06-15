@@ -342,12 +342,8 @@ export default function CalendarView({
     setGuestEmail("");
     setModalError(null);
     setIsPending(false);
-    setIsAreaDropdownOpen(false);
-    setIsDurationDropdownOpen(false);
     setRecurrencePattern("none");
     setRecurrenceCount(4);
-    setIsRecurrencePatternDropdownOpen(false);
-    setIsRecurrenceCountDropdownOpen(false);
     router.refresh();
   };
 
@@ -794,8 +790,6 @@ export default function CalendarView({
   // Recurrence states
   const [recurrencePattern, setRecurrencePattern] = useState<"none" | "weekly" | "bi-weekly" | "monthly">("none");
   const [recurrenceCount, setRecurrenceCount] = useState<number>(4);
-  const [isRecurrencePatternDropdownOpen, setIsRecurrencePatternDropdownOpen] = useState(false);
-  const [isRecurrenceCountDropdownOpen, setIsRecurrenceCountDropdownOpen] = useState(false);
 
   // Guest booking form states
   const [guestName, setGuestName] = useState("");
@@ -2054,111 +2048,89 @@ export default function CalendarView({
                     </div>
                   </div>
 
-                  {/* Recurrence Selection */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Opakování</label>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsRecurrencePatternDropdownOpen(!isRecurrencePatternDropdownOpen);
-                            setIsRecurrenceCountDropdownOpen(false);
-                            setIsAreaDropdownOpen(false);
-                            setIsDurationDropdownOpen(false);
+                  {/* Recurrence Selection Toggle & Form */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-[#2A2A40]/40 mt-3 pt-3">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Opakovat rezervaci</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">Vytvořit sérii pravidelných termínů</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={recurrencePattern !== "none"}
+                          onChange={(e) => {
+                            setRecurrencePattern(e.target.checked ? "weekly" : "none");
+                            if (e.target.checked && !recurrenceCount) {
+                              setRecurrenceCount(4);
+                            }
+                            setModalError(null);
                           }}
-                          className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
-                        >
-                          <span>
-                            {recurrencePattern === "none" ? "Jednorázově" : 
-                             recurrencePattern === "weekly" ? "Týdně" : 
-                             recurrencePattern === "bi-weekly" ? "Každé 2 týdny" : "Měsíčně"}
-                          </span>
-                          <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isRecurrencePatternDropdownOpen ? "rotate-180" : ""}`} />
-                        </button>
-                        
-                        {isRecurrencePatternDropdownOpen && (
-                          <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-[#7000FF]"></div>
+                      </label>
+                    </div>
+
+                    {recurrencePattern !== "none" && (
+                      <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-dashed border-slate-150 dark:border-[#2A2A40]/40 animate-in fade-in slide-in-from-top-2 duration-250">
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Frekvence</label>
+                          <div className="flex bg-slate-100/70 dark:bg-[#0D0D15]/60 p-1 rounded-xl gap-1 border border-slate-200/40 dark:border-[#2A2A40]/30">
                             {[
-                              { value: "none", label: "Jednorázově" },
                               { value: "weekly", label: "Týdně" },
-                              { value: "bi-weekly", label: "Každé 2 týdny" },
-                              { value: "monthly", label: "Měsíčně" }
+                              { value: "bi-weekly", label: "14 dní" },
+                              { value: "monthly", label: "Měsíc" }
                             ].map((opt) => {
-                              const isSelected = opt.value === recurrencePattern;
+                              const isSelected = recurrencePattern === opt.value;
                               return (
                                 <button
                                   key={opt.value}
                                   type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  onClick={() => {
                                     setRecurrencePattern(opt.value as any);
-                                    setIsRecurrencePatternDropdownOpen(false);
                                     setModalError(null);
                                   }}
-                                  className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                                  className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
                                     isSelected
-                                      ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
-                                      : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                      ? "bg-[#7000FF] text-white shadow-md shadow-[#7000FF]/15"
+                                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                                   }`}
                                 >
-                                  <span>{opt.label}</span>
-                                  {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                  {opt.label}
                                 </button>
                               );
                             })}
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
 
-                    {recurrencePattern !== "none" && (
-                      <div>
-                        <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Počet opakování</label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsRecurrenceCountDropdownOpen(!isRecurrenceCountDropdownOpen);
-                              setIsRecurrencePatternDropdownOpen(false);
-                              setIsAreaDropdownOpen(false);
-                              setIsDurationDropdownOpen(false);
-                            }}
-                            className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
-                          >
-                            <span>{recurrenceCount}x</span>
-                            <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isRecurrenceCountDropdownOpen ? "rotate-180" : ""}`} />
-                          </button>
-                          
-                          {isRecurrenceCountDropdownOpen && (
-                            <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
-                              {[2, 3, 4, 5, 6, 8, 10, 12].map((val) => {
-                                const isSelected = val === recurrenceCount;
-                                return (
-                                  <button
-                                    key={val}
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setRecurrenceCount(val);
-                                      setIsRecurrenceCountDropdownOpen(false);
-                                      setModalError(null);
-                                    }}
-                                    className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
-                                      isSelected
-                                        ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
-                                        : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
-                                    }`}
-                                  >
-                                    <span>{val}x</span>
-                                    {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Počet opakování</label>
+                          <div className="flex items-center justify-between bg-slate-100/70 dark:bg-[#0D0D15]/60 p-1 rounded-xl border border-slate-200/40 dark:border-[#2A2A40]/30 h-[34px]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRecurrenceCount(Math.max(2, recurrenceCount - 1));
+                                setModalError(null);
+                              }}
+                              className="w-8 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200/60 dark:hover:bg-[#1C1C2D]/60 transition-colors"
+                            >
+                              -
+                            </button>
+                            <span className="text-xs font-bold text-slate-850 dark:text-slate-150">
+                              {recurrenceCount}x
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRecurrenceCount(Math.min(12, recurrenceCount + 1));
+                                setModalError(null);
+                              }}
+                              className="w-8 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200/60 dark:hover:bg-[#1C1C2D]/60 transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
