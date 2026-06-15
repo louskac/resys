@@ -8,7 +8,7 @@ export const config = {
      * 2. /_next (Next.js internals)
      * 3. /static, /images, /uploads, and root asset files (Static assets)
      */
-    "/((?!api/|_next|static|images|uploads|favicon.ico|logo.png|logo.svg|robots.txt).*)",
+    "/((?!api/|_next|static|images|uploads|favicon.ico|logo.png|logo.svg|robots.txt|icon.png|icon.svg|apple-icon.png|manifest.webmanifest).*)",
   ],
 };
 
@@ -27,7 +27,11 @@ export function proxy(request: NextRequest) {
     url.pathname === "/favicon.ico" ||
     url.pathname === "/logo.png" ||
     url.pathname === "/logo.svg" ||
-    url.pathname === "/robots.txt"
+    url.pathname === "/robots.txt" ||
+    url.pathname === "/icon.png" ||
+    url.pathname === "/icon.svg" ||
+    url.pathname === "/apple-icon.png" ||
+    url.pathname === "/manifest.webmanifest"
   ) {
     return NextResponse.next();
   }

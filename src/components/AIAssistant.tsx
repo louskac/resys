@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, Send, Settings, X, Bot, User, Sparkles, Volume2, VolumeX, Key, Check, AlertTriangle, Calendar, Clock, MapPin, ChevronRight } from "lucide-react";
+import { Mic, Send, Settings, X, Bot, User, Sparkles, Volume2, VolumeX, RotateCcw, Check, AlertTriangle, Calendar, Clock, MapPin, ChevronRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import AILiquidCore from "./AILiquidCore";
+import AIStepper from "./AIStepper";
+import AIWaveform from "./AIWaveform";
+import AIInputBar from "./AIInputBar";
 
 interface AIAssistantProps {
   tenantId: string;
@@ -32,17 +37,84 @@ interface ConsoleState {
 
 export default function AIAssistant({ tenantId, resources, initialEvents }: AIAssistantProps) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [userApiKey, setUserApiKey] = useState("");
   const [isVoiceOutputEnabled, setIsVoiceOutputEnabled] = useState(true);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const [hasSavedKey, setHasSavedKey] = useState(false);
-  
-  // Decoupled Console State inside the Dynamic Island HUD
+  const [backdropClicks, setBackdropClicks] = useState(0);
+  const [shouldShake, setShouldShake] = useState(false);
+
+  // Sync session user to consoleState.userName if logged in
+  useEffect(() => {
+    if (session?.user?.name) {
+      const userName = session.user.name;
+      const userEmail = session.user.email || null;
+      setConsoleState(prev => {
+        if (prev.userName !== userName) {
+          return {
+            ...prev,
+            userName,
+            userEmail
+          };
+        }
+        return prev;
+      });
+    }
+  }, [session]);
+
+  // Listen to conflict status reported by the calendar view
+  useEffect(() => {
+    const handleConflictStatus = (e: Event) => {
+      const customEvent = e as CustomEvent<{ hasConflict: boolean; conflictMessage: string | null }>;
+      if (customEvent.detail) {
+        setConsoleState(prev => ({
+          ...prev,
+          hasConflict: customEvent.detail.hasConflict,
+          conflictMessage: customEvent.detail.conflictMessage
+        }));
+      }
+    };
+
+    window.addEventListener("assistant-conflict-status", handleConflictStatus);
+    return () => {
+      window.removeEventListener("assistant-conflict-status", handleConflictStatus);
+    };
+  }, []);
+
+  const lastInputWasVoiceRef = useRef(false);
+  const isVoiceOutputEnabledRef = useRef(isVoiceOutputEnabled);
+
+  // Sync isVoiceOutputEnabled with ref to avoid React stale closure issues in async callbacks
+  useEffect(() => {
+    isVoiceOutputEnabledRef.current = isVoiceOutputEnabled;
+    if (!isVoiceOutputEnabled && typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, [isVoiceOutputEnabled]);
+
+  // Reset backdrop clicks when assistant is opened or closed
+  useEffect(() => {
+    setBackdropClicks(0);
+  }, [isOpen]);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBackdropClicks(prev => {
+      const next = prev + 1;
+      if (next >= 2) {
+        setIsOpen(false);
+        return 0;
+      }
+      setShouldShake(true);
+      setTimeout(() => setShouldShake(false), 300);
+      return next;
+    });
+  };
+
+  // Console state representing resolved parameters
   const [consoleState, setConsoleState] = useState<ConsoleState>({
     resourceId: null,
     resourceName: null,
@@ -64,52 +136,71 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     }
   ]);
 
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const handleSendRef = useRef<any>(null);
 
-  // Initialize Speech Recognition & Local Storage Key
+  // Keep handleSend ref updated to avoid stale closure issues in audio transcription callbacks
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  }, [handleSend]);
+
+  // Check if MediaRecorder is supported on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        setIsSpeechSupported(true);
-        const rec = new SpeechRecognition();
-        rec.continuous = false;
-        rec.interimResults = false;
-        rec.lang = "cs-CZ";
-        
-        rec.onstart = () => {
-          setIsListening(true);
-        };
-        
-        rec.onend = () => {
-          setIsListening(false);
-        };
-        
-        rec.onerror = () => {
-          setIsListening(false);
-        };
-        
-        rec.onresult = (event: any) => {
-          const text = event.results[0][0].transcript;
-          if (text) {
-            setInputText(text);
-            handleSend(text);
-          }
-        };
-        recognitionRef.current = rec;
-      }
-
-      const key = localStorage.getItem("resys_gemini_api_key");
-      if (key) {
-        setUserApiKey(key);
-        setHasSavedKey(true);
-      }
+      const isSupported = !!(
+        navigator.mediaDevices && 
+        window.MediaRecorder
+      );
+      setIsSpeechSupported(isSupported);
     }
   }, []);
 
-  // Vocal readback output
+  // Cleanup active MediaRecorder on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        console.log("AIAssistant cleanup: stopping media recorder on unmount");
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (err) {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  // Reset assistant state to start a new booking conversation
+  const handleReset = () => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setMessages([
+      {
+        role: "assistant",
+        content: "Dobrý den! Jsem váš inteligentní asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
+      }
+    ]);
+    setConsoleState({
+      resourceId: null,
+      resourceName: null,
+      dayIndex: null,
+      startHour: null,
+      duration: null,
+      userName: session?.user?.name || null,
+      userEmail: session?.user?.email || null,
+      hasConflict: false,
+      conflictMessage: null,
+      suggestedAlternativeTime: null,
+      suggestedAlternativeResourceId: null
+    });
+    setInputText("");
+    window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
+  };
+
+  // Vocal text-to-speech feedback
   const speakText = (text: string) => {
-    if (!isVoiceOutputEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
+    if (!isVoiceOutputEnabledRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const cleanText = text.replace(/[\*\#\-\`\_]/g, "").replace(/\[.*?\]/g, "");
     const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -119,36 +210,159 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
   };
 
   const handleMicClick = () => {
-    if (!recognitionRef.current) return;
+    console.log("handleMicClick: isListening =", isListening, "mediaRecorder =", mediaRecorderRef.current);
+    
     if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      console.log("handleMicClick: stopping active recording");
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (err) {
+          console.error("handleMicClick: stop error:", err);
+        }
       }
-      recognitionRef.current.start();
+      setIsListening(false);
+      return;
     }
-  };
 
-  const saveApiKey = () => {
-    if (userApiKey.trim()) {
-      localStorage.setItem("resys_gemini_api_key", userApiKey.trim());
-      setHasSavedKey(true);
-      setShowSettings(false);
-    } else {
-      localStorage.removeItem("resys_gemini_api_key");
-      setHasSavedKey(false);
+    if (typeof window === "undefined" || !navigator.mediaDevices) {
+      console.warn("handleMicClick: Media devices are not supported in this browser environment.");
+      return;
     }
+
+    console.log("handleMicClick: request microphone permission and start recording");
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        try {
+          // Detect a supported MIME type for recording (prefer webm, fallback to mp4 or ogg)
+          let options = {};
+          if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+            options = { mimeType: "audio/webm;codecs=opus" };
+          } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+            options = { mimeType: "audio/webm" };
+          } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+            options = { mimeType: "audio/ogg;codecs=opus" };
+          } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+            options = { mimeType: "audio/mp4" };
+          }
+
+          console.log("Creating MediaRecorder with options:", options);
+          const recorder = new MediaRecorder(stream, options);
+          mediaRecorderRef.current = recorder;
+          audioChunksRef.current = [];
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+              audioChunksRef.current.push(e.data);
+            }
+          };
+
+          recorder.onstart = () => {
+            console.log("MediaRecorder onstart: recording active");
+            setIsListening(true);
+          };
+
+          recorder.onerror = (e: any) => {
+            console.error("MediaRecorder onerror:", e.error || e);
+            setIsListening(false);
+            stream.getTracks().forEach(track => track.stop());
+            
+            setMessages(prev => [
+              ...prev,
+              {
+                role: "assistant",
+                content: "Rozpoznávání hlasu selhalo kvůli chybě mikrofonu. Zkuste to prosím znovu nebo napište pokyn."
+              }
+            ]);
+          };
+
+          recorder.onstop = async () => {
+            console.log("MediaRecorder onstop: recording completed");
+            // Turn off the microphone track icons by stopping the tracks
+            stream.getTracks().forEach(track => track.stop());
+            setIsListening(false);
+
+            const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+            audioChunksRef.current = [];
+
+            if (audioBlob.size < 500) {
+              console.warn("Recorded audio blob is too small, ignoring transcription.");
+              return;
+            }
+
+            setIsLoading(true);
+            try {
+              const formData = new FormData();
+              formData.append("file", audioBlob);
+
+              console.log(`Sending ${audioBlob.size} bytes audio blob to /api/transcribe...`);
+              const response = await fetch("/api/transcribe", {
+                method: "POST",
+                body: formData
+              });
+
+              if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Chyba serveru při přepisu řeči.");
+              }
+
+              const data = await response.json();
+              console.log("Transcription result:", data.text);
+              if (data.text && data.text.trim()) {
+                setInputText(data.text);
+                lastInputWasVoiceRef.current = true;
+                if (handleSendRef.current) {
+                  handleSendRef.current(data.text);
+                }
+              }
+            } catch (err: any) {
+              console.error("Transcription execution failed:", err);
+              setMessages(prev => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Omlouvám se, nepodařilo se přepsat váš hlas: ${err.message || "Chyba sítě."}`
+                }
+              ]);
+            } finally {
+              setIsLoading(false);
+              mediaRecorderRef.current = null;
+            }
+          };
+
+          recorder.start(200);
+        } catch (err: any) {
+          console.error("Failed to construct MediaRecorder:", err);
+          setIsListening(false);
+          stream.getTracks().forEach(track => track.stop());
+        }
+      })
+      .catch(err => {
+        console.error("getUserMedia error:", err);
+        let errorMsg = "Nepodařilo se získat přístup k mikrofonu.";
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          errorMsg = "Přístup k mikrofonu byl zamítnut. Povolte prosím mikrofon v adresním řádku prohlížeče a zkuste to znovu.";
+        }
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "assistant",
+            content: errorMsg
+          }
+        ]);
+        setIsListening(false);
+      });
   };
 
-  const clearApiKey = () => {
-    localStorage.removeItem("resys_gemini_api_key");
-    setUserApiKey("");
-    setHasSavedKey(false);
-  };
-
-  // Sends prompt requests to backend assistant API route
-  const handleSend = async (textToSend?: string) => {
+  // Submit prompt requests to Gemini
+  async function handleSend(textToSend?: string) {
+    if (textToSend === undefined) {
+      lastInputWasVoiceRef.current = false;
+    }
     const text = (textToSend || inputText).trim();
     if (!text) return;
 
@@ -177,10 +391,6 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
         "Content-Type": "application/json"
       };
 
-      if (userApiKey.trim()) {
-        headers["x-gemini-api-key"] = userApiKey.trim();
-      }
-
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers,
@@ -190,7 +400,8 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           existingBookings: currentBookingsContext,
           currentDate: new Date().toISOString(),
           weekStart: getMondayOfDate(new Date(activeDateStr)).toISOString().split("T")[0],
-          activeResourceId: activeRes?.id || ""
+          activeResourceId: activeRes?.id || "",
+          loggedInUser: session?.user ? { name: session.user.name, email: session.user.email } : null
         })
       });
 
@@ -209,7 +420,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
 
       setMessages(prev => [...prev, replyMessage]);
 
-      if (replyMessage.content) {
+      if (replyMessage.content && lastInputWasVoiceRef.current) {
         speakText(replyMessage.content);
       }
 
@@ -333,6 +544,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           });
           window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
         }, 1000);
+        setTimeout(() => {
+          setIsOpen(false);
+        }, 3000);
         break;
     }
   };
@@ -341,12 +555,20 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     if (consoleState.suggestedAlternativeTime !== null) {
       const targetTimeStr = formatDecimalToTimeString(consoleState.suggestedAlternativeTime);
       const targetTimeText = `Změň rezervaci na ${consoleState.resourceName || "vybranou plochu"} na ${getDayNameCzech(consoleState.dayIndex || 0)} od ${targetTimeStr}`;
+      lastInputWasVoiceRef.current = false;
       handleSend(targetTimeText);
     }
   };
 
   const handleManualConfirm = () => {
     window.dispatchEvent(new CustomEvent("assistant-perform-booking"));
+    setMessages(prev => [
+      ...prev,
+      {
+        role: "assistant",
+        content: "Rezervace byla úspěšně potvrzena! Zavírám asistenta..."
+      }
+    ]);
     setTimeout(() => {
       setConsoleState({
         resourceId: null,
@@ -363,6 +585,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
       });
       window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
     }, 1000);
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 2500);
   };
 
   // Helper date mappings
@@ -386,52 +611,111 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   };
 
-  const isReadyToConfirm = consoleState.resourceId && consoleState.dayIndex !== null && consoleState.startHour !== null && !consoleState.hasConflict;
+  const isReadyToConfirm = !!(consoleState.resourceId && consoleState.dayIndex !== null && consoleState.startHour !== null && !consoleState.hasConflict);
 
   return (
     <>
-      {/* Floating Action Button (FAB) */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-tr from-[#7000FF] to-[#3B82F6] text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 z-50 cursor-pointer group"
-          title="Otevřít AI Asistenta"
-        >
-          <div className="absolute inset-0 rounded-full bg-[#7000FF]/20 animate-ping" />
-          <Sparkles size={22} className="group-hover:rotate-12 transition-transform duration-300 text-white" />
-        </button>
+      {/* Backdrop for disabling everything else when AI is open */}
+      {isOpen && (
+        <div 
+          onClick={handleBackdropClick}
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[1.5px] transition-opacity duration-300 cursor-default animate-fadeIn"
+        />
       )}
 
-      {/* Unified Compact Dynamic Island voice HUD */}
+      {/* Floating Action Button (FAB) redesigned as a premium centered AI Command Bar */}
+      {!isOpen && (
+        <AILiquidCore onClick={() => setIsOpen(true)} />
+      )}
+
+      {/* Google Stitch inspired Dynamic Island Voice HUD */}
       {isOpen && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-[550px] bg-[#0E0E18]/85 dark:bg-[#07070C]/90 border border-slate-700/30 dark:border-white/10 text-white p-4.5 rounded-3xl shadow-[0_12px_45px_rgba(112,0,255,0.22)] backdrop-blur-2xl flex flex-col gap-4 z-50 transition-all duration-350 font-sans border-b-purple-500/30">
+        <div className={`fixed bottom-10 md:bottom-12 left-0 right-0 mx-auto w-[95%] max-w-[550px] animated-glowing-border p-5 pt-14 pb-5 flex flex-col gap-4 z-50 transition-[opacity,background-color,border-color,box-shadow,backdrop-filter] duration-350 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
           
-          {/* Header Controls */}
-          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          {/* Subtle breathing liquid background mesh matching the design language */}
+          <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
+            {/* Ambient Purple Blur */}
+            <div className="absolute top-[-80px] left-[-60px] w-[260px] h-[260px] rounded-full bg-[#7000FF] opacity-[0.05] dark:opacity-[0.08] blur-[70px] animate-blob-orbit-1" />
+            {/* Ambient Cyan Blur */}
+            <div className="absolute bottom-[-100px] right-[-50px] w-[240px] h-[240px] rounded-full bg-[#00F5FF] opacity-[0.04] dark:opacity-[0.07] blur-[65px] animate-blob-orbit-2" />
+            {/* Ambient Pink Blur */}
+            <div className="absolute top-[30%] left-[35%] w-[220px] h-[220px] rounded-full bg-[#EC4899] opacity-[0.03] dark:opacity-[0.05] blur-[60px] animate-blob-orbit-3" />
+          </div>
+
+          {/* Stepper circles row half-attached to the top edge */}
+          <AIStepper
+            steps={[
+              {
+                id: "resource",
+                label: "Plocha",
+                icon: <MapPin size={18} />,
+                isCompleted: !!consoleState.resourceName,
+                tooltip: consoleState.resourceName ? `Plocha: ${consoleState.resourceName}` : "Plocha",
+                animationDelay: "0ms"
+              },
+              {
+                id: "day",
+                label: "Datum",
+                icon: <Calendar size={18} />,
+                isCompleted: consoleState.dayIndex !== null,
+                tooltip: consoleState.dayIndex !== null ? `Datum: ${getDayNameCzech(consoleState.dayIndex)}` : "Datum",
+                animationDelay: "75ms"
+              },
+              {
+                id: "time",
+                label: "Čas",
+                icon: <Clock size={18} />,
+                isCompleted: consoleState.startHour !== null,
+                isError: consoleState.hasConflict,
+                tooltip: consoleState.startHour !== null ? `Čas: ${formatDecimalToTimeString(consoleState.startHour)}` : "Čas",
+                animationDelay: "150ms"
+              },
+              {
+                id: "client",
+                label: "Klient",
+                icon: <User size={18} />,
+                isCompleted: !!consoleState.userName && !!consoleState.resourceName && consoleState.dayIndex !== null && consoleState.startHour !== null,
+                tooltip: consoleState.userName ? `Klient: ${consoleState.userName}` : "Klient",
+                animationDelay: "225ms"
+              }
+            ]}
+          />
+
+          {/* Inline header details showing parameter summary */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5 z-10 mt-1 select-none">
             <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse shadow-[0_0_8px_#a855f7]" />
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
               <span className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400">
-                {isListening ? "Poslouchám hlas..." : isLoading ? "Přemýšlím..." : "AI Hlasový Asistent"}
+                {isListening ? "Poslouchám hlas..." : isLoading ? "Zpracovávám..." : "AI Hlasový Asistent"}
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
+            {/* Tiny summary line of completed steps */}
+            <div className="flex gap-2 text-[9px] font-bold text-zinc-400 tracking-wide max-w-[55%] truncate">
+              {consoleState.resourceName && <span className="text-blue-400 truncate">● {consoleState.resourceName}</span>}
+              {consoleState.dayIndex !== null && <span className="text-purple-400 truncate">● {getDayNameCzech(consoleState.dayIndex)}</span>}
+            </div>
+            <div className="flex items-center gap-1.5 z-10">
               <button
-                onClick={() => setIsVoiceOutputEnabled(!isVoiceOutputEnabled)}
+                onClick={() => {
+                  const nextVal = !isVoiceOutputEnabled;
+                  setIsVoiceOutputEnabled(nextVal);
+                  if (typeof window !== "undefined" && window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                  }
+                }}
                 className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                   isVoiceOutputEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-500 hover:text-white"
                 }`}
-                title={isVoiceOutputEnabled ? "Vypnout mluvení" : "Zapnout mluvení"}
+                title={isVoiceOutputEnabled ? "Mluvení zapnuto" : "Mluvení vypnuto"}
               >
                 {isVoiceOutputEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
               </button>
               <button
-                onClick={() => setShowSettings(!showSettings)}
-                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                  showSettings ? "border-purple-500/30 text-purple-400 bg-purple-500/5" : "border-white/5 text-zinc-500 hover:text-white"
-                }`}
-                title="API Nastavení"
+                onClick={handleReset}
+                className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-450 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
+                title="Restartovat asistenta"
               >
-                <Key size={13} />
+                <RotateCcw size={13} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
@@ -442,68 +726,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
             </div>
           </div>
 
-          {/* Stepper horizontal parameter capsules */}
-          <div className="grid grid-cols-4 gap-2 text-center select-none">
-            {/* Step 1: PLOCHA */}
-            <div
-              className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition-all duration-200 truncate flex items-center justify-center gap-1.5 ${
-                consoleState.resourceName
-                  ? "bg-blue-500/10 text-blue-400 border-blue-500/25 shadow-[0_0_8px_rgba(59,130,246,0.1)]"
-                  : "bg-white/5 border-dashed border-white/10 text-zinc-500"
-              }`}
-              title={consoleState.resourceName || "Vyberte plochu"}
-            >
-              <MapPin size={10} className={consoleState.resourceName ? "text-blue-400" : "text-zinc-600"} />
-              <span className="truncate">{consoleState.resourceName || "Plocha?"}</span>
-            </div>
-
-            {/* Step 2: DATUM */}
-            <div
-              className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition-all duration-200 truncate flex items-center justify-center gap-1.5 ${
-                consoleState.dayIndex !== null
-                  ? "bg-purple-500/10 text-purple-400 border-purple-500/25 shadow-[0_0_8px_rgba(168,85,247,0.1)]"
-                  : "bg-white/5 border-dashed border-white/10 text-zinc-500"
-              }`}
-              title={getDayNameCzech(consoleState.dayIndex) || "Zvolte datum"}
-            >
-              <Calendar size={10} className={consoleState.dayIndex !== null ? "text-purple-400" : "text-zinc-600"} />
-              <span className="truncate">{getDayNameCzech(consoleState.dayIndex) || "Datum?"}</span>
-            </div>
-
-            {/* Step 3: ČAS */}
-            <div
-              className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition-all duration-200 truncate flex items-center justify-center gap-1.5 ${
-                consoleState.startHour !== null
-                  ? consoleState.hasConflict
-                    ? "bg-rose-500/15 text-rose-400 border-rose-500/25 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.15)]"
-                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
-                  : "bg-white/5 border-dashed border-white/10 text-zinc-500"
-              }`}
-              title={consoleState.startHour !== null ? `${formatDecimalToTimeString(consoleState.startHour)}` : "Zvolte čas"}
-            >
-              <Clock size={10} className={consoleState.startHour !== null ? (consoleState.hasConflict ? "text-rose-400 animate-bounce" : "text-emerald-400") : "text-zinc-600"} />
-              <span className="truncate">
-                {consoleState.startHour !== null ? formatDecimalToTimeString(consoleState.startHour) : "Čas?"}
-              </span>
-            </div>
-
-            {/* Step 4: KLIENT */}
-            <div
-              className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition-all duration-200 truncate flex items-center justify-center gap-1.5 ${
-                consoleState.userName
-                  ? "bg-purple-500/10 text-purple-400 border-purple-500/25 shadow-[0_0_8px_rgba(168,85,247,0.1)]"
-                  : "bg-white/5 border-dashed border-white/10 text-zinc-500"
-              }`}
-              title={consoleState.userName || "Zadejte jméno"}
-            >
-              <User size={10} className={consoleState.userName ? "text-purple-300" : "text-zinc-600"} />
-              <span className="truncate">{consoleState.userName || "Klient?"}</span>
-            </div>
-          </div>
-
-          {/* Conflict warnings inside capsule */}
+          {/* Overlap conflict warning alert box */}
           {consoleState.hasConflict && (
-            <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/15 space-y-2.5 animate-fadeIn">
+            <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/15 space-y-2.5 animate-fadeIn z-10">
               <div className="flex gap-2">
                 <AlertTriangle size={13} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-[10.5px] text-zinc-300 leading-normal">
@@ -512,13 +737,13 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
               </div>
               
               {consoleState.suggestedAlternativeTime !== null && (
-                <div className="p-2.5 bg-black/30 border border-white/5 rounded-xl flex items-center justify-between text-xs">
+                <div className="p-2.5 bg-black/35 border border-white/5 rounded-xl flex items-center justify-between text-xs">
                   <span className="text-[10px] font-semibold text-emerald-400">
                     Doporučeno: {getDayNameCzech(consoleState.dayIndex)} od {formatDecimalToTimeString(consoleState.suggestedAlternativeTime)}
                   </span>
                   <button
                     onClick={handleApplyAlternative}
-                    className="text-[9px] font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-0.5"
+                    className="text-[9px] font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-0.5"
                   >
                     Zvolit návrh <ChevronRight size={10} />
                   </button>
@@ -527,102 +752,30 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
             </div>
           )}
 
-          {/* Siri waveforms when recording or response text */}
+          {/* Siri fluid waveforms or conversation response text */}
           {isListening ? (
-            <div className="flex items-center justify-center gap-2 py-3 bg-black/15 rounded-2xl border border-white/5">
-              <span className="w-1.5 h-3 bg-purple-500 rounded-full wave-bar shadow-[0_0_6px_#a855f7]" style={{ animationDelay: "0ms" }} />
-              <span className="w-1.5 h-7 bg-blue-500 rounded-full wave-bar shadow-[0_0_6px_#3b82f6]" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-10 bg-purple-400 rounded-full wave-bar shadow-[0_0_6px_#c084fc]" style={{ animationDelay: "300ms" }} />
-              <span className="w-1.5 h-12 bg-cyan-400 rounded-full wave-bar shadow-[0_0_6px_#22d3ee]" style={{ animationDelay: "450ms" }} />
-              <span className="w-1.5 h-7 bg-blue-400 rounded-full wave-bar shadow-[0_0_6px_#60a5fa]" style={{ animationDelay: "600ms" }} />
-              <span className="w-1.5 h-3 bg-purple-500 rounded-full wave-bar shadow-[0_0_6px_#a855f7]" style={{ animationDelay: "750ms" }} />
-              <span className="text-[10px] text-purple-300 font-bold tracking-widest uppercase ml-4 animate-pulse select-none">
-                Poslouchám hlas...
-              </span>
-            </div>
+            <AIWaveform />
           ) : (
-            <div className="text-[11.5px] text-zinc-300 italic min-h-[38px] flex items-center bg-black/15 px-3.5 py-2.5 rounded-2xl border border-white/5 select-none leading-relaxed break-words">
-              {messages[messages.length - 1]?.content || "Jak vám mohu dnes pomoci?"}
+            <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/40 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10">
+              {messages[messages.length - 1]?.content || "Jak vám mohu pomoci?"}
             </div>
           )}
 
-          {/* Input field + Buttons */}
-          <div className="flex items-center gap-2">
-            {isSpeechSupported && (
-              <button
-                onClick={handleMicClick}
-                className={`h-11 w-11 rounded-2xl flex items-center justify-center border transition-all cursor-pointer ${
-                  isListening
-                    ? "border-rose-500 bg-rose-500/15 text-rose-400 animate-pulse scale-105 shadow-[0_0_12px_rgba(239,68,68,0.25)]"
-                    : "border-white/10 text-zinc-300 bg-white/5 hover:bg-white/10 hover:border-purple-500/30"
-                }`}
-              >
-                <Mic size={18} />
-              </button>
-            )}
-
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder={isListening ? "Mluvte nyní..." : "Napište pokyn..."}
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 h-11 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
-              disabled={isListening || isLoading}
-            />
-
-            {/* If ready to confirm, render glowing green CTA confirm button, otherwise standard send button */}
-            {isReadyToConfirm ? (
-              <button
-                onClick={handleManualConfirm}
-                className="h-11 px-4.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-[11px] font-extrabold tracking-wider uppercase shadow-md shadow-emerald-600/20 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Check size={14} className="text-emerald-100" />
-                Potvrdit
-              </button>
-            ) : (
-              <button
-                onClick={() => handleSend()}
-                className="h-11 w-11 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition-colors cursor-pointer"
-                disabled={isListening || isLoading}
-              >
-                <Send size={16} />
-              </button>
-            )}
-          </div>
-
-          {/* API settings drawer inside capsule */}
-          {showSettings && (
-            <div className="p-3 bg-black/45 rounded-2xl border border-white/15 space-y-2 mt-1 animate-fadeIn">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-400">
-                <Key size={13} />
-                <span>Klíč pro Gemini API</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={userApiKey}
-                  onChange={(e) => setUserApiKey(e.target.value)}
-                  placeholder="Vložte AIzaSy... API klíč"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-purple-500"
-                />
-                <button
-                  onClick={saveApiKey}
-                  className="bg-purple-600 hover:bg-purple-500 text-white rounded-xl px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Uložit
-                </button>
-              </div>
-              {hasSavedKey && (
-                <div className="flex items-center justify-between text-[10px] text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/15">
-                  <span>Aktivní klíč v localStorage</span>
-                  <button onClick={clearApiKey} className="text-rose-400 font-bold hover:underline cursor-pointer">
-                    Smazat
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Input Hud bar + Confirm CTA */}
+          <AIInputBar
+            inputText={inputText}
+            onChangeInput={(val) => {
+              setInputText(val);
+              lastInputWasVoiceRef.current = false;
+            }}
+            onSubmit={() => handleSend()}
+            onMicClick={handleMicClick}
+            onConfirm={handleManualConfirm}
+            isListening={isListening}
+            isLoading={isLoading}
+            isSpeechSupported={isSpeechSupported}
+            isReadyToConfirm={isReadyToConfirm}
+          />
         </div>
       )}
     </>

@@ -588,7 +588,7 @@ export default function CalendarView({
   };
 
   // Helper functions for concurrent physical sector conflict checks using tree-traversal
-  const getConflictingResourceIds = (resId: string) => {
+  const getConflictingResourceIds = React.useCallback((resId: string) => {
     const getAncestors = (id: string): string[] => {
       const res = resources.find(r => r.id === id);
       if (!res || !res.parentId) return [];
@@ -607,9 +607,9 @@ export default function CalendarView({
       ...getAncestors(resId),
       ...getDescendants(resId)
     ];
-  };
+  }, [resources]);
 
-  const isResourceAvailable = (resId: string, dayIdx: number | null, startStr: string, duration: number) => {
+  const isResourceAvailable = React.useCallback((resId: string, dayIdx: number | null, startStr: string, duration: number) => {
     if (dayIdx === null) return true;
     const [sh, sm] = startStr.split(":").map(Number);
     const startHour = sh + sm / 60;
@@ -629,7 +629,7 @@ export default function CalendarView({
     });
     
     return !hasOverlap;
-  };
+  }, [initialEvents, getConflictingResourceIds]);
 
   // Dynamic style mapper based on resource name hashes for any N resources
   const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false) => {
@@ -1115,14 +1115,15 @@ export default function CalendarView({
       } | null>;
       setDraftBooking(customEvent.detail);
       if (customEvent.detail) {
+        setBookingType("custom");
         setCustomResourceId(customEvent.detail.resourceId);
         setSelectedDayIndex(customEvent.detail.dayIndex);
         setSelectedTimeStr(formatHourString(customEvent.detail.startHour));
         setCustomDuration(customEvent.detail.duration);
         setGuestName(customEvent.detail.userName);
-        if (customEvent.detail.userEmail) {
-          setGuestEmail(customEvent.detail.userEmail);
-        }
+        setGuestEmail(customEvent.detail.userEmail || `${customEvent.detail.userName.toLowerCase().replace(/[^a-z0-9]/g, "") || "guest"}@example.com`);
+      } else {
+        setBookingType(null);
       }
     };
 
@@ -1151,6 +1152,28 @@ export default function CalendarView({
       window.removeEventListener("assistant-perform-booking", handlePerformBooking);
     };
   }, [resources, pathname, router, formatHourString, handleBooking]);
+
+  // Synchronize conflict status with AI assistant HUD
+  useEffect(() => {
+    if (bookingType === "custom" && selectedDayIndex !== null && selectedTimeStr && customResourceId) {
+      const available = isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration);
+      window.dispatchEvent(new CustomEvent("assistant-conflict-status", {
+        detail: {
+          hasConflict: !available,
+          conflictMessage: !available 
+            ? "Vybraná plocha/sektor není v tomto čase a délce trvání k dispozici kvůli překrývající se rezervaci." 
+            : null
+        }
+      }));
+    } else {
+      window.dispatchEvent(new CustomEvent("assistant-conflict-status", {
+        detail: {
+          hasConflict: false,
+          conflictMessage: null
+        }
+      }));
+    }
+  }, [bookingType, selectedDayIndex, selectedTimeStr, customResourceId, customDuration, isResourceAvailable]);
 
   return (
     <div className="p-6 bg-[#FAFAFD] dark:bg-[#060608] text-slate-800 dark:text-slate-100 border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl relative transition-all duration-300 font-sans shadow-2xl">
@@ -1307,7 +1330,7 @@ export default function CalendarView({
               </div>
 
               {/* Columns 2-8: Day columns */}
-              {DAYS.map((day) => {
+              {DAYS.map((day, dayIdx) => {
                 const dayEvents = events.filter((e) => e.dayIndex === day.dbDayIndex);
                 
                 // Now line calculation
@@ -1581,6 +1604,26 @@ export default function CalendarView({
                                    return getResourceStyles(resourceName).barColor;
                                   };
 
+                                const tooltipAlignmentClass = (() => {
+                                  if (viewMode === "week") {
+                                    if (dayIdx === 0) return "left-0 translate-x-0";
+                                    if (dayIdx === 6) return "right-0 left-auto translate-x-0";
+                                    if (dayIdx === 5) return "right-0 left-auto translate-x-0";
+                                    if (dayIdx === 1 && event.totalLanes && event.totalLanes > 1 && event.lane === 0) {
+                                      return "left-0 translate-x-0";
+                                    }
+                                    if (dayIdx === 4 && event.totalLanes && event.totalLanes > 1 && event.lane === event.totalLanes - 1) {
+                                      return "right-0 left-auto translate-x-0";
+                                    }
+                                  } else if (viewMode === "day") {
+                                    if (event.totalLanes && event.totalLanes > 1) {
+                                      if (event.lane === 0) return "left-0 translate-x-0";
+                                      if (event.lane === event.totalLanes - 1) return "right-0 left-auto translate-x-0";
+                                    }
+                                  }
+                                  return "left-1/2 -translate-x-1/2";
+                                })();
+
                                 const tooltipBorderClass = (() => {
                                   const color = (styles as any).colorName || "indigo";
                                   const borderClasses: Record<string, string> = {
@@ -1596,7 +1639,7 @@ export default function CalendarView({
                                   return borderClasses[color] || "border-indigo-500/25 dark:border-indigo-500/20";
                                 })();
 
-                                const tooltipClass = `absolute left-1/2 -translate-x-1/2 w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-2xl border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`;
+                                const tooltipClass = `absolute ${tooltipAlignmentClass} w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-2xl border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`;
 
                                 return (
                                   <div className={tooltipClass}>

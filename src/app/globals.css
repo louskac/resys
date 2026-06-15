@@ -384,4 +384,149 @@ body {
   border: 1px solid rgba(112, 0, 255, 0.14);
 }
 
+/* Google AI Stitch animated border path & glassmorphism */
+.animated-glowing-border {
+  border-radius: 28px;
+  background: rgba(15, 15, 24, 0.82); /* Dark glass background for contrast in light mode */
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  border: none;
+  box-shadow: 
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 16px 64px rgba(0, 0, 0, 0.45);
+}
+
+.dark .animated-glowing-border {
+  background: rgba(10, 10, 15, 0.88); /* Rich dark glass for dark mode */
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 16px 64px rgba(0, 0, 0, 0.65);
+}
+
+/* Moving crisp border */
+.animated-glowing-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  padding: 1.5px; /* Premium crisp border width */
+  background: linear-gradient(90deg, #7000FF, #3B82F6, #00F5FF, #8B5CF6, #7000FF);
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: stitch-glow-border 4s linear infinite;
+  opacity: 0.95;
+  z-index: 10;
+}
+
+/* Moving soft blurred drop-glow (halo) shadow */
+.animated-glowing-border::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 30px;
+  background: linear-gradient(90deg, #7000FF, #3B82F6, #00F5FF, #8B5CF6, #7000FF);
+  background-size: 200% 200%;
+  z-index: -1;
+  filter: blur(14px);
+  opacity: 0.22;
+  pointer-events: none;
+  animation: stitch-glow-border 4s linear infinite;
+}
+
+.dark .animated-glowing-border::after {
+  opacity: 0.42;
+  filter: blur(16px);
+}
+
+@keyframes stitch-glow-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Futuristic Morphing Blob Animation */
+@keyframes morphing-blob {
+  0% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: rotate(0deg);
+  }
+  34% {
+    border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+  }
+  67% {
+    border-radius: 28% 72% 37% 63% / 51% 43% 57% 49%;
+  }
+  100% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: rotate(360deg);
+  }
+}
+
+.animate-morphing-blob {
+  animation: morphing-blob 8s ease-in-out infinite;
+}
+
+/* Shake animation for AI Assistant backdrop dismiss */
+@keyframes dynamic-shake {
+  0%, 100% { transform: translateX(0) scale(1); }
+  20%, 60% { transform: translateX(-8px) scale(1.003); }
+  40%, 80% { transform: translateX(8px) scale(1.003); }
+}
+
+.animate-dynamic-shake {
+  animation: dynamic-shake 0.3s ease-in-out;
+  transition: none !important;
+}
+
+/* Alternate Morphing Blob Animation */
+@keyframes morphing-blob-alt {
+  0% {
+    border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+    transform: rotate(0deg) scale(0.95);
+  }
+  50% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+    transform: rotate(360deg) scale(0.95);
+  }
+}
+
+.animate-morphing-blob-alt {
+  animation: morphing-blob-alt 10s ease-in-out infinite;
+}
+
+/* Siri-style Liquid Blob Orbiting Animations - restricted to prevent edge clipping */
+@keyframes blob-orbit-1 {
+  0%, 100% { transform: translate(-5px, -4px) scale(1); }
+  33% { transform: translate(6px, 3px) scale(1.12); }
+  66% { transform: translate(-2px, 5px) scale(0.88); }
+}
+@keyframes blob-orbit-2 {
+  0%, 100% { transform: translate(5px, 4px) scale(0.88); }
+  33% { transform: translate(-5px, -6px) scale(1.15); }
+  66% { transform: translate(3px, -2px) scale(0.92); }
+}
+@keyframes blob-orbit-3 {
+  0%, 100% { transform: translate(2px, -5px) scale(1.1); }
+  50% { transform: translate(-6px, 3px) scale(0.82); }
+}
+
+.animate-blob-orbit-1 {
+  animation: blob-orbit-1 6s ease-in-out infinite;
+}
+.animate-blob-orbit-2 {
+  animation: blob-orbit-2 5s ease-in-out infinite;
+}
+.animate-blob-orbit-3 {
+  animation: blob-orbit-3 7s ease-in-out infinite;
+}
+
 
