@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Mic, Send, Check } from "lucide-react";
 
 interface AIInputBarProps {
@@ -30,6 +30,17 @@ export default function AIInputBar({
   placeholder,
   disabled = false
 }: AIInputBarProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isLoading && !isListening && !disabled) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isListening, disabled]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -57,6 +68,7 @@ export default function AIInputBar({
       )}
 
       <input
+        ref={inputRef}
         type="text"
         id="ai-assistant-input"
         autoComplete="off"
