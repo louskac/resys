@@ -33,6 +33,7 @@ interface CalendarEvent {
   resourceId: string;
   isOccupied?: boolean;
   resourceName?: string;
+  recurrenceGroup?: string | null;
 }
 
 interface TenantAttributes {
@@ -195,6 +196,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       resourceId: booking.resourceId,
       isOccupied: true, // Confirmed bookings are always occupied
       resourceName: booking.resource.name,
+      recurrenceGroup: booking.recurrenceGroup,
     });
   });
 

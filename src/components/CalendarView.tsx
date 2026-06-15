@@ -20,6 +20,7 @@ export interface CalendarEvent {
   resourceName?: string;
   lane?: number;
   totalLanes?: number;
+  recurrenceGroup?: string | null;
 }
 
 interface CalendarViewProps {
@@ -343,6 +344,10 @@ export default function CalendarView({
     setIsPending(false);
     setIsAreaDropdownOpen(false);
     setIsDurationDropdownOpen(false);
+    setRecurrencePattern("none");
+    setRecurrenceCount(4);
+    setIsRecurrencePatternDropdownOpen(false);
+    setIsRecurrenceCountDropdownOpen(false);
     router.refresh();
   };
 
@@ -786,6 +791,12 @@ export default function CalendarView({
   const [isAreaDropdownOpen, setIsAreaDropdownOpen] = useState(false);
   const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false);
 
+  // Recurrence states
+  const [recurrencePattern, setRecurrencePattern] = useState<"none" | "weekly" | "bi-weekly" | "monthly">("none");
+  const [recurrenceCount, setRecurrenceCount] = useState<number>(4);
+  const [isRecurrencePatternDropdownOpen, setIsRecurrencePatternDropdownOpen] = useState(false);
+  const [isRecurrenceCountDropdownOpen, setIsRecurrenceCountDropdownOpen] = useState(false);
+
   // Guest booking form states
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -793,7 +804,15 @@ export default function CalendarView({
   const [isPending, setIsPending] = useState(false);
 
   // Custom alert and confirmation modal states
-  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void | Promise<void> } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    onThirdOption?: () => void | Promise<void>;
+    thirdOptionLabel?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  } | null>(null);
   const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; title: string; message: string; onClose?: () => void } | null>(null);
 
   // AI Assistant custom states
@@ -989,6 +1008,8 @@ export default function CalendarView({
     if (bookingType === "event" && selectedEvent) {
       payload.scheduleRuleId = selectedEvent.id;
       payload.dayIndex = selectedEvent.dayIndex;
+      payload.recurrencePattern = recurrencePattern;
+      payload.recurrenceCount = recurrenceCount;
     } else if (bookingType === "custom" && selectedDayIndex !== null) {
       // Calculate endTime based on custom duration selection
       const [sh, sm] = selectedTimeStr.split(":").map(Number);
@@ -1013,6 +1034,8 @@ export default function CalendarView({
       payload.dayIndex = selectedDayIndex;
       payload.startTime = selectedTimeStr;
       payload.endTime = calculatedEndTime;
+      payload.recurrencePattern = recurrencePattern;
+      payload.recurrenceCount = recurrenceCount;
     } else {
       setIsPending(false);
       return;
@@ -1112,6 +1135,8 @@ export default function CalendarView({
         duration: number;
         userName: string;
         userEmail?: string;
+        recurrencePattern?: "none" | "weekly" | "bi-weekly" | "monthly";
+        recurrenceCount?: number;
       } | null>;
       setDraftBooking(customEvent.detail);
       if (customEvent.detail) {
@@ -1122,6 +1147,8 @@ export default function CalendarView({
         setCustomDuration(customEvent.detail.duration);
         setGuestName(customEvent.detail.userName);
         setGuestEmail(customEvent.detail.userEmail || `${customEvent.detail.userName.toLowerCase().replace(/[^a-z0-9]/g, "") || "guest"}@example.com`);
+        setRecurrencePattern(customEvent.detail.recurrencePattern || "none");
+        setRecurrenceCount(customEvent.detail.recurrenceCount || 4);
       } else {
         setBookingType(null);
       }
@@ -2027,6 +2054,116 @@ export default function CalendarView({
                     </div>
                   </div>
 
+                  {/* Recurrence Selection */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Opakování</label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsRecurrencePatternDropdownOpen(!isRecurrencePatternDropdownOpen);
+                            setIsRecurrenceCountDropdownOpen(false);
+                            setIsAreaDropdownOpen(false);
+                            setIsDurationDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                        >
+                          <span>
+                            {recurrencePattern === "none" ? "Jednorázově" : 
+                             recurrencePattern === "weekly" ? "Týdně" : 
+                             recurrencePattern === "bi-weekly" ? "Každé 2 týdny" : "Měsíčně"}
+                          </span>
+                          <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isRecurrencePatternDropdownOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        
+                        {isRecurrencePatternDropdownOpen && (
+                          <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                            {[
+                              { value: "none", label: "Jednorázově" },
+                              { value: "weekly", label: "Týdně" },
+                              { value: "bi-weekly", label: "Každé 2 týdny" },
+                              { value: "monthly", label: "Měsíčně" }
+                            ].map((opt) => {
+                              const isSelected = opt.value === recurrencePattern;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRecurrencePattern(opt.value as any);
+                                    setIsRecurrencePatternDropdownOpen(false);
+                                    setModalError(null);
+                                  }}
+                                  className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                                    isSelected
+                                      ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                                      : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                  }`}
+                                >
+                                  <span>{opt.label}</span>
+                                  {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {recurrencePattern !== "none" && (
+                      <div>
+                        <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Počet opakování</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsRecurrenceCountDropdownOpen(!isRecurrenceCountDropdownOpen);
+                              setIsRecurrencePatternDropdownOpen(false);
+                              setIsAreaDropdownOpen(false);
+                              setIsDurationDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                          >
+                            <span>{recurrenceCount}x</span>
+                            <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isRecurrenceCountDropdownOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          
+                          {isRecurrenceCountDropdownOpen && (
+                            <div className="absolute left-0 right-0 mt-1.5 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl z-55 overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+                              {[2, 3, 4, 5, 6, 8, 10, 12].map((val) => {
+                                const isSelected = val === recurrenceCount;
+                                return (
+                                  <button
+                                    key={val}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRecurrenceCount(val);
+                                      setIsRecurrenceCountDropdownOpen(false);
+                                      setModalError(null);
+                                    }}
+                                    className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                                      isSelected
+                                        ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                                        : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                    }`}
+                                  >
+                                    <span>{val}x</span>
+                                    {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {!isCurrentSelectionAvailable && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-550 dark:text-red-400 text-[10px] p-3 rounded-xl font-medium leading-normal flex items-start gap-1.5">
                       <AlertCircle size={13} className="text-red-500 shrink-0 mt-0.5" />
@@ -2117,43 +2254,60 @@ export default function CalendarView({
                 </button>
                 <button
                   onClick={() => {
-                    setConfirmModal({
-                      title: "Zrušit rezervaci",
-                      message: "Opravdu chcete zrušit tuto rezervaci?",
-                      onConfirm: async () => {
-                        try {
-                          const res = await fetch(`/api/bookings?bookingId=${selectedEvent.id}`, {
-                            method: "DELETE"
+                    const hasSeries = !!selectedEvent.recurrenceGroup;
+                    const executeCancellation = async (cancelSeries: boolean) => {
+                      try {
+                        const res = await fetch(`/api/bookings?bookingId=${selectedEvent.id}&cancelSeries=${cancelSeries}`, {
+                          method: "DELETE"
+                        });
+                        if (res.ok) {
+                          setNotification({
+                            type: "success",
+                            title: "Rezervace zrušena",
+                            message: cancelSeries ? "Celá série rezervací byla úspěšně zrušena!" : "Rezervace byla úspěšně zrušena!",
+                            onClose: () => {
+                              setBookingType(null);
+                              setSelectedEvent(null);
+                              window.location.reload();
+                            }
                           });
-                          if (res.ok) {
-                            setNotification({
-                              type: "success",
-                              title: "Rezervace zrušena",
-                              message: "Rezervace byla úspěšně zrušena!",
-                              onClose: () => {
-                                setBookingType(null);
-                                setSelectedEvent(null);
-                                window.location.reload();
-                              }
-                            });
-                          } else {
-                            const data = await res.json();
-                            setNotification({
-                              type: "error",
-                              title: "Zrušení selhalo",
-                              message: "Chyba při rušení rezervace: " + (data.error || "Neznámá chyba")
-                            });
-                          }
-                        } catch (err) {
-                          console.error(err);
+                        } else {
+                          const data = await res.json();
                           setNotification({
                             type: "error",
-                            title: "Chyba",
-                            message: "Nepodařilo se připojit k serveru."
+                            title: "Zrušení selhalo",
+                            message: "Chyba při rušení rezervace: " + (data.error || "Neznámá chyba")
                           });
                         }
+                      } catch (err) {
+                        console.error(err);
+                        setNotification({
+                          type: "error",
+                          title: "Chyba",
+                          message: "Nepodařilo se připojit k serveru."
+                        });
                       }
-                    });
+                    };
+
+                    if (hasSeries) {
+                      setConfirmModal({
+                        title: "Zrušit rezervaci",
+                        message: "Tato rezervace je součástí opakující se série. Chcete zrušit pouze tento termín, nebo celou sérii?",
+                        confirmLabel: "Zrušit celou sérii",
+                        cancelLabel: "Zpět",
+                        thirdOptionLabel: "Pouze tento termín",
+                        onConfirm: () => executeCancellation(true),
+                        onThirdOption: () => executeCancellation(false)
+                      });
+                    } else {
+                      setConfirmModal({
+                        title: "Zrušit rezervaci",
+                        message: "Opravdu chcete zrušit tuto rezervaci?",
+                        confirmLabel: "Zrušit",
+                        cancelLabel: "Zpět",
+                        onConfirm: () => executeCancellation(false)
+                      });
+                    }
                   }}
                   className="btn-danger-filled flex-1 py-2.5 rounded-xl text-xs font-bold"
                 >
@@ -2205,8 +2359,8 @@ export default function CalendarView({
         isOpen={confirmModal !== null}
         title={confirmModal?.title || ""}
         message={confirmModal?.message || ""}
-        confirmLabel="Potvrdit"
-        cancelLabel="Zrušit"
+        confirmLabel={confirmModal?.confirmLabel || "Potvrdit"}
+        cancelLabel={confirmModal?.cancelLabel || "Zrušit"}
         onCancel={() => setConfirmModal(null)}
         onConfirm={async () => {
           if (confirmModal) {
@@ -2215,6 +2369,8 @@ export default function CalendarView({
             await onConf();
           }
         }}
+        onThirdOption={confirmModal?.onThirdOption}
+        thirdOptionLabel={confirmModal?.thirdOptionLabel}
       />
 
       {/* 5. Reusable Alert/Notification Modal */}

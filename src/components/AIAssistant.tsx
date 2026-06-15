@@ -33,6 +33,8 @@ interface ConsoleState {
   conflictMessage: string | null;
   suggestedAlternativeTime: number | null;
   suggestedAlternativeResourceId: string | null;
+  recurrencePattern: "none" | "weekly" | "bi-weekly" | "monthly" | null;
+  recurrenceCount: number | null;
 }
 
 export default function AIAssistant({ tenantId, resources, initialEvents }: AIAssistantProps) {
@@ -114,7 +116,6 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     });
   };
 
-  // Console state representing resolved parameters
   const [consoleState, setConsoleState] = useState<ConsoleState>({
     resourceId: null,
     resourceName: null,
@@ -126,7 +127,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     hasConflict: false,
     conflictMessage: null,
     suggestedAlternativeTime: null,
-    suggestedAlternativeResourceId: null
+    suggestedAlternativeResourceId: null,
+    recurrencePattern: "none",
+    recurrenceCount: null
   });
 
   const [messages, setMessages] = useState<Message[]>([
@@ -192,7 +195,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
       hasConflict: false,
       conflictMessage: null,
       suggestedAlternativeTime: null,
-      suggestedAlternativeResourceId: null
+      suggestedAlternativeResourceId: null,
+      recurrencePattern: "none",
+      recurrenceCount: null
     });
     setInputText("");
     window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
@@ -492,7 +497,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           hasConflict: !!args.hasConflict,
           conflictMessage: args.conflictMessage || null,
           suggestedAlternativeTime: args.suggestedAlternativeTime !== undefined ? args.suggestedAlternativeTime : null,
-          suggestedAlternativeResourceId: args.suggestedAlternativeResourceId || null
+          suggestedAlternativeResourceId: args.suggestedAlternativeResourceId || null,
+          recurrencePattern: args.recurrencePattern || "none",
+          recurrenceCount: args.recurrenceCount !== undefined ? args.recurrenceCount : null
         });
 
         if (args.dayIndex !== undefined && args.startHour !== undefined && args.duration !== undefined && !args.hasConflict) {
@@ -503,7 +510,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
                 dayIndex: args.dayIndex,
                 startHour: args.startHour,
                 duration: args.duration || 1.0,
-                userName: args.userName || "Předběžná rezervace"
+                userName: args.userName || "Předběžná rezervace",
+                recurrencePattern: args.recurrencePattern || "none",
+                recurrenceCount: args.recurrenceCount || null
               }
             })
           );
@@ -522,7 +531,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           hasConflict: false,
           conflictMessage: null,
           suggestedAlternativeTime: null,
-          suggestedAlternativeResourceId: null
+          suggestedAlternativeResourceId: null,
+          recurrencePattern: args.recurrencePattern || "none",
+          recurrenceCount: args.recurrenceCount || null
         });
         window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: args }));
         break;
@@ -540,7 +551,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
             hasConflict: false,
             conflictMessage: null,
             suggestedAlternativeTime: null,
-            suggestedAlternativeResourceId: null
+            suggestedAlternativeResourceId: null,
+            recurrencePattern: "none",
+            recurrenceCount: null
           });
           window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
         }, 1000);
@@ -581,7 +594,9 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
         hasConflict: false,
         conflictMessage: null,
         suggestedAlternativeTime: null,
-        suggestedAlternativeResourceId: null
+        suggestedAlternativeResourceId: null,
+        recurrencePattern: "none",
+        recurrenceCount: null
       });
       window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: null }));
     }, 1000);
@@ -693,6 +708,11 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
             <div className="flex gap-2 text-[9px] font-bold text-zinc-400 tracking-wide max-w-[55%] truncate">
               {consoleState.resourceName && <span className="text-blue-400 truncate">● {consoleState.resourceName}</span>}
               {consoleState.dayIndex !== null && <span className="text-purple-400 truncate">● {getDayNameCzech(consoleState.dayIndex)}</span>}
+              {consoleState.recurrencePattern && consoleState.recurrencePattern !== "none" && (
+                <span className="text-pink-400 truncate">
+                  ● Opakování: {consoleState.recurrencePattern === "weekly" ? "Týdně" : consoleState.recurrencePattern === "bi-weekly" ? "Každé 2 týdny" : "Měsíčně"} ({consoleState.recurrenceCount}x)
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 z-10">
               <button

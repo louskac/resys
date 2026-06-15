@@ -173,6 +173,7 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     reservedTo: booking.reservedTo.toISOString(),
     status: booking.status,
     createdAt: booking.createdAt.toISOString(),
+    recurrenceGroup: booking.recurrenceGroup,
   }));
 
   const serializedDevices = tenant.devices.map(device => ({

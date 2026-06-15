@@ -11,6 +11,8 @@ interface ConfirmDialogProps {
   onCancel: () => void;
   confirmLabel?: string;
   cancelLabel?: string;
+  onThirdOption?: () => void | Promise<void>;
+  thirdOptionLabel?: string;
 }
 
 export default function ConfirmDialog({
@@ -20,7 +22,9 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
   confirmLabel = "Potvrdit",
-  cancelLabel = "Zrušit"
+  cancelLabel = "Zrušit",
+  onThirdOption,
+  thirdOptionLabel
 }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
@@ -34,7 +38,7 @@ export default function ConfirmDialog({
         <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 whitespace-pre-line font-medium">
           {message}
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
           <button
             type="button"
             onClick={onCancel}
@@ -42,6 +46,17 @@ export default function ConfirmDialog({
           >
             {cancelLabel}
           </button>
+          {onThirdOption && thirdOptionLabel && (
+            <button
+              type="button"
+              onClick={async () => {
+                await onThirdOption();
+              }}
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-rose-600/15 hover:bg-rose-600/25 text-rose-600 dark:text-rose-450 border border-rose-500/25 transition-colors"
+            >
+              {thirdOptionLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={async () => {

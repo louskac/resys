@@ -74,6 +74,7 @@ ${bookingsContext || "- No bookings, calendar is completely free!"}
 6. DRAFT BOOKING: Once resource, dayIndex, and startHour are chosen and free, call 'propose_draft_booking' to draw the draft slot in purple on the grid. Ask: "Navrhl jsem to na obrazovku. Souhlasí to tak?"
 7. CONFIRMATION: Wait for explicit user confirmation before calling 'confirm_current_booking'.
 8. STATE SYNC: Call 'report_booking_status' only when a booking parameter (resource, day, start hour, duration, or client name) is newly resolved, updated, or if there is a conflict. If no parameters have been resolved or changed in this turn, do not call this tool.
+9. RECURRING RESERVATIONS: If the user mentions that they want the booking to repeat or be recurring (e.g., 'každý týden', 'každé dva týdny', 'opakovat', 'každý měsíc'), set the recurrencePattern ('weekly', 'bi-weekly', 'monthly') and recurrenceCount (default to 4 if not specified by user). If they don't mention recurrence, default to 'none' for pattern and null for count. Pass these parameters in propose_draft_booking and report_booking_status.
 
 === TOOLS ===
 You have access to function calling tools to control the user's browser screen in real-time. Use them proactively!`;
@@ -165,6 +166,14 @@ You have access to function calling tools to control the user's browser screen i
                 userEmail: {
                   type: "STRING",
                   description: "The user's email address (optional)."
+                },
+                recurrencePattern: {
+                  type: "STRING",
+                  description: "The pattern of booking recurrence: 'none', 'weekly', 'bi-weekly', 'monthly'. Default is 'none'."
+                },
+                recurrenceCount: {
+                  type: "INTEGER",
+                  description: "The number of total recurrences to create, including the initial one, e.g. 4."
                 }
               },
               required: ["resourceId", "dayIndex", "startHour", "duration", "userName"]
@@ -223,6 +232,14 @@ You have access to function calling tools to control the user's browser screen i
                 suggestedAlternativeResourceId: {
                   type: "STRING",
                   description: "Resource ID of a free alternative slot."
+                },
+                recurrencePattern: {
+                  type: "STRING",
+                  description: "The pattern of booking recurrence: 'none', 'weekly', 'bi-weekly', 'monthly'."
+                },
+                recurrenceCount: {
+                  type: "INTEGER",
+                  description: "The number of total recurrences to create, including the initial one, e.g. 4."
                 }
               }
             }

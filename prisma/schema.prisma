@@ -99,6 +99,7 @@ model Booking {
   paymentTransactionId String?
   createdAt            DateTime      @default(now())
   checkinLogs          CheckinLog[]
+  recurrenceGroup      String?
 
   @@index([tenantId, oneidUserId])
 }
