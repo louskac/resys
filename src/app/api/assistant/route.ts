@@ -176,7 +176,7 @@ You have access to function calling tools to control the user's browser screen i
                   description: "The number of total recurrences to create, including the initial one, e.g. 4."
                 }
               },
-              required: ["resourceId", "dayIndex", "startHour", "duration", "userName"]
+              required: ["resourceId", "dayIndex", "startHour", "duration"]
             }
           },
           {

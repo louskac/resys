@@ -485,57 +485,90 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
         }, 7000);
         break;
       case "report_booking_status":
-        const matchedResName = resources.find(r => r.id === args.resourceId)?.name || null;
-        setConsoleState({
-          resourceId: args.resourceId || null,
-          resourceName: matchedResName || args.resourceName || null,
-          dayIndex: args.dayIndex !== undefined ? args.dayIndex : null,
-          startHour: args.startHour !== undefined ? args.startHour : null,
-          duration: args.duration !== undefined ? args.duration : null,
-          userName: args.userName || null,
-          userEmail: args.userEmail || null,
-          hasConflict: !!args.hasConflict,
-          conflictMessage: args.conflictMessage || null,
-          suggestedAlternativeTime: args.suggestedAlternativeTime !== undefined ? args.suggestedAlternativeTime : null,
-          suggestedAlternativeResourceId: args.suggestedAlternativeResourceId || null,
-          recurrencePattern: args.recurrencePattern || "none",
-          recurrenceCount: args.recurrenceCount !== undefined ? args.recurrenceCount : null
+        setConsoleState(prev => {
+          const nextResourceId = args.resourceId !== undefined ? args.resourceId : prev.resourceId;
+          const matchedResName = nextResourceId ? (resources.find(r => r.id === nextResourceId)?.name || null) : null;
+          const nextResourceName = args.resourceId !== undefined 
+            ? matchedResName 
+            : (args.resourceName !== undefined ? args.resourceName : prev.resourceName);
+
+          return {
+            resourceId: nextResourceId,
+            resourceName: nextResourceName,
+            dayIndex: args.dayIndex !== undefined ? args.dayIndex : prev.dayIndex,
+            startHour: args.startHour !== undefined ? args.startHour : prev.startHour,
+            duration: args.duration !== undefined ? args.duration : prev.duration,
+            userName: args.userName !== undefined ? args.userName : prev.userName,
+            userEmail: args.userEmail !== undefined ? args.userEmail : prev.userEmail,
+            hasConflict: args.hasConflict !== undefined ? !!args.hasConflict : prev.hasConflict,
+            conflictMessage: args.conflictMessage !== undefined ? args.conflictMessage : prev.conflictMessage,
+            suggestedAlternativeTime: args.suggestedAlternativeTime !== undefined ? args.suggestedAlternativeTime : prev.suggestedAlternativeTime,
+            suggestedAlternativeResourceId: args.suggestedAlternativeResourceId !== undefined ? args.suggestedAlternativeResourceId : prev.suggestedAlternativeResourceId,
+            recurrencePattern: args.recurrencePattern !== undefined ? args.recurrencePattern : prev.recurrencePattern,
+            recurrenceCount: args.recurrenceCount !== undefined ? args.recurrenceCount : prev.recurrenceCount
+          };
         });
 
-        if (args.dayIndex !== undefined && args.startHour !== undefined && args.duration !== undefined && !args.hasConflict) {
-          window.dispatchEvent(
-            new CustomEvent("assistant-set-draft", {
-              detail: {
-                resourceId: args.resourceId || consoleState.resourceId,
-                dayIndex: args.dayIndex,
-                startHour: args.startHour,
-                duration: args.duration || 1.0,
-                userName: args.userName || "Předběžná rezervace",
-                recurrencePattern: args.recurrencePattern || "none",
-                recurrenceCount: args.recurrenceCount || null
-              }
-            })
-          );
-        }
+        setTimeout(() => {
+          setConsoleState(current => {
+            if (current.dayIndex !== null && current.startHour !== null && !current.hasConflict) {
+              window.dispatchEvent(
+                new CustomEvent("assistant-set-draft", {
+                  detail: {
+                    resourceId: current.resourceId,
+                    dayIndex: current.dayIndex,
+                    startHour: current.startHour,
+                    duration: current.duration || 1.0,
+                    userName: current.userName || "Předběžná rezervace",
+                    recurrencePattern: current.recurrencePattern || "none",
+                    recurrenceCount: current.recurrenceCount || null
+                  }
+                })
+              );
+            }
+            return current;
+          });
+        }, 0);
         break;
       case "propose_draft_booking":
-        const draftResName = resources.find(r => r.id === args.resourceId)?.name || null;
-        setConsoleState({
-          resourceId: args.resourceId,
-          resourceName: draftResName,
-          dayIndex: args.dayIndex,
-          startHour: args.startHour,
-          duration: args.duration,
-          userName: args.userName,
-          userEmail: args.userEmail || null,
-          hasConflict: false,
-          conflictMessage: null,
-          suggestedAlternativeTime: null,
-          suggestedAlternativeResourceId: null,
-          recurrencePattern: args.recurrencePattern || "none",
-          recurrenceCount: args.recurrenceCount || null
+        setConsoleState(prev => {
+          const nextResourceId = args.resourceId !== undefined ? args.resourceId : prev.resourceId;
+          const draftResName = nextResourceId ? (resources.find(r => r.id === nextResourceId)?.name || null) : null;
+          return {
+            resourceId: nextResourceId,
+            resourceName: draftResName || prev.resourceName,
+            dayIndex: args.dayIndex !== undefined ? args.dayIndex : prev.dayIndex,
+            startHour: args.startHour !== undefined ? args.startHour : prev.startHour,
+            duration: args.duration !== undefined ? args.duration : prev.duration,
+            userName: args.userName !== undefined ? args.userName : prev.userName,
+            userEmail: args.userEmail !== undefined ? args.userEmail : prev.userEmail,
+            hasConflict: false,
+            conflictMessage: null,
+            suggestedAlternativeTime: null,
+            suggestedAlternativeResourceId: null,
+            recurrencePattern: args.recurrencePattern !== undefined ? args.recurrencePattern : prev.recurrencePattern,
+            recurrenceCount: args.recurrenceCount !== undefined ? args.recurrenceCount : prev.recurrenceCount
+          };
         });
-        window.dispatchEvent(new CustomEvent("assistant-set-draft", { detail: args }));
+
+        setTimeout(() => {
+          setConsoleState(current => {
+            window.dispatchEvent(
+              new CustomEvent("assistant-set-draft", {
+                detail: {
+                  resourceId: current.resourceId,
+                  dayIndex: current.dayIndex,
+                  startHour: current.startHour,
+                  duration: current.duration || 1.0,
+                  userName: current.userName || "Předběžná rezervace",
+                  recurrencePattern: current.recurrencePattern || "none",
+                  recurrenceCount: current.recurrenceCount || null
+                }
+              })
+            );
+            return current;
+          });
+        }, 0);
         break;
       case "confirm_current_booking":
         window.dispatchEvent(new CustomEvent("assistant-perform-booking"));
