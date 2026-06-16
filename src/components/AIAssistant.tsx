@@ -41,6 +41,28 @@ interface ConsoleState {
   recurrenceCount: number | null;
 }
 
+function getCustomerGreeting(tenantVertical: string, tenantAiInstructions?: string): string {
+  const isFootball = tenantAiInstructions?.toLowerCase().includes("fotbal") || 
+                     tenantAiInstructions?.toLowerCase().includes("soccer") ||
+                     tenantAiInstructions?.toLowerCase().includes("umělk") ||
+                     tenantAiInstructions?.toLowerCase().includes("hřišt");
+
+  if (isFootball) {
+    return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci fotbal na středu ve 4 odpoledne na jméno Jakub'.";
+  }
+
+  if (tenantVertical === "SPORTS_GROUND") {
+    return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'.";
+  } else if (tenantVertical === "CAPACITY_CLASS") {
+    return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci lekci na středu ve 4 odpoledne na jméno Jakub'.";
+  } else if (tenantVertical === "EDUCATIONAL_COURSE") {
+    return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci kurz na středu ve 4 odpoledne na jméno Jakub'.";
+  } else if (tenantVertical === "EVENT_TICKETING") {
+    return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci lístek na středu ve 4 odpoledne na jméno Jakub'.";
+  }
+  return "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci rezervovat na středu ve 4 odpoledne na jméno Jakub'.";
+}
+
 export default function AIAssistant({ 
   tenantId, 
   resources, 
@@ -130,7 +152,7 @@ export default function AIAssistant({
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
+      content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
     }
   ]);
 
@@ -168,6 +190,19 @@ export default function AIAssistant({
     };
   }, []);
 
+  // Keep greeting synchronized if vertical or instructions change when there is only the initial greeting
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 1 && prev[0].role === "assistant") {
+        return [{
+          role: "assistant",
+          content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
+        }];
+      }
+      return prev;
+    });
+  }, [tenantVertical, tenantAiInstructions]);
+
   // Reset assistant state to start a new booking conversation
   const handleReset = () => {
     if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -176,7 +211,7 @@ export default function AIAssistant({
     setMessages([
       {
         role: "assistant",
-        content: "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
+        content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
       }
     ]);
     setConsoleState({

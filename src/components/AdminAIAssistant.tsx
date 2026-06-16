@@ -30,6 +30,28 @@ interface Message {
   toolCalls?: any[];
 }
 
+function getAdminGreeting(tenantVertical: string, tenantAiInstructions?: string): string {
+  const isFootball = tenantAiInstructions?.toLowerCase().includes("fotbal") || 
+                     tenantAiInstructions?.toLowerCase().includes("soccer") ||
+                     tenantAiInstructions?.toLowerCase().includes("umělk") ||
+                     tenantAiInstructions?.toLowerCase().includes("hřišt");
+
+  if (isFootball) {
+    return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nové hřiště Sektor C s kapacitou 15'.";
+  }
+
+  if (tenantVertical === "SPORTS_GROUND") {
+    return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'.";
+  } else if (tenantVertical === "CAPACITY_CLASS") {
+    return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový sál Sál B s kapacitou 25'.";
+  } else if (tenantVertical === "EDUCATIONAL_COURSE") {
+    return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit novou učebnu Třída 102 s kapacitou 30'.";
+  } else if (tenantVertical === "EVENT_TICKETING") {
+    return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit novou akci Koncert s kapacitou 500'.";
+  }
+  return "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový zdroj Plocha s kapacitou 10'.";
+}
+
 export default function AdminAIAssistant({
   tenantId,
   resources,
@@ -72,7 +94,7 @@ export default function AdminAIAssistant({
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
+      content: getAdminGreeting(tenantVertical, tenantAiInstructions)
     }
   ]);
 
@@ -125,6 +147,19 @@ export default function AdminAIAssistant({
     }
   }, []);
 
+  // Keep greeting synchronized if vertical or instructions change when there is only the initial greeting
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 1 && prev[0].role === "assistant") {
+        return [{
+          role: "assistant",
+          content: getAdminGreeting(tenantVertical, tenantAiInstructions)
+        }];
+      }
+      return prev;
+    });
+  }, [tenantVertical, tenantAiInstructions]);
+
   // Cleanup MediaRecorder
   useEffect(() => {
     return () => {
@@ -145,7 +180,7 @@ export default function AdminAIAssistant({
     setMessages([
       {
         role: "assistant",
-        content: "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
+        content: getAdminGreeting(tenantVertical, tenantAiInstructions)
       }
     ]);
     setDraftState({
