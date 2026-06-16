@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -20,6 +20,7 @@ import TenantBanner from "@/components/TenantBanner";
 import ResourceCard from "@/components/ResourceCard";
 import { useSession } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
+import AdminAIAssistant from "@/components/AdminAIAssistant";
 
 // UTC Date/Time format helpers to avoid client-side timezone shifts
 const formatUTCDate = (dateStr: string) => {
@@ -308,6 +309,107 @@ export default function AdminDashboardClient({
     }
   }, [settingsOpenTime, settingsCloseTime]);
 
+  // Synchronize custom events from Admin AI Assistant HUD
+  useEffect(() => {
+    const handleNavigateTab = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab: any }>;
+      if (customEvent.detail?.tab) {
+        setActiveTab(customEvent.detail.tab);
+      }
+    };
+
+    const handleDraftResource = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      const data = customEvent.detail;
+      if (data) {
+        setActiveTab("resources");
+        setResourceModal({
+          open: true,
+          mode: data.mode || "add",
+          data: {
+            id: data.id || "",
+            name: data.name || "",
+            type: data.type || "SPACE",
+            maxCapacity: data.maxCapacity !== undefined ? data.maxCapacity : 10,
+            instructor: data.instructor || "",
+            room: data.room || "",
+            parentId: data.parentId || "",
+            surface: data.surface || "",
+            equipment: data.equipment || "",
+            price: data.price || ""
+          }
+        });
+      }
+    };
+
+    const handleDraftRule = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      const data = customEvent.detail;
+      if (data) {
+        setActiveTab("rules");
+        setRuleModal({
+          open: true,
+          mode: data.mode || "add",
+          data: {
+            id: data.id || "",
+            resourceId: data.resourceId || "",
+            name: data.name || "",
+            dayOfWeek: data.dayOfWeek !== undefined ? data.dayOfWeek : 1,
+            startTime: data.startTime || "12:00",
+            endTime: data.endTime || "13:30",
+            price: data.price !== undefined ? data.price : 100,
+            maxCapacity: data.maxCapacity !== undefined ? data.maxCapacity : 10,
+            daysOfWeek: data.daysOfWeek || [1]
+          }
+        });
+      }
+    };
+
+    const handleDraftDevice = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      const data = customEvent.detail;
+      if (data) {
+        setActiveTab("devices");
+        setDeviceModal({
+          open: true,
+          mode: data.mode || "add",
+          data: {
+            id: data.id || "",
+            name: data.name || "",
+            token: data.token || "",
+            active: data.active !== undefined ? data.active : true
+          }
+        });
+      }
+    };
+
+    const handleDraftSettings = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      const data = customEvent.detail;
+      if (data) {
+        setActiveTab("settings");
+        if (data.tagline !== undefined) setSettingsTagline(data.tagline);
+        if (data.openTime !== undefined) setSettingsOpenTime(data.openTime);
+        if (data.closeTime !== undefined) setSettingsCloseTime(data.closeTime);
+        if (Array.isArray(data.adminEmails)) setSettingsAdminEmails(data.adminEmails.join(", "));
+      }
+    };
+
+    window.addEventListener("admin-assistant-navigate-tab", handleNavigateTab);
+    window.addEventListener("admin-assistant-draft-resource", handleDraftResource);
+    window.addEventListener("admin-assistant-draft-rule", handleDraftRule);
+    window.addEventListener("admin-assistant-draft-device", handleDraftDevice);
+    window.addEventListener("admin-assistant-draft-settings", handleDraftSettings);
+
+    return () => {
+      window.removeEventListener("admin-assistant-navigate-tab", handleNavigateTab);
+      window.removeEventListener("admin-assistant-draft-resource", handleDraftResource);
+      window.removeEventListener("admin-assistant-draft-rule", handleDraftRule);
+      window.removeEventListener("admin-assistant-draft-device", handleDraftDevice);
+      window.removeEventListener("admin-assistant-draft-settings", handleDraftSettings);
+    };
+  }, []);
+
   // --- Image Upload Handler ---
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -404,6 +506,7 @@ export default function AdminDashboardClient({
       });
       if (res.ok) {
         setResourceModal({ ...resourceModal, open: false });
+        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení zdroje", success: true } }));
         setNotification({
           type: "success",
           title: "Zdroj uložen",
@@ -488,6 +591,7 @@ export default function AdminDashboardClient({
       });
       if (res.ok) {
         setRuleModal({ ...ruleModal, open: false });
+        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení časového pravidla", success: true } }));
         setNotification({
           type: "success",
           title: "Časový slot uložen",
@@ -566,6 +670,7 @@ export default function AdminDashboardClient({
         await res.json();
         const createdToken = deviceModal.data.token;
         setDeviceModal({ ...deviceModal, open: false });
+        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení IoT zařízení", success: true } }));
 
         if (deviceModal.mode === "add" && createdToken) {
           setNotification({
@@ -667,6 +772,7 @@ export default function AdminDashboardClient({
         body: JSON.stringify({ action: "tenant_settings_update", data: dataToSend })
       });
       if (res.ok) {
+        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení nastavení portálu", success: true } }));
         setNotification({
           type: "success",
           title: "Nastavení aktualizována",
@@ -2515,6 +2621,23 @@ export default function AdminDashboardClient({
             setNotification(null);
             if (onCl) onCl();
           }
+        }}
+      />
+
+      <AdminAIAssistant
+        tenantId={tenant.id}
+        resources={resources}
+        bookings={bookings}
+        devices={devices}
+        checkinLogs={checkinLogs}
+        activeTab={activeTab}
+        activeDate={activeDate}
+        weekStart={weekStart}
+        settingsForm={{
+          tagline: settingsTagline,
+          openTime: settingsOpenTime,
+          closeTime: settingsCloseTime,
+          adminEmails: settingsAdminEmails
         }}
       />
 
