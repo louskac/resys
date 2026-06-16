@@ -1,0 +1,824 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { 
+  Calendar, Clock, User as UserIcon, CheckCircle, AlertTriangle, 
+  MapPin, Shield, Phone, Mail, FileText, ArrowLeft, Loader2, 
+  KeyRound, CreditCard, LogOut, Check, Building, QrCode, Ticket
+} from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+
+interface UserDashboardClientProps {
+  tenant: {
+    id: string;
+    name: string;
+    vertical: string;
+  };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    phone: string | null;
+    avatarUrl: string | null;
+    addressStreet: string | null;
+    addressCity: string | null;
+    addressZip: string | null;
+    addressCountry: string | null;
+    organization: string | null;
+  };
+  bookings: {
+    id: string;
+    tenantId: string;
+    tenantName: string;
+    resourceId: string;
+    resourceName: string;
+    reservedFrom: string;
+    reservedTo: string;
+    status: string;
+    createdAt: string;
+  }[];
+  checkinLogs: {
+    id: string;
+    scannedAt: string;
+    result: string;
+    deviceName: string;
+    bookingId: string;
+    resourceName: string;
+    tenantName: string;
+  }[];
+  theme: {
+    primary: string;
+    primaryHover: string;
+    accent: string;
+    gradientStart: string;
+    gradientEnd: string;
+  };
+}
+
+const PRESET_AVATARS = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&h=128&q=80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&h=128&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=128&h=128&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=128&h=128&q=80",
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=128&h=128&q=80",
+  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=128&h=128&q=80",
+];
+
+export default function UserDashboardClient({
+  tenant,
+  user: initialUser,
+  bookings: initialBookings,
+  checkinLogs,
+  theme,
+}: UserDashboardClientProps) {
+  const { update: updateSession } = useSession();
+  const [activeTab, setActiveTab] = useState<"bookings" | "history" | "profile">("bookings");
+  const [bookings, setBookings] = useState(initialBookings);
+  const [user, setUser] = useState(initialUser);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Profile Form states
+  const [name, setName] = useState(user.name);
+  const [phone, setPhone] = useState(user.phone || "");
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
+  const [addressStreet, setAddressStreet] = useState(user.addressStreet || "");
+  const [addressCity, setAddressCity] = useState(user.addressCity || "");
+  const [addressZip, setAddressZip] = useState(user.addressZip || "");
+  const [addressCountry, setAddressCountry] = useState(user.addressCountry || "");
+  const [organization, setOrganization] = useState(user.organization || "");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Ticket Modal state
+  const [activeTicket, setActiveTicket] = useState<typeof bookings[0] | null>(null);
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("cs-CZ", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatTimeRange = (fromStr: string, toStr: string) => {
+    const from = new Date(fromStr);
+    const to = new Date(toStr);
+    const format = (date: Date) => {
+      const h = String(date.getUTCHours()).padStart(2, "0");
+      const m = String(date.getUTCMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    };
+    return `${format(from)} - ${format(to)} (UTC)`;
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm("Opravdu chcete zrušit tuto rezervaci?")) {
+      return;
+    }
+
+    setCancellingId(bookingId);
+    try {
+      const res = await fetch(`/api/bookings?bookingId=${bookingId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setBookings(bookings.filter((b) => b.id !== bookingId));
+        alert("Rezervace byla úspěšně zrušena.");
+      } else {
+        alert("Rezervaci se nepodařilo zrušit. Kontaktujte prosím podporu.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Došlo k chybě při rušení rezervace.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileMessage(null);
+
+    if (password && password !== confirmPassword) {
+      setProfileMessage({ type: "error", text: "Zadaná hesla se neshodují." });
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          password,
+          avatarUrl,
+          addressStreet,
+          addressCity,
+          addressZip,
+          addressCountry,
+          organization,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser({
+          ...user,
+          name: data.user.name,
+          phone: data.user.phone,
+          avatarUrl: data.user.avatarUrl,
+          addressStreet: data.user.addressStreet,
+          addressCity: data.user.addressCity,
+          addressZip: data.user.addressZip,
+          addressCountry: data.user.addressCountry,
+          organization: data.user.organization,
+        });
+
+        // Update NextAuth session cookie
+        await updateSession({
+          name: data.user.name,
+          phone: data.user.phone,
+          avatarUrl: data.user.avatarUrl,
+        });
+
+        setProfileMessage({ type: "success", text: "Profil byl úspěšně aktualizován." });
+        setPassword("");
+        setConfirmPassword("");
+      } else {
+        const err = await res.json();
+        setProfileMessage({ type: "error", text: err.error || "Uložení profilu se nezdařilo." });
+      }
+    } catch (err) {
+      console.error(err);
+      setProfileMessage({ type: "error", text: "Nastala neočekávaná chyba při ukládání." });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const upcomingBookings = bookings.filter((b) => new Date(b.reservedFrom) > new Date());
+  const pastBookings = bookings.filter((b) => new Date(b.reservedFrom) <= new Date());
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
+      
+      {/* Header */}
+      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/tenants/${tenant.id}`}
+              className="btn-outline py-1.5 px-3 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground hover:border-tenant-primary/30"
+              style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+            >
+              <ArrowLeft size={13} />
+              Zpět na rezervace
+            </Link>
+            <span className="h-4 w-px bg-border hidden sm:inline" />
+            <span className="font-extrabold text-sm text-foreground select-none">
+              Můj Profil / Dashboard
+            </span>
+          </div>
+
+          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-sm">
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Dashboard Container */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
+        
+        {/* User profile banner header card */}
+        <div className="relative overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+          {/* Glowing back-glow */}
+          <div className="absolute top-0 right-0 h-40 w-40 bg-tenant-gradient opacity-10 blur-3xl rounded-full" />
+          
+          <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left z-10">
+            {/* Avatar */}
+            <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-2xl text-tenant-primary">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <h1 className="text-xl font-extrabold text-foreground tracking-tight">{user.name}</h1>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide">
+                  {user.role === "USER" ? "Zákazník" : user.role === "ADMIN" ? "Správce" : "Superadmin"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5 justify-center sm:justify-start">
+                <Mail size={12} className="text-muted-foreground" />
+                {user.email}
+                {user.phone && (
+                  <>
+                    <span className="h-1.5 w-1.5 rounded-full bg-border" />
+                    <Phone size={12} className="text-muted-foreground" />
+                    {user.phone}
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Stats Strip */}
+          <div className="flex gap-4 w-full md:w-auto border-t md:border-t-0 border-border pt-4 md:pt-0 justify-center z-10 text-center">
+            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+              <span className="block text-xl font-extrabold text-tenant-primary">{upcomingBookings.length}</span>
+              <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Aktivní</span>
+            </div>
+            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+              <span className="block text-xl font-extrabold text-foreground">{checkinLogs.length}</span>
+              <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Vstupy</span>
+            </div>
+            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+              <span className="block text-xl font-extrabold text-foreground">{bookings.length}</span>
+              <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Celkem</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashboard Navigation Tabs */}
+        <div className="flex border-b border-border gap-2 pb-px overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("bookings")}
+            className={`px-4 py-3 border-b-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+              activeTab === "bookings"
+                ? "border-tenant-primary text-tenant-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+          >
+            <Calendar size={14} />
+            Moje rezervace ({bookings.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-3 border-b-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+              activeTab === "history"
+                ? "border-tenant-primary text-tenant-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+          >
+            <Clock size={14} />
+            Historie vstupů ({checkinLogs.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`px-4 py-3 border-b-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+              activeTab === "profile"
+                ? "border-tenant-primary text-tenant-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+          >
+            <UserIcon size={14} />
+            Nastavení profilu
+          </button>
+        </div>
+
+        {/* Tab content area */}
+        <div className="space-y-6">
+          {/* TAB 1: BOOKINGS */}
+          {activeTab === "bookings" && (
+            <div className="space-y-6">
+              {/* Upcoming Reservations */}
+              <div className="space-y-3">
+                <h2 className="text-sm font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse" />
+                  Nadcházející rezervace
+                </h2>
+                
+                {upcomingBookings.length === 0 ? (
+                  <div className="bg-secondary/10 border border-border p-8 text-center rounded-2xl text-muted-foreground text-xs font-medium leading-relaxed">
+                    Nemáte žádné nadcházející rezervace. Klikněte na tlačítko výše pro vytvoření nové rezervace.
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {upcomingBookings.map((b) => (
+                      <div 
+                        key={b.id} 
+                        className="card p-5 relative overflow-hidden flex flex-col justify-between gap-4 border-slate-200 dark:border-[#1F1F35]"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 font-extrabold uppercase tracking-wide">
+                              {b.tenantName}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                              Potvrzeno
+                            </span>
+                          </div>
+
+                          <h3 className="font-extrabold text-base text-foreground leading-tight">{b.resourceName}</h3>
+                          
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            <p className="flex items-center gap-1.5">
+                              <Calendar size={13} className="text-muted-foreground" />
+                              {formatDate(b.reservedFrom)}
+                            </p>
+                            <p className="flex items-center gap-1.5">
+                              <Clock size={13} className="text-muted-foreground" />
+                              {formatTimeRange(b.reservedFrom, b.reservedTo)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2 border-t border-border mt-1">
+                          <button
+                            onClick={() => setActiveTicket(b)}
+                            className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                            style={{ 
+                              background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
+                              boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
+                            }}
+                          >
+                            <Ticket size={14} />
+                            Vstupní jízdenka
+                          </button>
+                          <button
+                            onClick={() => handleCancelBooking(b.id)}
+                            disabled={cancellingId === b.id}
+                            className="btn-outline text-rose-500 hover:bg-rose-500/10 border-border py-2 px-3 shrink-0 cursor-pointer"
+                            style={{ color: "oklch(0.60 0.18 15)" }}
+                          >
+                            {cancellingId === b.id ? "Rušení..." : "Zrušit"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Past Reservations */}
+              {pastBookings.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <h2 className="text-sm font-extrabold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                    Proběhlé rezervace
+                  </h2>
+
+                  <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-secondary/35 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">
+                            <th className="p-4">Tenant / Property</th>
+                            <th className="p-4">Rezervace</th>
+                            <th className="p-4">Datum a čas</th>
+                            <th className="p-4 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border text-foreground">
+                          {pastBookings.map((b) => (
+                            <tr key={b.id} className="hover:bg-secondary/5 transition-colors text-muted-foreground">
+                              <td className="p-4 font-bold text-foreground">{b.tenantName}</td>
+                              <td className="p-4 font-medium text-foreground">{b.resourceName}</td>
+                              <td className="p-4 space-y-0.5">
+                                <p className="font-semibold text-foreground">{new Date(b.reservedFrom).toLocaleDateString("cs-CZ")}</p>
+                                <p className="text-[11px]">{formatTimeRange(b.reservedFrom, b.reservedTo)}</p>
+                              </td>
+                              <td className="p-4 text-right">
+                                <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground font-bold uppercase tracking-wider text-[9px] border border-border">
+                                  Proběhlo
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: CHECKIN HISTORY */}
+          {activeTab === "history" && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse" />
+                Historie fyzických příchodů a skenů
+              </h2>
+
+              {checkinLogs.length === 0 ? (
+                <div className="bg-secondary/10 border border-border p-8 text-center rounded-2xl text-muted-foreground text-xs font-medium leading-relaxed">
+                  Zatím jste neprovedli žádné fyzické check-iny u terminálů. Vaše QR kódy budou naskenovány na check-in zařízení při vstupu.
+                </div>
+              ) : (
+                <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-secondary/35 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">
+                          <th className="p-4">Čas skenu</th>
+                          <th className="p-4">Zařízení</th>
+                          <th className="p-4">Rezervace</th>
+                          <th className="p-4">Tenant</th>
+                          <th className="p-4 text-right">Výsledek</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border text-foreground">
+                        {checkinLogs.map((log) => (
+                          <tr key={log.id} className="hover:bg-secondary/10 transition-colors">
+                            <td className="p-4 font-semibold">
+                              {new Date(log.scannedAt).toLocaleString("cs-CZ")}
+                            </td>
+                            <td className="p-4 text-muted-foreground">{log.deviceName}</td>
+                            <td className="p-4 font-bold">{log.resourceName}</td>
+                            <td className="p-4 text-muted-foreground font-medium">{log.tenantName}</td>
+                            <td className="p-4 text-right">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border ${
+                                log.result === "SUCCESS"
+                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                  : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                              }`}>
+                                {log.result === "SUCCESS" ? "Úspěch" : log.result.replace("_", " ")}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: PROFILE SETTINGS */}
+          {activeTab === "profile" && (
+            <div className="grid md:grid-cols-3 gap-6">
+              
+              {/* Left Col: Avatar Selection */}
+              <div className="card p-6 h-fit flex flex-col items-center text-center gap-6 border-slate-200 dark:border-[#1F1F35]">
+                <h3 className="font-extrabold text-sm text-foreground uppercase tracking-wider mb-2 self-start border-b border-border pb-2 w-full text-left">
+                  Profilový Obrázek
+                </h3>
+                
+                {/* Visual Avatar */}
+                <div className="h-24 w-24 rounded-3xl overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-3xl text-tenant-primary shadow-inner">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Zvolený avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                  )}
+                </div>
+
+                <div className="space-y-3 w-full">
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-left">
+                    Vyberte přednastavený avatar:
+                  </label>
+                  <div className="grid grid-cols-6 gap-2">
+                    {PRESET_AVATARS.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setAvatarUrl(url)}
+                        className={`h-8 w-8 rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 active:scale-95 ${
+                          avatarUrl === url ? "border-tenant-primary scale-105 shadow-md" : "border-transparent"
+                        }`}
+                      >
+                        <img src={url} alt={`Preset ${i}`} className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-left mb-1">
+                      Nebo vložte URL obrázku:
+                    </label>
+                    <input
+                      type="text"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                      className="input-field py-1.5 text-[11px] font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Middle & Right Cols: Profile Data Form */}
+              <div className="md:col-span-2 card p-6 border-slate-200 dark:border-[#1F1F35]">
+                <h3 className="font-extrabold text-sm text-foreground uppercase tracking-wider mb-6 border-b border-border pb-3">
+                  Osobní a Fakturační údaje
+                </h3>
+
+                {profileMessage && (
+                  <div className={`p-4 rounded-2xl mb-6 flex items-start gap-2.5 text-xs font-semibold leading-relaxed border ${
+                    profileMessage.type === "success"
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                  }`}>
+                    {profileMessage.type === "success" ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                    <span>{profileMessage.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleProfileSubmit} className="space-y-6 text-xs">
+                  
+                  {/* Basic Data Grid */}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="block text-muted-foreground font-semibold">Celé jméno</label>
+                      <div className="relative flex items-center">
+                        <UserIcon size={14} className="absolute left-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="input-field pl-10"
+                          style={{ paddingLeft: "2.5rem" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-muted-foreground font-semibold">Telefonní číslo</label>
+                      <div className="relative flex items-center">
+                        <Phone size={14} className="absolute left-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="input-field pl-10 font-mono"
+                          style={{ paddingLeft: "2.5rem" }}
+                          placeholder="+420777123456"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* B2B / Billing Details Grid */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <h4 className="text-[10px] font-bold text-tenant-primary uppercase tracking-wider">
+                      Fakturační Adresa & Společnost (B2B SaaS)
+                    </h4>
+                    
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="block text-muted-foreground font-semibold">Firma / Název organizace</label>
+                        <div className="relative flex items-center">
+                          <Building size={14} className="absolute left-3.5 text-slate-400" />
+                          <input
+                            type="text"
+                            value={organization}
+                            onChange={(e) => setOrganization(e.target.value)}
+                            placeholder="Např. DeepVision s.r.o."
+                            className="input-field pl-10"
+                            style={{ paddingLeft: "2.5rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">Ulice a číslo popisné</label>
+                        <div className="relative flex items-center">
+                          <MapPin size={14} className="absolute left-3.5 text-slate-400" />
+                          <input
+                            type="text"
+                            value={addressStreet}
+                            onChange={(e) => setAddressStreet(e.target.value)}
+                            placeholder="Např. 17. listopadu 237"
+                            className="input-field pl-10"
+                            style={{ paddingLeft: "2.5rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">Město</label>
+                        <input
+                          type="text"
+                          value={addressCity}
+                          onChange={(e) => setAddressCity(e.target.value)}
+                          placeholder="Např. Pardubice"
+                          className="input-field"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">PSČ</label>
+                        <input
+                          type="text"
+                          value={addressZip}
+                          onChange={(e) => setAddressZip(e.target.value)}
+                          placeholder="Např. 530 02"
+                          className="input-field font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">Země</label>
+                        <input
+                          type="text"
+                          value={addressCountry}
+                          onChange={(e) => setAddressCountry(e.target.value)}
+                          placeholder="Např. Česká republika"
+                          className="input-field"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Change Password Block */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <h4 className="text-[10px] font-bold text-tenant-primary uppercase tracking-wider">
+                      Změna hesla (ponechte prázdné, pokud nechcete měnit)
+                    </h4>
+                    
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">Nové heslo</label>
+                        <div className="relative flex items-center">
+                          <KeyRound size={14} className="absolute left-3.5 text-slate-400" />
+                          <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="input-field pl-10 font-mono"
+                            style={{ paddingLeft: "2.5rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-muted-foreground font-semibold">Potvrzení nového hesla</label>
+                        <div className="relative flex items-center">
+                          <KeyRound size={14} className="absolute left-3.5 text-slate-400" />
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="input-field pl-10 font-mono"
+                            style={{ paddingLeft: "2.5rem" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="btn-tenant py-3 px-6 text-white font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-75"
+                      style={{ 
+                        background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
+                        boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
+                      }}
+                    >
+                      {savingProfile && <Loader2 size={14} className="animate-spin" />}
+                      {savingProfile ? "Ukládání..." : "Uložit nastavení profilu"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+      </main>
+
+      {/* Ticket boarding pass modal overlay */}
+      {activeTicket && (
+        <div 
+          onClick={() => setActiveTicket(null)}
+          className="fixed inset-0 bg-[#07070C]/75 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-200"
+        >
+          {/* Boarding Pass Ticket representation */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
+          >
+            {/* Ticket Top Part */}
+            <div className="p-6 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative">
+              {/* Glow badge */}
+              <div className="absolute top-0 right-0 h-32 w-32 bg-tenant-gradient opacity-15 blur-2xl rounded-full" />
+              
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary">{activeTicket.tenantName}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                  Aktivní vstup
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Sportoviště / Plocha</span>
+                <h3 className="text-xl font-extrabold text-foreground leading-tight mt-0.5">{activeTicket.resourceName}</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-dashed border-border mt-2">
+                <div>
+                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Datum vstupu</span>
+                  <p className="font-bold text-foreground mt-0.5">{new Date(activeTicket.reservedFrom).toLocaleDateString("cs-CZ")}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Časový úsek</span>
+                  <p className="font-bold text-foreground mt-0.5">{formatTimeRange(activeTicket.reservedFrom, activeTicket.reservedTo).split(" (")[0]}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticket Divider with Semi-circle notches on edges */}
+            <div className="relative h-6 flex items-center justify-center">
+              <div className="absolute -left-3 h-6 w-6 rounded-full bg-[#07070C] border-r border-slate-200/50 dark:border-[#1F1F35]" />
+              <div className="absolute -right-3 h-6 w-6 rounded-full bg-[#07070C] border-l border-slate-200/50 dark:border-[#1F1F35]" />
+              <div className="w-full border-t border-dashed border-slate-300 dark:border-[#2A2A45] mx-5" />
+            </div>
+
+            {/* Ticket Bottom Part (QR Code) */}
+            <div className="p-6 flex flex-col items-center bg-slate-50/50 dark:bg-slate-900/20 text-center gap-4">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Naskenujte QR kód u turniketu</span>
+              
+              {/* Premium looking QR Code visual representation */}
+              <div className="p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md hover:scale-102 transition-transform duration-200">
+                <div className="h-40 w-40 flex flex-col items-center justify-center bg-slate-50 rounded-2xl relative overflow-hidden text-slate-800">
+                  <QrCode size={128} className="text-slate-850 stroke-[1.5]" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/5 to-transparent pointer-events-none" />
+                </div>
+              </div>
+
+              <code className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-full border border-border">
+                {activeTicket.id}
+              </code>
+
+              <button
+                onClick={() => setActiveTicket(null)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-foreground text-xs font-semibold rounded-2xl transition-all cursor-pointer mt-2"
+              >
+                Zavřít lístek
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

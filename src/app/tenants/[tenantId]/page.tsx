@@ -337,20 +337,33 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-1.5 justify-end">
-                    {session.user?.email === "admin@deepvision.cz" && (
+                    {((session.user as any).role === "ADMIN" || session.user?.email === "admin@deepvision.cz") && (
                       <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
                         Správce
                       </span>
                     )}
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{session.user?.name}</span>
+                    {(session.user as any).role === "SUPERADMIN" && (
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide leading-none">
+                        Superadmin
+                      </span>
+                    )}
+                    <Link href={`/tenants/${tenantId}/dashboard`} className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none hover:text-tenant-primary transition-colors">
+                      {session.user?.name}
+                    </Link>
                   </div>
-                  <span className="text-[9px] text-slate-500 dark:text-zinc-400 mt-1 leading-none">{session.user?.email}</span>
+                  <Link href={`/tenants/${tenantId}/dashboard`} className="text-[9px] text-slate-500 dark:text-zinc-400 mt-1 leading-none hover:underline">
+                    Můj profil & rezervace
+                  </Link>
                 </div>
                 
                 {/* Avatar with gradient matching brand colors */}
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5">
+                <Link
+                  href={`/tenants/${tenantId}/dashboard`}
+                  className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  title="Můj profil a rezervace"
+                >
                   {session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
-                </div>
+                </Link>
                 
                 <LogoutButton />
               </div>

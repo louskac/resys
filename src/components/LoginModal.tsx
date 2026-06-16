@@ -174,11 +174,11 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
             </button>
           )}
 
-          {/* Admin Credentials Login Toggle & Form */}
+          {/* Credentials Login Form */}
           {showAdminLogin ? (
             <form onSubmit={handleAdminLogin} className="space-y-3 pt-1">
               <div className="space-y-1">
-                <label className="block text-muted-foreground font-semibold">Administrátor</label>
+                <label className="block text-muted-foreground font-semibold">Přihlašovací e-mail / Jméno</label>
                 <div className="relative flex items-center">
                   <User size={13} className="absolute left-3 text-muted-foreground" />
                   <input
@@ -188,7 +188,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                     onChange={(e) => setUsername(e.target.value)}
                     className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
                     style={{ paddingLeft: "2.25rem" }}
-                    placeholder="admin-profile"
+                    placeholder="např. user@gmail.com nebo admin@umelka.cz"
                   />
                 </div>
               </div>
@@ -224,7 +224,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                   setShowAdminLogin(false);
                   setError(null);
                 }}
-                className="w-full text-center text-[10px] text-muted-foreground hover:text-foreground font-semibold mt-2 underline"
+                className="w-full text-center text-[10px] text-muted-foreground hover:text-foreground font-semibold mt-2 underline cursor-pointer"
               >
                 Zpět na přihlášení přes OneiD
               </button>
@@ -236,7 +236,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                 onClick={() => setShowAdminLogin(true)}
                 className="text-[10px] text-slate-400 dark:text-zinc-500 hover:text-foreground font-semibold underline cursor-pointer"
               >
-                Přihlásit se jako správce
+                Přihlásit se e-mailem a heslem
               </button>
             </div>
           )}

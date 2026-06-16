@@ -10,12 +10,20 @@ import {
   Lock, Terminal, ArrowUpRight, Check, Server
 } from "lucide-react";
 
+import prisma from "@/lib/prisma";
+import { ensureDefaultData } from "@/lib/dbInit";
+
 export default async function Home() {
+  await ensureDefaultData();
   const hostHeader = (await headers()).get("host") || "";
   const isLocal = hostHeader.includes("localhost") || hostHeader.includes("127.0.0.1");
-  const sferaUrl = isLocal ? "http://sfera.localhost:3000" : "/tenants/sfera";
-  const umelkaUrl = isLocal ? "http://umelka.localhost:3000" : "/tenants/umelka";
   const hostConsoleUrl = isLocal ? "http://localhost:3000/host" : "/host";
+
+  const tenants = await prisma.tenant.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   return (
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-150 relative overflow-hidden">
@@ -300,59 +308,49 @@ export default async function Home() {
               <ScrollReveal animation="fade-right" duration={1000} className="lg:col-span-7 space-y-8">
                 <div>
                   <span className="text-tenant-primary font-bold text-xs tracking-wider uppercase">Unifikovaný plánovací engine</span>
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mt-2">Dva portály, jedno univerzální jádro</h2>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mt-2">Více portálů, jedno univerzální jádro</h2>
                   <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 leading-relaxed">
-                    ReSys funguje jako robustní multi-tenant platforma. Sféra i Umělka jsou napájeny naprosto shodnými datovými strukturami, kontrolery a přihlašovacím systémem OneiD, ale liší se ceníky, kapacitním typem a vzhledem.
+                    ReSys funguje jako robustní multi-tenant platforma. Libovolné množství klientských portálů je napájeno naprosto shodnými datovými strukturami a přihlašovacím systémem OneiD, ale liší se vzhledem, ceníky a kapacitním typem.
                   </p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-6">
-                  
-                  {/* Sféra Card */}
-                  <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl shadow-sm hover:border-tenant-primary/30 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex flex-col justify-between group">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20 uppercase tracking-wide">Kapacitní model</span>
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase font-mono">ID: sfera</span>
-                      </div>
-                      <h3 className="font-extrabold text-lg text-foreground group-hover:text-tenant-primary transition-colors">Sféra Pardubice</h3>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                        Příklad výukového areálu. Zaměřeno na skupinové lekce, kapacitní kurzy a rezervace laboratoří studenty prostřednictvím SSO přihlášení.
-                      </p>
-                    </div>
-                    <div className="pt-6 mt-6 border-t border-slate-100/50 dark:border-[#1F1F35]/20">
-                      <Link 
-                        href={sferaUrl}
-                        className="w-full text-center py-2 px-4 rounded-xl text-xs font-bold bg-tenant-primary/10 hover:bg-tenant-gradient hover:text-white text-tenant-primary transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                      >
-                        Otevřít portál Sféra
-                        <ArrowUpRight size={13} />
-                      </Link>
-                    </div>
-                  </div>
+                  {tenants.map((t) => {
+                    const portalUrl = isLocal ? `http://${t.id}.localhost:3000` : `/tenants/${t.id}`;
+                    const attrs = (t.attributes as any) || {};
+                    const tagline = attrs.tagline || (t.vertical === "SPORTS_GROUND" 
+                      ? "Pronájem časových slotů na hřišti, dělení plochy na sektory a vazba na hardware turniketů."
+                      : "Skupinové lekce, kapacitní kurzy a rezervace výukových laboratoří.");
+                    
+                    const verticalLabel = 
+                      t.vertical === "SPORTS_GROUND" ? "Sportoviště / Časový grid" :
+                      t.vertical === "EDUCATIONAL_COURSE" ? "Kapacitní model / Výuka" :
+                      t.vertical === "CAPACITY_CLASS" ? "Kapacitní model / Lekce" : "Eventy / Ticketing";
 
-                  {/* Umělka Card */}
-                  <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl shadow-sm hover:border-tenant-primary/30 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex flex-col justify-between group">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20 uppercase tracking-wide">Časový grid</span>
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase font-mono">ID: umelka</span>
+                    return (
+                      <div key={t.id} className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl shadow-sm hover:border-tenant-primary/30 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex flex-col justify-between group">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-start">
+                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20 uppercase tracking-wide">{verticalLabel}</span>
+                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase font-mono">ID: {t.id}</span>
+                          </div>
+                          <h3 className="font-extrabold text-lg text-foreground group-hover:text-tenant-primary transition-colors">{t.name}</h3>
+                          <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+                            {tagline}
+                          </p>
+                        </div>
+                        <div className="pt-6 mt-6 border-t border-slate-100/50 dark:border-[#1F1F35]/20">
+                          <Link 
+                            href={portalUrl}
+                            className="w-full text-center py-2 px-4 rounded-xl text-xs font-bold bg-tenant-primary/10 hover:bg-tenant-gradient hover:text-white text-tenant-primary transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                          >
+                            Otevřít portál {t.name}
+                            <ArrowUpRight size={13} />
+                          </Link>
+                        </div>
                       </div>
-                      <h3 className="font-extrabold text-lg text-foreground group-hover:text-tenant-primary transition-colors">Umělka Pardubice</h3>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                        Příklad sportovního centra. Pronájem časových slotů na hřišti, dělení plochy na sektory (1/2 hřiště) a vazba na hardware turniketů.
-                      </p>
-                    </div>
-                    <div className="pt-6 mt-6 border-t border-slate-100/50 dark:border-[#1F1F35]/20">
-                      <Link 
-                        href={umelkaUrl}
-                        className="w-full text-center py-2 px-4 rounded-xl text-xs font-bold bg-tenant-primary/10 hover:bg-tenant-gradient hover:text-white text-tenant-primary transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                      >
-                        Otevřít portál Umělka
-                        <ArrowUpRight size={13} />
-                      </Link>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </ScrollReveal>
 
@@ -568,12 +566,21 @@ export default async function Home() {
           </div>
 
           <div>
-            <span className="font-bold text-slate-700 dark:text-zinc-300 block mb-3 uppercase tracking-wider text-[10px]">Segmenty</span>
+            <span className="font-bold text-slate-700 dark:text-zinc-300 block mb-3 uppercase tracking-wider text-[10px]">Aktivní portály</span>
             <ul className="space-y-2 text-[11px]">
-              <li><Link href={umelkaUrl} className="hover:text-tenant-primary transition-colors">Sportovní areály</Link></li>
-              <li><Link href={sferaUrl} className="hover:text-tenant-primary transition-colors">Kreativní a výuková centra</Link></li>
-              <li><a href="#verticals" className="hover:text-tenant-primary transition-colors">Kapacitní přednášky</a></li>
-              <li><a href="#verticals" className="hover:text-tenant-primary transition-colors">Hromadné ticketing akce</a></li>
+              {tenants.slice(0, 4).map((t) => {
+                const portalUrl = isLocal ? `http://${t.id}.localhost:3000` : `/tenants/${t.id}`;
+                return (
+                  <li key={t.id}>
+                    <Link href={portalUrl} className="hover:text-tenant-primary transition-colors">
+                      {t.name}
+                    </Link>
+                  </li>
+                );
+              })}
+              {tenants.length === 0 && (
+                <li><span className="text-slate-400">Žádné aktivní portály</span></li>
+              )}
             </ul>
           </div>
 

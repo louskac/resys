@@ -5,11 +5,33 @@ import { exec } from "child_process";
 import util from "util";
 import fs from "fs";
 import path from "path";
+import { getServerSession } from "next-auth/next";
+import authOptions from "@/lib/auth";
+import { hashPassword } from "@/lib/crypto";
+import { ensureDefaultData } from "@/lib/dbInit";
 
 const execPromise = util.promisify(exec);
 
+// Helper to verify if the requester has SUPERADMIN role
+async function checkSuperadmin(session: any) {
+  return session && session.user && session.user.role === "SUPERADMIN";
+}
+
+// Helper to verify if the requester has ADMIN/SUPERADMIN role for a specific tenant
+async function checkTenantAdmin(session: any, tenantId: string) {
+  if (!session || !session.user) return false;
+  if (session.user.role === "SUPERADMIN") return true;
+  return session.user.role === "ADMIN" && session.user.tenantId === tenantId;
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensureDefaultData();
+    const session = await getServerSession(authOptions);
+    if (!await checkSuperadmin(session)) {
+      return NextResponse.json({ error: "Forbidden: Superadmin access required" }, { status: 403 });
+    }
+
     const tenants = await prisma.tenant.findMany({
       include: {
         resources: {
@@ -32,11 +54,42 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureDefaultData();
+    const session = await getServerSession(authOptions);
     const body = await request.json();
     const { action, data } = body;
 
     if (!action) {
       return NextResponse.json({ error: "Action is required" }, { status: 400 });
+    }
+
+    // --- SUPERADMIN / HOST PORTAL ACTIONS ---
+    const superadminActions = ["seed_reset", "tenant_upsert", "tenant_delete", "user_list", "user_upsert", "user_delete"];
+    if (superadminActions.includes(action)) {
+      if (!await checkSuperadmin(session)) {
+        return NextResponse.json({ error: "Forbidden: Superadmin access required" }, { status: 403 });
+      }
+    }
+
+    // --- TENANT ADMIN PORTAL ACTIONS ---
+    const tenantAdminActions = [
+      "tenant_settings_update",
+      "resource_upsert",
+      "resource_delete",
+      "image_upload",
+      "rule_upsert",
+      "rule_delete",
+      "device_upsert",
+      "device_delete"
+    ];
+    if (tenantAdminActions.includes(action)) {
+      const targetTenantId = data?.tenantId || data?.id;
+      if (!targetTenantId) {
+        return NextResponse.json({ error: "tenantId or tenant id is required for this action" }, { status: 400 });
+      }
+      if (!await checkTenantAdmin(session, targetTenantId)) {
+        return NextResponse.json({ error: "Forbidden: Unauthorized access to tenant settings" }, { status: 403 });
+      }
     }
 
     switch (action) {
@@ -75,6 +128,76 @@ export async function POST(request: NextRequest) {
           data: { attributes },
         });
         return NextResponse.json({ status: "success", tenant });
+      }
+
+      case "user_list": {
+        const users = await prisma.user.findMany({
+          include: {
+            tenant: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
+          orderBy: {
+            email: "asc"
+          }
+        });
+        const sanitizedUsers = users.map(u => {
+          const { passwordHash, ...rest } = u;
+          return rest;
+        });
+        return NextResponse.json({ status: "success", users: sanitizedUsers });
+      }
+
+      case "user_upsert": {
+        const { id, email, password, name, role, tenantId, phone } = data;
+        
+        const updateData: any = {
+          email,
+          name,
+          role,
+          tenantId: tenantId || null,
+          phone: phone || null,
+        };
+
+        if (password && password.trim() !== "") {
+          updateData.passwordHash = hashPassword(password);
+        }
+
+        let user;
+        if (id) {
+          user = await prisma.user.update({
+            where: { id },
+            data: updateData
+          });
+        } else {
+          if (!password || password.trim() === "") {
+            return NextResponse.json({ error: "Password is required for new users" }, { status: 400 });
+          }
+          // Check if user already exists
+          const existing = await prisma.user.findUnique({ where: { email } });
+          if (existing) {
+            return NextResponse.json({ error: "User with this email already exists" }, { status: 400 });
+          }
+
+          user = await prisma.user.create({
+            data: {
+              ...updateData,
+              passwordHash: hashPassword(password)
+            }
+          });
+        }
+
+        const { passwordHash, ...sanitized } = user;
+        return NextResponse.json({ status: "success", user: sanitized });
+      }
+
+      case "user_delete": {
+        const { id } = data;
+        await prisma.user.delete({ where: { id } });
+        return NextResponse.json({ status: "success", message: "User deleted." });
       }
 
       // --- TENANT ADMIN PORTAL ACTIONS ---

@@ -108,8 +108,12 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
   const attributes = (tenant.attributes as Record<string, any>) || {};
   const adminEmails = attributes.adminEmails || ["josef.novak@deepvision.cz"];
   const userEmail = session.user.email || "";
+  const userRole = (session.user as any).role;
+  const userTenantId = (session.user as any).tenantId;
 
   const isAuthorized = 
+    userRole === "SUPERADMIN" || 
+    (userRole === "ADMIN" && userTenantId === tenantId) ||
     adminEmails.includes(userEmail) || 
     userEmail.endsWith("@deepvision.cz"); // Developer convenience shortcut
 

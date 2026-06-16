@@ -155,7 +155,7 @@ export default function AdminLoginClient({
           {/* Credentials Login Form */}
           <form onSubmit={handleCredentialsLogin} className="w-full space-y-4 text-xs mb-6">
             <div className="space-y-1">
-              <label className="block text-muted-foreground font-semibold">Přihlášení profilu správce</label>
+              <label className="block text-muted-foreground font-semibold">E-mail správce / Jméno</label>
               <div className="relative flex items-center">
                 <User size={14} className="absolute left-3.5 text-muted-foreground" />
                 <input
@@ -165,7 +165,7 @@ export default function AdminLoginClient({
                   onChange={(e) => setUsername(e.target.value)}
                   className="input-field pl-10 py-2.5 text-xs bg-secondary/30"
                   style={{ paddingLeft: "2.5rem" }}
-                  placeholder="admin-profile"
+                  placeholder="admin@umelka.cz nebo admin-profile"
                 />
               </div>
             </div>

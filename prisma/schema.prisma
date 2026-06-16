@@ -50,6 +50,34 @@ model Tenant {
   resources    Resource[]
   bookings     Booking[]
   devices      CheckinDevice[]
+  users        User[]
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  USER
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String?   // Hashed password (nullable if OneiD SSO user who never set a password)
+  name           String
+  role           Role      @default(USER)
+  phone          String?
+  avatarUrl      String?
+  tenantId       String?
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  addressStreet  String?
+  addressCity    String?
+  addressZip     String?
+  addressCountry String?
+  organization   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 // Bookable resources (gyms, yoga rooms, classes)

@@ -3,6 +3,12 @@ const crypto = require("crypto");
 
 const prisma = new PrismaClient();
 
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+  return `${salt}:${hash}`;
+}
+
 async function main() {
   console.log("Starting database seed...");
 
@@ -12,6 +18,7 @@ async function main() {
   await prisma.booking.deleteMany({});
   await prisma.scheduleRule.deleteMany({});
   await prisma.resource.deleteMany({});
+  await prisma.user.deleteMany({}); // Delete users
   await prisma.tenant.deleteMany({});
 
   console.log("Cleared existing database records.");
@@ -53,6 +60,65 @@ async function main() {
   });
 
   console.log("Seeded Tenants: Sféra (Educational) and Umělka (Sports).");
+
+  // Seed Users
+  await prisma.user.create({
+    data: {
+      email: "superadmin@resys.cz",
+      passwordHash: hashPassword("superadmin"),
+      name: "Platform Superadmin",
+      role: "SUPERADMIN",
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "admin@sfera.cz",
+      passwordHash: hashPassword("sfera"),
+      name: "Sféra Administrator",
+      role: "ADMIN",
+      tenantId: sfera.id,
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "admin@umelka.cz",
+      passwordHash: hashPassword("umelka"),
+      name: "Umělka Administrator",
+      role: "ADMIN",
+      tenantId: umelka.id,
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      id: "9999", // Match mock_dev_session_secret
+      email: "josef.novak@deepvision.cz",
+      passwordHash: hashPassword("josef"),
+      name: "Josef Novák (Customer)",
+      role: "USER",
+      phone: "+420123456789",
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80",
+      addressStreet: "17. listopadu 237",
+      addressCity: "Pardubice",
+      addressZip: "53002",
+      addressCountry: "Česká republika",
+      organization: "DeepVision s.r.o.",
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "user@gmail.com",
+      passwordHash: hashPassword("user"),
+      name: "Jan Novotný",
+      role: "USER",
+      phone: "+420987654321",
+    }
+  });
+
+  console.log("Seeded default users.");
 
   // 3. Seed Resources for Sféra (Educational Courses / Labs)
   const chemLab = await prisma.resource.create({
