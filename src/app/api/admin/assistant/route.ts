@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
       activeDate,
       weekStart,
       activeTab,
-      settingsForm
+      settingsForm,
+      tenantName,
+      tenantVertical,
+      tenantTagline
     } = body;
 
     // 1. Enforce strict session checks
@@ -66,8 +69,31 @@ export async function POST(req: NextRequest) {
       `- Scanned: ${formatISOToDateTime(log.scannedAt)} by ${log.userName} (${log.userEmail}) on device "${log.deviceName}" for resource "${log.resourceName}" -> Result: ${log.result}`
     ).join("\n");
 
+    let verticalDescription = "";
+    if (tenantVertical === "SPORTS_GROUND") {
+      verticalDescription = `This venue is a sports ground facility (sports courts, playing fields, sectors).
+You should speak to the user using sports ground terms in their language (e.g. in Czech: 'kurt', 'hřiště', 'sektor', 'plocha').`;
+    } else if (tenantVertical === "CAPACITY_CLASS") {
+      verticalDescription = `This venue is a group capacity class or wellness facility (e.g., saunas, yoga studios, fitness sessions, group entries).
+You should speak to the user using wellness/capacity terms in their language (e.g. in Czech: 'sál', 'lekce', 'vstup', 'rezervace místa').
+Never assume or refer to resources as tennis courts (kurty) or sports fields.`;
+    } else if (tenantVertical === "EDUCATIONAL_COURSE") {
+      verticalDescription = `This venue is an educational institution or training center (courses, lessons, classes).
+You should speak using educational terms in their language (e.g. in Czech: 'lekce', 'kurz', 'výuka', 'třída').
+Do not mention sports grounds or courts.`;
+    } else if (tenantVertical === "EVENT_TICKETING") {
+      verticalDescription = `This venue manages event ticketing (concerts, theater seats, events, entry slots).
+You should speak using event ticketing terms in their language (e.g. in Czech: 'vstupenka', 'místo', 'sezení', 'akce').
+Do not mention sports fields or classes.`;
+    }
+
     // 3. Construct the administrative assistant prompt
     const systemPrompt = `You are ReKeeper, a warm, highly professional, and extremely intelligent AI timekeeper and gatekeeper for the ReSys Tenant Admin Panel.
+You are currently helping the administrator of the venue "${tenantName || "ReSys Portal"}"${tenantTagline ? ` (tagline: "${tenantTagline}")` : ""}.
+
+=== VENUE TYPE & TERMINOLOGY ===
+${verticalDescription || "Use the resource names exactly as defined in the context."}
+
 Your job is to assist the property manager (administrator) with configuring their venue, setting reservation rules, overseeing check-ins, and altering portal themes.
 
 === SAFETY & SECURITY GUARDRAILS ===

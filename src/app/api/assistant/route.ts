@@ -3,7 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, resources, existingBookings, currentDate, weekStart, activeResourceId, loggedInUser } = body;
+    const { 
+      messages, 
+      resources, 
+      existingBookings, 
+      currentDate, 
+      weekStart, 
+      activeResourceId, 
+      loggedInUser,
+      tenantName,
+      tenantVertical,
+      tenantTagline
+    } = body;
 
     // Get API keys from headers (client-supplied) or server env
     const clientKey = req.headers.get("x-gemini-api-key") || req.headers.get("x-openai-api-key");
@@ -39,7 +50,30 @@ export async function POST(req: NextRequest) {
       return `- Booking ID: "${b.id}" on Resource: "${b.resourceName || 'Plocha'}" (ID: ${b.resourceId}) on ${dayLabel} (dayIndex: ${b.dayIndex}) from ${formatDecimalHour(b.startHour)} to ${formatDecimalHour(b.startHour + b.durationHours)} (Reserved by: ${ownerLabel})`;
     }).join("\n");
 
+    let verticalDescription = "";
+    if (tenantVertical === "SPORTS_GROUND") {
+      verticalDescription = `This venue is a sports ground facility (sports courts, playing fields, sectors).
+You should speak to the user using sports ground terms in their language (e.g. in Czech: 'kurt', 'hřiště', 'sektor', 'plocha').`;
+    } else if (tenantVertical === "CAPACITY_CLASS") {
+      verticalDescription = `This venue is a group capacity class or wellness facility (e.g., saunas, yoga studios, fitness sessions, group entries).
+You should speak to the user using wellness/capacity terms in their language (e.g. in Czech: 'sál', 'lekce', 'vstup', 'rezervace místa').
+Never assume or refer to resources as tennis courts (kurty) or sports fields.`;
+    } else if (tenantVertical === "EDUCATIONAL_COURSE") {
+      verticalDescription = `This venue is an educational institution or training center (courses, lessons, classes).
+You should speak using educational terms in their language (e.g. in Czech: 'lekce', 'kurz', 'výuka', 'třída').
+Do not mention sports grounds or courts.`;
+    } else if (tenantVertical === "EVENT_TICKETING") {
+      verticalDescription = `This venue manages event ticketing (concerts, theater seats, events, entry slots).
+You should speak using event ticketing terms in their language (e.g. in Czech: 'vstupenka', 'místo', 'sezení', 'akce').
+Do not mention sports fields or classes.`;
+    }
+
     const systemPrompt = `You are ReKeeper, a warm, highly professional, and extremely intelligent AI reservation assistant and timekeeper for the ReSys booking portal.
+You are currently helping a user book a slot at the venue "${tenantName || "ReSys Portal"}"${tenantTagline ? ` (tagline: "${tenantTagline}")` : ""}.
+
+=== VENUE TYPE & TERMINOLOGY ===
+${verticalDescription || "Use the resource names exactly as defined."}
+
 Your job is to guide the user step-by-step through the reservation process in a natural, friendly manner, asking for only ONE parameter at a time to prevent overwhelming them.
 
 === CONTEXT ===

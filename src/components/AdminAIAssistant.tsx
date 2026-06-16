@@ -18,6 +18,9 @@ interface AdminAIAssistantProps {
   settingsForm: any;
   activeDate?: string;
   weekStart?: string;
+  tenantName: string;
+  tenantVertical: string;
+  tenantTagline?: string;
 }
 
 interface Message {
@@ -35,7 +38,10 @@ export default function AdminAIAssistant({
   activeTab,
   settingsForm,
   activeDate,
-  weekStart
+  weekStart,
+  tenantName,
+  tenantVertical,
+  tenantTagline
 }: AdminAIAssistantProps) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -345,7 +351,10 @@ export default function AdminAIAssistant({
           activeDate,
           weekStart,
           activeTab,
-          settingsForm
+          settingsForm,
+          tenantName,
+          tenantVertical,
+          tenantTagline
         })
       });
 

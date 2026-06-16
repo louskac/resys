@@ -13,6 +13,9 @@ interface AIAssistantProps {
   tenantId: string;
   resources: { id: string; name: string; parentId?: string | null }[];
   initialEvents: any[];
+  tenantName: string;
+  tenantVertical: string;
+  tenantTagline?: string;
 }
 
 interface Message {
@@ -37,7 +40,14 @@ interface ConsoleState {
   recurrenceCount: number | null;
 }
 
-export default function AIAssistant({ tenantId, resources, initialEvents }: AIAssistantProps) {
+export default function AIAssistant({ 
+  tenantId, 
+  resources, 
+  initialEvents,
+  tenantName,
+  tenantVertical,
+  tenantTagline
+}: AIAssistantProps) {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -507,7 +517,10 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           currentDate: new Date().toISOString(),
           weekStart: getMondayOfDate(new Date(activeDateStr)).toISOString().split("T")[0],
           activeResourceId: activeRes?.id || "",
-          loggedInUser: session?.user ? { name: session.user.name, email: session.user.email } : null
+          loggedInUser: session?.user ? { name: session.user.name, email: session.user.email } : null,
+          tenantName,
+          tenantVertical,
+          tenantTagline
         })
       });
 

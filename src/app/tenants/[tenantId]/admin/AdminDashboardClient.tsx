@@ -2633,6 +2633,9 @@ export default function AdminDashboardClient({
         activeTab={activeTab}
         activeDate={activeDate}
         weekStart={weekStart}
+        tenantName={tenant.name}
+        tenantVertical={tenant.vertical}
+        tenantTagline={tenant.attributes?.tagline || ""}
         settingsForm={{
           tagline: settingsTagline,
           openTime: settingsOpenTime,

@@ -556,6 +556,9 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
         }))}
         initialEvents={calendarEvents}
+        tenantName={tenant.name}
+        tenantVertical={tenant.vertical}
+        tenantTagline={attributes.tagline || ""}
       />
     </div>
   );
