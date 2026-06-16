@@ -82,8 +82,9 @@ export async function POST(request: NextRequest) {
       "device_upsert",
       "device_delete"
     ];
+    let targetTenantId: string | undefined = undefined;
     if (tenantAdminActions.includes(action)) {
-      const targetTenantId = data?.tenantId || data?.id;
+      targetTenantId = data?.tenantId || data?.id;
       if (!targetTenantId) {
         return NextResponse.json({ error: "tenantId or tenant id is required for this action" }, { status: 400 });
       }
@@ -205,11 +206,18 @@ export async function POST(request: NextRequest) {
         const { id, tenantId, name, type, maxCapacity, attributes } = data;
         let resource;
         if (id) {
+          const existing = await prisma.resource.findUnique({ where: { id } });
+          if (!existing || existing.tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
+          }
           resource = await prisma.resource.update({
             where: { id },
             data: { name, type, maxCapacity, attributes },
           });
         } else {
+          if (tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Cannot create resource for another tenant" }, { status: 403 });
+          }
           resource = await prisma.resource.create({
             data: { tenantId, name, type, maxCapacity, attributes },
           });
@@ -219,6 +227,10 @@ export async function POST(request: NextRequest) {
 
       case "resource_delete": {
         const { id } = data;
+        const existing = await prisma.resource.findUnique({ where: { id } });
+        if (!existing || existing.tenantId !== targetTenantId) {
+          return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
+        }
         await prisma.resource.delete({ where: { id } });
         return NextResponse.json({ status: "success", message: "Resource deleted." });
       }
@@ -275,6 +287,13 @@ export async function POST(request: NextRequest) {
         const { id, resourceId, name, dayOfWeek, startTime, endTime, price, maxCapacity, daysOfWeek } = data;
         
         if (id) {
+          const existingRule = await prisma.scheduleRule.findUnique({
+            where: { id },
+            include: { resource: true }
+          });
+          if (!existingRule || existingRule.resource.tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Rule does not belong to this tenant" }, { status: 403 });
+          }
           const rule = await prisma.scheduleRule.update({
             where: { id },
             data: { 
@@ -287,41 +306,56 @@ export async function POST(request: NextRequest) {
             },
           });
           return NextResponse.json({ status: "success", rule });
-        } else if (Array.isArray(daysOfWeek) && daysOfWeek.length > 0) {
-          const createdRules = [];
-          for (const dIndex of daysOfWeek) {
-            const rule = await prisma.scheduleRule.create({
-              data: {
-                resourceId,
-                name,
-                dayOfWeek: parseInt(dIndex, 10),
-                startTime,
-                endTime,
-                price: parseFloat(price),
-                maxCapacity: parseInt(maxCapacity, 10),
-              }
-            });
-            createdRules.push(rule);
-          }
-          return NextResponse.json({ status: "success", rules: createdRules });
         } else {
-          const rule = await prisma.scheduleRule.create({
-            data: { 
-              resourceId, 
-              name, 
-              dayOfWeek: dayOfWeek !== undefined && dayOfWeek !== null ? parseInt(dayOfWeek, 10) : null, 
-              startTime, 
-              endTime, 
-              price: parseFloat(price), 
-              maxCapacity: parseInt(maxCapacity, 10) 
-            },
-          });
-          return NextResponse.json({ status: "success", rule });
+          if (resourceId) {
+            const resource = await prisma.resource.findUnique({ where: { id: resourceId } });
+            if (!resource || resource.tenantId !== targetTenantId) {
+              return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
+            }
+          }
+          if (Array.isArray(daysOfWeek) && daysOfWeek.length > 0) {
+            const createdRules = [];
+            for (const dIndex of daysOfWeek) {
+              const rule = await prisma.scheduleRule.create({
+                data: {
+                  resourceId,
+                  name,
+                  dayOfWeek: parseInt(dIndex, 10),
+                  startTime,
+                  endTime,
+                  price: parseFloat(price),
+                  maxCapacity: parseInt(maxCapacity, 10),
+                }
+              });
+              createdRules.push(rule);
+            }
+            return NextResponse.json({ status: "success", rules: createdRules });
+          } else {
+            const rule = await prisma.scheduleRule.create({
+              data: { 
+                resourceId, 
+                name, 
+                dayOfWeek: dayOfWeek !== undefined && dayOfWeek !== null ? parseInt(dayOfWeek, 10) : null, 
+                startTime, 
+                endTime, 
+                price: parseFloat(price), 
+                maxCapacity: parseInt(maxCapacity, 10) 
+              },
+            });
+            return NextResponse.json({ status: "success", rule });
+          }
         }
       }
 
       case "rule_delete": {
         const { id } = data;
+        const existing = await prisma.scheduleRule.findUnique({
+          where: { id },
+          include: { resource: true }
+        });
+        if (!existing || existing.resource.tenantId !== targetTenantId) {
+          return NextResponse.json({ error: "Forbidden: Rule does not belong to this tenant" }, { status: 403 });
+        }
         await prisma.scheduleRule.delete({ where: { id } });
         return NextResponse.json({ status: "success", message: "Schedule rule deleted." });
       }
@@ -337,18 +371,25 @@ export async function POST(request: NextRequest) {
 
         let device;
         if (id) {
+          const existing = await prisma.checkinDevice.findUnique({ where: { id } });
+          if (!existing || existing.tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Device does not belong to this tenant" }, { status: 403 });
+          }
           device = await prisma.checkinDevice.update({
             where: { id },
             data: { name, active, ...tokenHashUpdate },
           });
         } else {
+          if (tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Cannot create device for another tenant" }, { status: 403 });
+          }
           device = await prisma.checkinDevice.create({
             data: { 
               id: id || undefined, 
               tenantId, 
               name, 
               tokenHash: token ? crypto.createHash("sha256").update(token).digest("hex") : crypto.createHash("sha256").update("default_tok_" + Math.random()).digest("hex"), 
-              active: active ?? true 
+              active
             },
           });
         }
@@ -357,8 +398,12 @@ export async function POST(request: NextRequest) {
 
       case "device_delete": {
         const { id } = data;
+        const existing = await prisma.checkinDevice.findUnique({ where: { id } });
+        if (!existing || existing.tenantId !== targetTenantId) {
+          return NextResponse.json({ error: "Forbidden: Device does not belong to this tenant" }, { status: 403 });
+        }
         await prisma.checkinDevice.delete({ where: { id } });
-        return NextResponse.json({ status: "success", message: "Check-in device deleted." });
+        return NextResponse.json({ status: "success", message: "Device deleted." });
       }
 
       default:

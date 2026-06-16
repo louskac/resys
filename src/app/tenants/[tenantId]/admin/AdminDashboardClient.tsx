@@ -541,7 +541,7 @@ export default function AdminDashboardClient({
           const res = await fetch("/api/admin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "resource_delete", data: { id } })
+            body: JSON.stringify({ action: "resource_delete", data: { id, tenantId: tenant.id } })
           });
           if (res.ok) {
             setNotification({
@@ -575,6 +575,7 @@ export default function AdminDashboardClient({
     // For bulk creation, if adding we send daysOfWeek array
     const dataToSend = {
       id: ruleModal.data.id || undefined,
+      tenantId: tenant.id,
       resourceId: ruleModal.data.resourceId,
       name: ruleModal.data.name,
       dayOfWeek: ruleModal.mode === "edit" ? ruleModal.data.dayOfWeek : undefined,
@@ -626,7 +627,7 @@ export default function AdminDashboardClient({
           const res = await fetch("/api/admin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "rule_delete", data: { id } })
+            body: JSON.stringify({ action: "rule_delete", data: { id, tenantId: tenant.id } })
           });
           if (res.ok) {
             setNotification({
@@ -715,7 +716,7 @@ export default function AdminDashboardClient({
           const res = await fetch("/api/admin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "device_delete", data: { id } })
+            body: JSON.stringify({ action: "device_delete", data: { id, tenantId: tenant.id } })
           });
           if (res.ok) {
             setNotification({
