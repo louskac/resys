@@ -91,12 +91,7 @@ export default function AdminAIAssistant({
     tagline: null
   });
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: getAdminGreeting(tenantVertical, tenantAiInstructions)
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -147,18 +142,63 @@ export default function AdminAIAssistant({
     }
   }, []);
 
-  // Keep greeting synchronized if vertical or instructions change when there is only the initial greeting
-  useEffect(() => {
-    setMessages(prev => {
-      if (prev.length === 1 && prev[0].role === "assistant") {
-        return [{
+  const generateAiGreeting = async () => {
+    setIsLoading(true);
+    try {
+      const initPrompt = "Pozdravte administrátora vřele v jazyce portálu (česky), představte se jako ReKeeper a stručně (1-2 věty) nabídněte pomoc se správou portálu (zdroje, pravidla, zařízení). Zkuste například navrhnout nějakou konkrétní akci podle vašeho nastavení. Dodržujte instrukce pro terminologii.";
+      const response = await fetch("/api/admin/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: initPrompt }],
+          tenantId,
+          resources,
+          bookings,
+          devices,
+          checkinLogs,
+          activeDate,
+          weekStart,
+          activeTab,
+          settingsForm,
+          tenantName,
+          tenantVertical,
+          tenantTagline,
+          tenantAiInstructions
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch greeting");
+      }
+
+      const data = await response.json();
+      const greetingMsg: Message = {
+        role: "assistant",
+        content: data.reply || getAdminGreeting(tenantVertical, tenantAiInstructions)
+      };
+      setMessages([greetingMsg]);
+      
+      if (isVoiceOutputEnabledRef.current) {
+        speakText(greetingMsg.content);
+      }
+    } catch (err) {
+      console.error("Failed to generate AI greeting:", err);
+      setMessages([
+        {
           role: "assistant",
           content: getAdminGreeting(tenantVertical, tenantAiInstructions)
-        }];
-      }
-      return prev;
-    });
-  }, [tenantVertical, tenantAiInstructions]);
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      generateAiGreeting();
+    }
+  }, [isOpen, messages.length]);
 
   // Cleanup MediaRecorder
   useEffect(() => {
@@ -177,12 +217,7 @@ export default function AdminAIAssistant({
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    setMessages([
-      {
-        role: "assistant",
-        content: getAdminGreeting(tenantVertical, tenantAiInstructions)
-      }
-    ]);
+    setMessages([]);
     setDraftState({
       tab: activeTab,
       resourceName: null,

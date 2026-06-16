@@ -149,12 +149,7 @@ export default function AIAssistant({
     recurrenceCount: null
   });
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -190,30 +185,92 @@ export default function AIAssistant({
     };
   }, []);
 
-  // Keep greeting synchronized if vertical or instructions change when there is only the initial greeting
-  useEffect(() => {
-    setMessages(prev => {
-      if (prev.length === 1 && prev[0].role === "assistant") {
-        return [{
+  const generateAiGreeting = async () => {
+    setIsLoading(true);
+    try {
+      const initPrompt = "Pozdravte uživatele vřele v jazyce portálu (česky), představte se jako ReKeeper a stručně (1-2 věty) jej vyzvěte k rezervaci. Nabídněte pomoc s rezervací hřiště nebo zdroje na základě vašeho nastavení a instrukcí. Zkuste například navrhnout nějakou konkrétní akci podle vašeho nastavení. Dodržujte instrukce pro terminologii.";
+      const activeDateStr = searchParams.get("date") || new Date().toISOString().split("T")[0];
+      const activeResSlug = searchParams.get("resource") || "";
+      const activeRes = resources.find(r => r.id === activeResSlug || r.name.toLowerCase().replace(/\s+/g, "-").includes(activeResSlug.split("-")[0]));
+
+      const currentBookingsContext = initialEvents
+        .filter(e => e.isOccupied)
+        .map(e => ({
+          id: e.id,
+          resourceId: e.resourceId,
+          resourceName: e.resourceName || resources.find(r => r.id === e.resourceId)?.name || "Plocha",
+          dayIndex: e.dayIndex,
+          startHour: e.startHour,
+          durationHours: e.durationHours,
+          name: e.name,
+          instructor: e.instructor
+        }));
+
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: initPrompt }],
+          resources,
+          existingBookings: currentBookingsContext,
+          currentDate: new Date().toISOString(),
+          weekStart: (() => {
+            const temp = new Date(activeDateStr);
+            const day = temp.getUTCDay();
+            const diff = temp.getUTCDate() - day + (day === 0 ? -6 : 1);
+            const mon = new Date(temp);
+            mon.setUTCDate(diff);
+            mon.setUTCHours(0, 0, 0, 0);
+            return mon.toISOString().split("T")[0];
+          })(),
+          activeResourceId: activeRes?.id || "",
+          loggedInUser: session?.user ? { name: session.user.name, email: session.user.email } : null,
+          tenantName,
+          tenantVertical,
+          tenantTagline,
+          tenantAiInstructions
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch greeting");
+      }
+
+      const data = await response.json();
+      const greetingMsg: Message = {
+        role: "assistant",
+        content: data.reply || getCustomerGreeting(tenantVertical, tenantAiInstructions)
+      };
+      setMessages([greetingMsg]);
+      
+      if (isVoiceOutputEnabledRef.current) {
+        speakText(greetingMsg.content);
+      }
+    } catch (err) {
+      console.error("Failed to generate AI greeting:", err);
+      setMessages([
+        {
           role: "assistant",
           content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
-        }];
-      }
-      return prev;
-    });
-  }, [tenantVertical, tenantAiInstructions]);
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      generateAiGreeting();
+    }
+  }, [isOpen, messages.length]);
 
   // Reset assistant state to start a new booking conversation
   const handleReset = () => {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    setMessages([
-      {
-        role: "assistant",
-        content: getCustomerGreeting(tenantVertical, tenantAiInstructions)
-      }
-    ]);
+    setMessages([]);
     setConsoleState({
       resourceId: null,
       resourceName: null,

@@ -351,6 +351,13 @@ You have access to tools to control the admin screen layout and form modals:`;
     });
 
     // 5. Query Gemini with model fallbacks
+    if (contents.length > 0 && contents[0].role === "model") {
+      contents.unshift({
+        role: "user",
+        parts: [{ text: "Dobrý den." }]
+      });
+    }
+
     const response = await fetchWithRetry(geminiApiKey, contents, systemPrompt, tools);
     const data = await response.json();
 

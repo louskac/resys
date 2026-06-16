@@ -500,6 +500,13 @@ You have access to function calling tools to control the user's browser screen i
       });
 
       // Call Gemini API via fetch with retry and model fallback (Pass 1)
+      if (contents.length > 0 && contents[0].role === "model") {
+        contents.unshift({
+          role: "user",
+          parts: [{ text: "Dobrý den." }]
+        });
+      }
+
       const response = await fetchWithRetry(activeApiKey, contents, systemPrompt, tools);
       const data = await response.json();
       
