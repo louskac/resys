@@ -536,7 +536,7 @@ export default function AdminAIAssistant({
       {isOpen && (
         <div 
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] transition-opacity duration-300 cursor-default animate-fadeIn"
+          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] transition-opacity duration-300 cursor-default animate-fadeIn md:hidden"
         />
       )}
 
@@ -550,7 +550,7 @@ export default function AdminAIAssistant({
       )}
 
       {isOpen && (
-        <div className={`fixed bottom-10 md:bottom-12 left-0 right-0 mx-auto w-[95%] max-w-[550px] bg-[#0A0A12]/95 border border-purple-500/20 shadow-[0_20px_50px_rgba(112,0,255,0.25)] rounded-[28px] p-5 pt-8 pb-5 flex flex-col gap-4 z-50 transition-all duration-300 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
+        <div className={`fixed bottom-6 md:bottom-8 right-6 md:right-8 w-[95%] max-w-[460px] left-auto mx-0 bg-[#0A0A12]/95 border border-purple-500/20 shadow-[0_20px_50px_rgba(112,0,255,0.25)] rounded-[28px] p-5 pt-8 pb-5 flex flex-col gap-4 z-50 transition-all duration-300 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
           
           {/* Subtle glowing backgrounds */}
           <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">

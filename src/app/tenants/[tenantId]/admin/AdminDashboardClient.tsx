@@ -2102,7 +2102,7 @@ export default function AdminDashboardClient({
       {/* 1. Resource CRUD Modal */}
       {resourceModal.open && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-md w-full p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
+          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
             <h3 className="text-base font-bold text-foreground mb-4">
               {resourceModal.mode === "add" ? "Vytvořit rezervovatelný zdroj" : "Upravit detaily zdroje"}
             </h3>
@@ -2136,39 +2136,44 @@ export default function AdminDashboardClient({
                   <option value="SEAT">MÍSTO (Sedadlo / Konkrétní místo)</option>
                   <option value="COURSE_PROGRAM">PROGRAM (Pravidelná lekce / Kurz)</option>
                 </select>
-                <div className="mt-2 p-3 bg-white/20 dark:bg-[#151522]/30 rounded-xl border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
-                  <span className="font-bold text-foreground block">Jak se typ SPACE zobrazuje na veřejném webu?</span>
-                  <span>
-                    V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
-                  </span>
-                  <div className="space-y-1 pt-1">
-                    <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
-                    <ul className="list-disc list-inside space-y-0.5 pl-1">
-                      <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
-                      <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu &bdquo;1/2&ldquo; či &bdquo;sektor&ldquo;).</li>
-                    </ul>
+                <details className="group mt-2">
+                  <summary className="cursor-pointer text-[10px] text-tenant-primary font-semibold select-none flex items-center gap-1 group-open:mb-2 hover:underline">
+                    <span>Zobrazit nápovědu k typům plochy</span>
+                  </summary>
+                  <div className="p-3 bg-white/20 dark:bg-[#151522]/30 rounded-xl border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
+                    <span className="font-bold text-foreground block">Jak se typ SPACE zobrazuje na veřejném webu?</span>
+                    <span>
+                      V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
+                    </span>
+                    <div className="space-y-1 pt-1">
+                      <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
+                      <ul className="list-disc list-inside space-y-0.5 pl-1">
+                        <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
+                        <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu &bdquo;1/2&ldquo; či &bdquo;sektor&ldquo;).</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-1.5 pt-1">
+                      <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
+                      <ol className="list-decimal list-inside space-y-1 pl-1">
+                        <li>
+                          <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
+                        </li>
+                        <li>
+                          <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>&bdquo;Jednorázový pronájem&ldquo;</em>, <em>&bdquo;Dlouhodobý trénink&ldquo;</em> nebo <em>&bdquo;Turnajový slot&ldquo;</em>. Vhodné, pokud nabízíte různé obchodní modely.
+                        </li>
+                        <li>
+                          <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>&bdquo;Fotbalové hřiště&ldquo;</em>, <em>&bdquo;Tenisový kurt&ldquo;</em>, <em>&bdquo;Beachvolejbal&ldquo;</em> nebo <em>&bdquo;Dráha&ldquo;</em>. Užitečné pro multi-sportovní areály.
+                        </li>
+                        <li>
+                          <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
+                        </li>
+                        <li>
+                          <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
+                        </li>
+                      </ol>
+                    </div>
                   </div>
-                  <div className="space-y-1.5 pt-1">
-                    <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
-                    <ol className="list-decimal list-inside space-y-1 pl-1">
-                      <li>
-                        <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
-                      </li>
-                      <li>
-                        <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>&bdquo;Jednorázový pronájem&ldquo;</em>, <em>&bdquo;Dlouhodobý trénink&ldquo;</em> nebo <em>&bdquo;Turnajový slot&ldquo;</em>. Vhodné, pokud nabízíte různé obchodní modely.
-                      </li>
-                      <li>
-                        <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>&bdquo;Fotbalové hřiště&ldquo;</em>, <em>&bdquo;Tenisový kurt&ldquo;</em>, <em>&bdquo;Beachvolejbal&ldquo;</em> nebo <em>&bdquo;Dráha&ldquo;</em>. Užitečné pro multi-sportovní areály.
-                      </li>
-                      <li>
-                        <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
-                      </li>
-                      <li>
-                        <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
-                      </li>
-                    </ol>
-                  </div>
-                </div>
+                </details>
               </div>
 
               <div>
@@ -2304,7 +2309,7 @@ export default function AdminDashboardClient({
       {/* 2. Schedule Rule CRUD Modal */}
       {ruleModal.open && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-md w-full p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
+          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
             <h3 className="text-base font-bold text-foreground mb-4">
               {ruleModal.mode === "add" ? "Přidat rozvrhový slot programu" : "Upravit detaily rozvrhového slotu"}
             </h3>
@@ -2519,7 +2524,7 @@ export default function AdminDashboardClient({
       {/* 3. IoT Device Register Modal */}
       {deviceModal.open && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-md w-full p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
+          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
             <h3 className="text-base font-bold text-foreground mb-4">
               {deviceModal.mode === "add" ? "Registrovat fyzické přístupové zařízení" : "Upravit parametry zařízení"}
             </h3>

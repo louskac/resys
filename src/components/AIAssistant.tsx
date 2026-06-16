@@ -927,7 +927,7 @@ export default function AIAssistant({
       {isOpen && (
         <div 
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[1.5px] transition-opacity duration-300 cursor-default animate-fadeIn"
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[1.5px] transition-opacity duration-300 cursor-default animate-fadeIn md:hidden"
         />
       )}
 
@@ -938,7 +938,7 @@ export default function AIAssistant({
 
       {/* Google Stitch inspired Dynamic Island Voice HUD */}
       {isOpen && (
-        <div className={`fixed bottom-10 md:bottom-12 left-0 right-0 mx-auto w-[95%] max-w-[550px] animated-glowing-border p-5 pt-14 pb-5 flex flex-col gap-4 z-50 transition-[opacity,background-color,border-color,box-shadow,backdrop-filter] duration-350 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
+        <div className={`fixed bottom-6 md:bottom-8 right-6 md:right-8 w-[95%] max-w-[460px] left-auto mx-0 animated-glowing-border p-5 pt-14 pb-5 flex flex-col gap-4 z-50 transition-[opacity,background-color,border-color,box-shadow,backdrop-filter] duration-350 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
           
           {/* Subtle breathing liquid background mesh matching the design language */}
           <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
