@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
       settingsForm,
       tenantName,
       tenantVertical,
-      tenantTagline
+      tenantTagline,
+      tenantAiInstructions
     } = body;
 
     // 1. Enforce strict session checks
@@ -93,7 +94,7 @@ You are currently helping the administrator of the venue "${tenantName || "ReSys
 
 === VENUE TYPE & TERMINOLOGY ===
 ${verticalDescription || "Use the resource names exactly as defined in the context."}
-
+${tenantAiInstructions ? `\n=== CUSTOM VENUE INSTRUCTIONS & RULES ===\n${tenantAiInstructions}\n` : ""}
 Your job is to assist the property manager (administrator) with configuring their venue, setting reservation rules, overseeing check-ins, and altering portal themes.
 
 === SAFETY & SECURITY GUARDRAILS ===

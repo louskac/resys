@@ -16,6 +16,7 @@ interface AIAssistantProps {
   tenantName: string;
   tenantVertical: string;
   tenantTagline?: string;
+  tenantAiInstructions?: string;
 }
 
 interface Message {
@@ -46,7 +47,8 @@ export default function AIAssistant({
   initialEvents,
   tenantName,
   tenantVertical,
-  tenantTagline
+  tenantTagline,
+  tenantAiInstructions
 }: AIAssistantProps) {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -520,7 +522,8 @@ export default function AIAssistant({
           loggedInUser: session?.user ? { name: session.user.name, email: session.user.email } : null,
           tenantName,
           tenantVertical,
-          tenantTagline
+          tenantTagline,
+          tenantAiInstructions
         })
       });
 

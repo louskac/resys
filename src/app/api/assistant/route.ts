@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
       loggedInUser,
       tenantName,
       tenantVertical,
-      tenantTagline
+      tenantTagline,
+      tenantAiInstructions
     } = body;
 
     // Get API keys from headers (client-supplied) or server env
@@ -73,7 +74,7 @@ You are currently helping a user book a slot at the venue "${tenantName || "ReSy
 
 === VENUE TYPE & TERMINOLOGY ===
 ${verticalDescription || "Use the resource names exactly as defined."}
-
+${tenantAiInstructions ? `\n=== CUSTOM VENUE INSTRUCTIONS & RULES ===\n${tenantAiInstructions}\n` : ""}
 Your job is to guide the user step-by-step through the reservation process in a natural, friendly manner, asking for only ONE parameter at a time to prevent overwhelming them.
 
 === CONTEXT ===

@@ -49,6 +49,7 @@ interface TenantAttributes {
     closeTime: string;
     closed: boolean;
   }[];
+  aiInstructions?: string;
 }
 
 interface ResourceAttributes {
@@ -559,6 +560,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         tenantName={tenant.name}
         tenantVertical={tenant.vertical}
         tenantTagline={attributes.tagline || ""}
+        tenantAiInstructions={attributes.aiInstructions || ""}
       />
     </div>
   );

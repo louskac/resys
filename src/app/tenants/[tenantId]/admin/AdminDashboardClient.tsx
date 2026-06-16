@@ -176,6 +176,7 @@ export default function AdminDashboardClient({
     ? initialAttributes.adminEmails.join(", ")
     : (initialAttributes.adminEmails || "josef.novak@deepvision.cz");
   const [settingsAdminEmails, setSettingsAdminEmails] = useState(initialAdminEmails);
+  const [settingsAiInstructions, setSettingsAiInstructions] = useState((initialAttributes as any).aiInstructions || "");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
 
@@ -392,6 +393,7 @@ export default function AdminDashboardClient({
         if (data.openTime !== undefined) setSettingsOpenTime(data.openTime);
         if (data.closeTime !== undefined) setSettingsCloseTime(data.closeTime);
         if (Array.isArray(data.adminEmails)) setSettingsAdminEmails(data.adminEmails.join(", "));
+        if (data.aiInstructions !== undefined) setSettingsAiInstructions(data.aiInstructions);
       }
     };
 
@@ -762,6 +764,7 @@ export default function AdminDashboardClient({
         bannerPosition: settingsBannerPosition,
         openingHours: settingsOpeningHours,
         adminEmails: emailsArray,
+        aiInstructions: settingsAiInstructions,
       }
     };
 
@@ -1732,6 +1735,22 @@ export default function AdminDashboardClient({
                           Seznam emailů oddělených čárkou. Přihlášené administrátorské účty se musí shodovat.
                         </span>
                       </div>
+
+                      <div>
+                        <label className="block text-slate-500 dark:text-zinc-400 mb-1.5 font-bold uppercase tracking-wider text-[9px]">Instrukce pro AI (ReKeepera)</label>
+                        <div className="relative">
+                          <textarea
+                            rows={3}
+                            value={settingsAiInstructions}
+                            onChange={(e) => setSettingsAiInstructions(e.target.value)}
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl px-3 py-2.5 text-xs outline-none shadow-sm resize-none"
+                            placeholder="Upřesněte kontext, tón a specifická pravidla pro ReKeepera. Např. 'Jsme fotbalový areál s umělou trávou. Máme Celou plochu a dva sektory (Sektor A, Sektor B). Zaměřujeme se na fotbalové pronájmy.'"
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1.5 block font-medium">
+                          Pomáhá AI asistentovi přizpůsobit slovní zásobu a chování (např. zda se jedná o fotbal, tenis, masáže atd.).
+                        </span>
+                      </div>
                     </div>
 
                     {/* Right Column: Banner Drag Widget */}
@@ -2636,6 +2655,7 @@ export default function AdminDashboardClient({
         tenantName={tenant.name}
         tenantVertical={tenant.vertical}
         tenantTagline={tenant.attributes?.tagline || ""}
+        tenantAiInstructions={settingsAiInstructions}
         settingsForm={{
           tagline: settingsTagline,
           openTime: settingsOpenTime,

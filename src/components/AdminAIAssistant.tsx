@@ -21,6 +21,7 @@ interface AdminAIAssistantProps {
   tenantName: string;
   tenantVertical: string;
   tenantTagline?: string;
+  tenantAiInstructions?: string;
 }
 
 interface Message {
@@ -41,7 +42,8 @@ export default function AdminAIAssistant({
   weekStart,
   tenantName,
   tenantVertical,
-  tenantTagline
+  tenantTagline,
+  tenantAiInstructions
 }: AdminAIAssistantProps) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -354,7 +356,8 @@ export default function AdminAIAssistant({
           settingsForm,
           tenantName,
           tenantVertical,
-          tenantTagline
+          tenantTagline,
+          tenantAiInstructions
         })
       });
 
