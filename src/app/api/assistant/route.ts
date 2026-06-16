@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       return `- Booking ID: "${b.id}" on Resource: "${b.resourceName || 'Plocha'}" (ID: ${b.resourceId}) on ${dayLabel} (dayIndex: ${b.dayIndex}) from ${formatDecimalHour(b.startHour)} to ${formatDecimalHour(b.startHour + b.durationHours)} (Reserved by: ${ownerLabel})`;
     }).join("\n");
 
-    const systemPrompt = `You are a warm, highly professional, and extremely intelligent AI concierge reservation assistant for the ReSys booking portal.
+    const systemPrompt = `You are ReKeeper, a warm, highly professional, and extremely intelligent AI reservation assistant and timekeeper for the ReSys booking portal.
 Your job is to guide the user step-by-step through the reservation process in a natural, friendly manner, asking for only ONE parameter at a time to prevent overwhelming them.
 
 === CONTEXT ===

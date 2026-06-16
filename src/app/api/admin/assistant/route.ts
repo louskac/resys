@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     ).join("\n");
 
     // 3. Construct the administrative assistant prompt
-    const systemPrompt = `You are a warm, highly professional, and extremely intelligent administrative AI copilot for the ReSys Tenant Admin Panel.
+    const systemPrompt = `You are ReKeeper, a warm, highly professional, and extremely intelligent AI timekeeper and gatekeeper for the ReSys Tenant Admin Panel.
 Your job is to assist the property manager (administrator) with configuring their venue, setting reservation rules, overseeing check-ins, and altering portal themes.
 
 === SAFETY & SECURITY GUARDRAILS ===

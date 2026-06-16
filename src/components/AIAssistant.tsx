@@ -118,7 +118,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Dobrý den! Jsem váš inteligentní asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
+      content: "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
     }
   ]);
 
@@ -164,7 +164,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
     setMessages([
       {
         role: "assistant",
-        content: "Dobrý den! Jsem váš inteligentní asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
+        content: "Dobrý den! Jsem ReKeeper, váš inteligentní rezervační asistent. Řekněte mi například: 'Chci tenis na středu ve 4 odpoledne na jméno Jakub'."
       }
     ]);
     setConsoleState({
@@ -244,7 +244,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
           ...prev,
           {
             role: "assistant",
-            content: "Rezervace byla úspěšně potvrzena! Zavírám asistenta..."
+            content: "Rezervace byla úspěšně potvrzena! Zavírám ReKeepera..."
           }
         ];
       });
@@ -886,7 +886,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
               <span className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400">
-                {isListening ? "Poslouchám hlas..." : isLoading ? "Zpracovávám..." : "AI Hlasový Asistent"}
+                {isListening ? "ReKeeper poslouchá..." : isLoading ? "Zpracovávám..." : "ReKeeper: Timekeeper"}
               </span>
             </div>
             {/* Tiny summary line of completed steps */}
@@ -918,7 +918,7 @@ export default function AIAssistant({ tenantId, resources, initialEvents }: AIAs
               <button
                 onClick={handleReset}
                 className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-450 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
-                title="Restartovat asistenta"
+                title="Restartovat ReKeepera"
               >
                 <RotateCcw size={13} />
               </button>

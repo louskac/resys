@@ -64,7 +64,7 @@ export default function AdminAIAssistant({
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Dobrý den, jsem váš administrátorský kopilot. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
+      content: "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
     }
   ]);
 
@@ -137,7 +137,7 @@ export default function AdminAIAssistant({
     setMessages([
       {
         role: "assistant",
-        content: "Dobrý den, jsem váš administrátorský kopilot. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
+        content: "Dobrý den, jsem ReKeeper, váš timekeeper & gatekeeper. Mohu vám pomoci spravovat zdroje, časové sloty, IoT čtečky nebo změnit tagline portálu. Zkuste například: 'Chci vytvořit nový kurt Kurt 3 s kapacitou 4'."
       }
     ]);
     setDraftState({
@@ -461,9 +461,9 @@ export default function AdminAIAssistant({
       {!isOpen && (
         <AILiquidCore 
           onClick={() => setIsOpen(true)} 
-          label="Administrace pomocí AI"
-          badgeText="Admin AI"
-          title="Otevřít administrátorského AI asistenta"
+          label="Spustit ReKeeper"
+          badgeText="ReKeeper Admin"
+          title="Otevřít administrátorského asistenta ReKeeper"
         />
       )}
 
@@ -510,7 +510,7 @@ export default function AdminAIAssistant({
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-550 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
               <span className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400">
-                {isListening ? "Poslouchám administrátora..." : isLoading ? "Zpracovávám příkaz..." : "Admin AI Copilot"}
+                {isListening ? "ReKeeper poslouchá..." : isLoading ? "Zpracovávám příkaz..." : "ReKeeper: Admin"}
               </span>
             </div>
 
@@ -533,7 +533,7 @@ export default function AdminAIAssistant({
               <button
                 onClick={handleReset}
                 className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-400 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
-                title="Restartovat konverzaci"
+                title="Restartovat ReKeepera"
               >
                 <RotateCcw size={13} />
               </button>

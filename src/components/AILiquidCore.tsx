@@ -14,9 +14,9 @@ interface AILiquidCoreProps {
 
 export default function AILiquidCore({
   onClick,
-  label = "Rezervovat pomocí AI",
-  title = "Otevřít AI Asistenta",
-  badgeText = "Ask AI",
+  label = "Rezervovat s ReKeeperem",
+  title = "Otevřít ReKeepera",
+  badgeText = "ReKeeper",
   className = "",
   showMicIcon = true
 }: AILiquidCoreProps) {
