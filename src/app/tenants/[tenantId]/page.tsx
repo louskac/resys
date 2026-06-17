@@ -175,6 +175,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   })();
 
+  const activeResources = tenant.resources;
+
   const calendarEvents: CalendarEvent[] = [];
 
   // A. Add confirmed bookings for the week as occupied calendar overlays
@@ -397,7 +399,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             tenantId={tenantId} 
             initialEvents={calendarEvents} 
             session={session}
-            resources={tenant.resources.map(r => ({ 
+            resources={activeResources.map(r => ({ 
               id: r.id, 
               name: r.name,
               parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
@@ -466,7 +468,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* Section Heading for Cards */}
-        {tenant.resources.length > 0 && (
+        {activeResources.length > 0 && (
           <div className="col-span-1 md:col-span-2 order-3 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-4 lg:mt-4">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2 select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
@@ -476,14 +478,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         )}
 
         {/* Available Spaces Cards */}
-        {tenant.resources.map((res) => (
+        {activeResources.map((res) => (
           <ResourceCard
             key={res.id}
             resource={res as any}
             vertical={tenant.vertical}
             openTime={openTime}
             closeTime={closeTime}
-            allResources={tenant.resources as any}
+            allResources={activeResources as any}
             className="col-span-1 order-4 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 lg:h-[400px]"
             footer={
               session ? (
@@ -551,7 +553,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       <LoginModal tenantId={tenantId} />
       <AIAssistant 
         tenantId={tenantId} 
-        resources={tenant.resources.map(r => ({ 
+        resources={activeResources.map(r => ({ 
           id: r.id, 
           name: r.name,
           parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null

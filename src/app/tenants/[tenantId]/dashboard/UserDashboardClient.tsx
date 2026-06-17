@@ -9,6 +9,7 @@ import {
   KeyRound, CreditCard, LogOut, Check, Building, QrCode, Ticket
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import AlertDialog from "@/components/AlertDialog";
 
 interface UserDashboardClientProps {
   tenant: {
@@ -563,16 +564,7 @@ export default function UserDashboardClient({
                   Osobní a Fakturační údaje
                 </h3>
 
-                {profileMessage && (
-                  <div className={`p-4 rounded-2xl mb-6 flex items-start gap-2.5 text-xs font-semibold leading-relaxed border ${
-                    profileMessage.type === "success"
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                      : "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                  }`}>
-                    {profileMessage.type === "success" ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                    <span>{profileMessage.text}</span>
-                  </div>
-                )}
+
 
                 <form onSubmit={handleProfileSubmit} className="space-y-6 text-xs">
                   
@@ -818,6 +810,14 @@ export default function UserDashboardClient({
           </div>
         </div>
       )}
+
+      <AlertDialog
+        isOpen={profileMessage !== null}
+        type={profileMessage?.type || "success"}
+        title={profileMessage?.type === "success" ? "Profil aktualizován" : "Uložení selhalo"}
+        message={profileMessage?.text || ""}
+        onClose={() => setProfileMessage(null)}
+      />
 
     </div>
   );

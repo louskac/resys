@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
   Building, Calendar, Clock, QrCode, ClipboardList, 
-  Plus, Edit, Trash, Settings, 
+  Plus, Edit, Trash, Settings, ChevronDown,
   ArrowLeft, Smartphone, Activity,
   Upload, Eye, List, Move,
   Users, Layers, Wrench, CreditCard, MapPin, User,
-  Type, Mail, Save
+  Type, Mail, Save, X
 } from "lucide-react";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -130,6 +130,88 @@ interface AdminDashboardClientProps {
   weekStart?: string;
 }
 
+const timeOptions = [
+  ...Array.from({ length: 96 }, (_, i) => {
+    const h = Math.floor(i / 4).toString().padStart(2, "0");
+    const m = ((i % 4) * 15).toString().padStart(2, "0");
+    return `${h}:${m}`;
+  }),
+  "24:00"
+];
+
+const getTimeOptions = (currentValue?: string) => {
+  if (currentValue && !timeOptions.includes(currentValue)) {
+    const combined = [...timeOptions, currentValue];
+    combined.sort();
+    return combined;
+  }
+  return timeOptions;
+};
+
+interface TimePickerState {
+  id: string;
+  rect: DOMRect;
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function TimePickerDropdown({
+  picker,
+  onClose
+}: {
+  picker: TimePickerState;
+  onClose: () => void;
+}) {
+  const activeRef = React.useRef<HTMLButtonElement>(null);
+  
+  React.useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ block: "center", behavior: "instant" as any });
+    }
+  }, [picker.id]);
+
+  return (
+    <>
+      <div 
+        className="fixed inset-0 z-50 cursor-default" 
+        onClick={onClose} 
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: `${picker.rect.bottom + window.scrollY}px`,
+          left: `${picker.rect.left + window.scrollX}px`,
+          width: `${picker.rect.width}px`,
+        }}
+        className="z-55 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 font-mono text-xs"
+      >
+        {getTimeOptions(picker.value).map((t) => {
+          const isSelected = t === picker.value;
+          return (
+            <button
+              key={t}
+              ref={isSelected ? activeRef : undefined}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                picker.onChange(t);
+                onClose();
+              }}
+              className={`w-full text-center py-2 transition-colors border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 cursor-pointer ${
+                isSelected
+                  ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-bold"
+                  : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
+              }`}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 const defaultOpeningHours: OpeningHoursDay[] = [
   { dayOfWeek: 1, name: "Pondělí", openTime: "08:00", closeTime: "22:00", closed: false },
   { dayOfWeek: 2, name: "Úterý", openTime: "08:00", closeTime: "22:00", closed: false },
@@ -153,7 +235,7 @@ export default function AdminDashboardClient({
   const { data: session } = useSession();
   const theme = getTenantTheme(tenant.id, tenant.vertical, tenant.name);
 
-  const [activeTab, setActiveTab] = useState<"overview" | "resources" | "rules" | "bookings" | "devices" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "resources" | "rules" | "bookings" | "devices" | "settings" | "operating">("overview");
   const [bookingsSubTab, setBookingsSubTab] = useState<"calendar" | "list">("calendar");
 
   // Portal settings states
@@ -171,6 +253,7 @@ export default function AdminDashboardClient({
   const [presetOpenTime, setPresetOpenTime] = useState("08:00");
   const [presetCloseTime, setPresetCloseTime] = useState("22:00");
   const [presetClosed, setPresetClosed] = useState(false);
+  const [activeTimePicker, setActiveTimePicker] = useState<TimePickerState | null>(null);
 
   const initialAdminEmails = Array.isArray(initialAttributes.adminEmails)
     ? initialAttributes.adminEmails.join(", ")
@@ -273,12 +356,6 @@ export default function AdminDashboardClient({
     data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
   });
 
-  const [ruleModal, setRuleModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; resourceId: string; name: string; dayOfWeek: number; startTime: string; endTime: string; price: number; maxCapacity: number; daysOfWeek: number[]; } }>({
-    open: false,
-    mode: "add",
-    data: { id: "", resourceId: "", name: "", dayOfWeek: 1, startTime: "12:00", endTime: "13:30", price: 100, maxCapacity: 10, daysOfWeek: [1] }
-  });
-
   const [deviceModal, setDeviceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; token: string; active: boolean; } }>({
     open: false,
     mode: "add",
@@ -324,43 +401,51 @@ export default function AdminDashboardClient({
       const data = customEvent.detail;
       if (data) {
         setActiveTab("resources");
+        
+        let targetId = data.id || "";
+        let targetName = data.name || "";
+        let targetType = data.type || "SPACE";
+        let targetMaxCapacity = data.maxCapacity !== undefined ? data.maxCapacity : 10;
+        let targetInstructor = data.instructor || "";
+        let targetRoom = data.room || "";
+        let targetParentId = data.parentId || "";
+        let targetSurface = data.surface || "";
+        let targetEquipment = data.equipment || "";
+        let targetPrice = data.price || "";
+
+        // Fallback matching by ID or name in existing resources to preserve other attributes
+        const existing = resources.find(r => 
+          (targetId && r.id === targetId) || 
+          (targetName && r.name.toLowerCase() === targetName.toLowerCase())
+        );
+
+        if (existing) {
+          targetId = existing.id;
+          targetName = existing.name;
+          if (!data.type) targetType = existing.type;
+          if (data.maxCapacity === undefined) targetMaxCapacity = existing.maxCapacity;
+          if (data.instructor === undefined) targetInstructor = existing.attributes?.instructor || "";
+          if (data.room === undefined) targetRoom = existing.attributes?.room || "";
+          if (data.parentId === undefined) targetParentId = existing.attributes?.parentId || "";
+          if (data.surface === undefined) targetSurface = existing.attributes?.surface || "";
+          if (data.equipment === undefined) targetEquipment = existing.attributes?.equipment || "";
+          if (data.price === undefined) targetPrice = existing.attributes?.price || "";
+        }
+
         setResourceModal({
           open: true,
-          mode: data.mode || "add",
+          mode: data.mode || (existing ? "edit" : "add"),
           data: {
-            id: data.id || "",
-            name: data.name || "",
-            type: data.type || "SPACE",
-            maxCapacity: data.maxCapacity !== undefined ? data.maxCapacity : 10,
-            instructor: data.instructor || "",
-            room: data.room || "",
-            parentId: data.parentId || "",
-            surface: data.surface || "",
-            equipment: data.equipment || "",
-            price: data.price || ""
-          }
-        });
-      }
-    };
-
-    const handleDraftRule = (e: Event) => {
-      const customEvent = e as CustomEvent<any>;
-      const data = customEvent.detail;
-      if (data) {
-        setActiveTab("rules");
-        setRuleModal({
-          open: true,
-          mode: data.mode || "add",
-          data: {
-            id: data.id || "",
-            resourceId: data.resourceId || "",
-            name: data.name || "",
-            dayOfWeek: data.dayOfWeek !== undefined ? data.dayOfWeek : 1,
-            startTime: data.startTime || "12:00",
-            endTime: data.endTime || "13:30",
-            price: data.price !== undefined ? data.price : 100,
-            maxCapacity: data.maxCapacity !== undefined ? data.maxCapacity : 10,
-            daysOfWeek: data.daysOfWeek || [1]
+            id: targetId,
+            name: targetName,
+            type: targetType,
+            maxCapacity: targetMaxCapacity,
+            instructor: targetInstructor,
+            room: targetRoom,
+            parentId: targetParentId,
+            surface: targetSurface,
+            equipment: targetEquipment,
+            price: targetPrice
           }
         });
       }
@@ -371,14 +456,31 @@ export default function AdminDashboardClient({
       const data = customEvent.detail;
       if (data) {
         setActiveTab("devices");
+        
+        let targetId = data.id || "";
+        let targetName = data.name || "";
+        let targetActive = data.active !== undefined ? data.active : true;
+        let targetToken = data.token || "";
+
+        const existing = devices.find(d => 
+          (targetId && d.id === targetId) || 
+          (targetName && d.name.toLowerCase() === targetName.toLowerCase())
+        );
+
+        if (existing) {
+          targetId = existing.id;
+          targetName = existing.name;
+          if (data.active === undefined) targetActive = existing.active;
+        }
+
         setDeviceModal({
           open: true,
-          mode: data.mode || "add",
+          mode: data.mode || (existing ? "edit" : "add"),
           data: {
-            id: data.id || "",
-            name: data.name || "",
-            token: data.token || "",
-            active: data.active !== undefined ? data.active : true
+            id: targetId,
+            name: targetName,
+            token: targetToken,
+            active: targetActive
           }
         });
       }
@@ -399,14 +501,12 @@ export default function AdminDashboardClient({
 
     window.addEventListener("admin-assistant-navigate-tab", handleNavigateTab);
     window.addEventListener("admin-assistant-draft-resource", handleDraftResource);
-    window.addEventListener("admin-assistant-draft-rule", handleDraftRule);
     window.addEventListener("admin-assistant-draft-device", handleDraftDevice);
     window.addEventListener("admin-assistant-draft-settings", handleDraftSettings);
 
     return () => {
       window.removeEventListener("admin-assistant-navigate-tab", handleNavigateTab);
       window.removeEventListener("admin-assistant-draft-resource", handleDraftResource);
-      window.removeEventListener("admin-assistant-draft-rule", handleDraftRule);
       window.removeEventListener("admin-assistant-draft-device", handleDraftDevice);
       window.removeEventListener("admin-assistant-draft-settings", handleDraftSettings);
     };
@@ -569,91 +669,6 @@ export default function AdminDashboardClient({
     });
   };
 
-  const handleRuleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // For bulk creation, if adding we send daysOfWeek array
-    const dataToSend = {
-      id: ruleModal.data.id || undefined,
-      tenantId: tenant.id,
-      resourceId: ruleModal.data.resourceId,
-      name: ruleModal.data.name,
-      dayOfWeek: ruleModal.mode === "edit" ? ruleModal.data.dayOfWeek : undefined,
-      daysOfWeek: ruleModal.mode === "add" ? ruleModal.data.daysOfWeek : undefined,
-      startTime: ruleModal.data.startTime,
-      endTime: ruleModal.data.endTime,
-      price: typeof ruleModal.data.price === "string" ? parseFloat(ruleModal.data.price) : ruleModal.data.price,
-      maxCapacity: typeof ruleModal.data.maxCapacity === "string" ? parseInt(ruleModal.data.maxCapacity, 10) : ruleModal.data.maxCapacity,
-    };
-
-    try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rule_upsert", data: dataToSend })
-      });
-      if (res.ok) {
-        setRuleModal({ ...ruleModal, open: false });
-        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení časového pravidla", success: true } }));
-        setNotification({
-          type: "success",
-          title: "Časový slot uložen",
-          message: "Konfigurace časového slotu byla úspěšně uložena!",
-          onClose: () => router.refresh()
-        });
-      } else {
-        setNotification({
-          type: "error",
-          title: "Uložení selhalo",
-          message: "Při ukládání časového slotu došlo k chybě."
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      setNotification({
-        type: "error",
-        title: "Chyba",
-        message: "Došlo k neočekávané chybě."
-      });
-    }
-  };
-
-  const handleRuleDelete = (id: string) => {
-    setConfirmModal({
-      title: "Smazat časový slot",
-      message: "Opravdu chcete smazat tento časový slot?",
-      onConfirm: async () => {
-        try {
-          const res = await fetch("/api/admin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "rule_delete", data: { id, tenantId: tenant.id } })
-          });
-          if (res.ok) {
-            setNotification({
-              type: "success",
-              title: "Slot smazán",
-              message: "Časový slot byl úspěšně smazán!",
-              onClose: () => router.refresh()
-            });
-          } else {
-            setNotification({
-              type: "error",
-              title: "Smazání selhalo",
-              message: "Při mazání časového slotu došlo k chybě."
-            });
-          }
-        } catch (err) {
-          console.error(err);
-          setNotification({
-            type: "error",
-            title: "Chyba",
-            message: "Došlo k neočekávané chybě."
-          });
-        }
-      }
-    });
-  };
 
   const handleDeviceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -899,6 +914,150 @@ export default function AdminDashboardClient({
     return days[dayOfWeek] || "Specifický";
   };
 
+  const getResourceTypeName = (type: string, vertical: string, name: string, parentId: string | null, siblingsCount: number) => {
+    if (vertical === "SPORTS_GROUND") {
+      switch (type) {
+        case "SPACE": 
+          const nameLower = name.toLowerCase();
+          if (parentId !== null || nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
+            if (siblingsCount === 3) return "Třetina hřiště";
+            if (siblingsCount === 2) return "Polovina hřiště";
+            return "Polovina hřiště";
+          }
+          return "Celé hřiště";
+        case "SEAT": return "Místo k sezení";
+        case "COURSE_PROGRAM": return "Trénink / Lekce";
+        default: return type;
+      }
+    }
+    switch (type) {
+      case "SPACE": return "Kapacitní lekce";
+      case "SEAT": return "Sedadlo";
+      case "COURSE_PROGRAM": return "Pravidelný program";
+      default: return type;
+    }
+  };
+
+  // Redirect 'rules' tab to 'resources' to support unified slots view and preserve backward compatibility with AI draft commands
+  useEffect(() => {
+    if (activeTab === "rules") {
+      setActiveTab("resources");
+    }
+  }, [activeTab]);
+
+  // Recursive React component to render hierarchical resource tree
+  const RenderResourceNode = ({ res, level = 0 }: { res: any; level: number }) => {
+    const children = resources.filter(r => r.attributes?.parentId === res.id);
+    const resAttrs = res.attributes || {};
+    
+    const priceText = resAttrs.price 
+      ? `${resAttrs.price} Kč` 
+      : "Dle dohody";
+    
+    const timeText = `${settingsOpenTime} - ${settingsCloseTime}`;
+
+    const siblingsCount = resAttrs.parentId
+      ? resources.filter(r => r.attributes?.parentId === resAttrs.parentId).length
+      : 0;
+
+    const typeLabel = getResourceTypeName(res.type, tenant.vertical, res.name, resAttrs.parentId || null, siblingsCount);
+
+    return (
+      <div 
+        className="relative space-y-4"
+        style={{ paddingLeft: level > 0 ? "24px" : "0" }}
+      >
+        {/* Visual guide lines for children hierarchy */}
+        {level > 0 && (
+          <>
+            <div 
+              className="absolute left-[8px] top-0 bottom-6 border-l-2 border-dashed border-slate-200 dark:border-[#1F1F35]" 
+              style={{ height: "calc(100% - 24px)" }}
+            />
+            <div className="absolute left-[8px] top-8 w-4 border-t-2 border-dashed border-slate-200 dark:border-[#1F1F35]" />
+          </>
+        )}
+
+        <div className="flex gap-4">
+          <div className="flex-1 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary rounded-2xl p-5 shadow-sm">
+            <div className="flex justify-between items-start flex-wrap gap-2">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-widest select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+                    {typeLabel}
+                  </span>
+                  {level > 0 && (
+                    <span className="text-[9.5px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-wider select-none">
+                      • Podřízený výběr
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200 mt-2.5 mb-1.5 tracking-tight">
+                  {res.name}
+                </h4>
+                <div className="text-[11px] text-muted-foreground flex gap-3 flex-wrap">
+                  {resAttrs.surface && <span>Povrch: <strong>{resAttrs.surface}</strong></span>}
+                  <span>Kapacita: <strong>{res.maxCapacity} {tenant.vertical === "SPORTS_GROUND" ? "skupina/y" : "místo/a"}</strong></span>
+                  <span>Cena: <strong>{resAttrs.price ? `${resAttrs.price} Kč/hod` : "Dle dohody"}</strong></span>
+                  {resAttrs.equipment && <span className="truncate max-w-[200px]" title={resAttrs.equipment}>Vybavení: {resAttrs.equipment}</span>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right mr-1 select-none hidden sm:block">
+                  <span className="block text-[9px] uppercase font-extrabold text-slate-400 dark:text-zinc-500 tracking-wider">Cena pronájmu</span>
+                  <span className="text-xs font-extrabold text-tenant-primary bg-tenant-primary/5 border border-tenant-primary/15 px-2.5 py-1 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+                    {resAttrs.price ? `${resAttrs.price} Kč/hod` : "Dle dohody"}
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setResourceModal({
+                      open: true,
+                      mode: "edit",
+                      data: {
+                        id: res.id,
+                        name: res.name,
+                        type: res.type,
+                        maxCapacity: res.maxCapacity,
+                        instructor: resAttrs.instructor || "",
+                        room: resAttrs.room || "",
+                        parentId: resAttrs.parentId || "",
+                        surface: resAttrs.surface || "",
+                        equipment: resAttrs.equipment || "",
+                        price: resAttrs.price || ""
+                      }
+                    })}
+                    className="p-1.5 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                    title="Upravit zdroj"
+                  >
+                    <Edit size={13} />
+                  </button>
+                  <button
+                    onClick={() => handleResourceDelete(res.id)}
+                    className="p-1.5 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                    title="Smazat zdroj"
+                  >
+                    <Trash size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {children.length > 0 && (
+          <div className="space-y-4">
+            {children.map(child => (
+              <RenderResourceNode key={child.id} res={child} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getResultBadgeColor = (result: string) => {
     switch (result) {
       case "SUCCESS": return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
@@ -1075,15 +1234,15 @@ export default function AdminDashboardClient({
           </button>
 
           <button
-            onClick={() => setActiveTab("rules")}
+            onClick={() => setActiveTab("operating")}
             className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent ${
-              activeTab === "rules" 
+              activeTab === "operating" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
             }`}
           >
             <Clock size={16} />
-            Rozvrhové sloty
+            Provozní doba
           </button>
 
           <button
@@ -1234,7 +1393,10 @@ export default function AdminDashboardClient({
           {activeTab === "resources" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold text-foreground">Konfigurované zdroje ({resources.length})</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Správa zdrojů a rozvrhů</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Konfigurace sportovních ploch, sektorů, lekcí a jejich časových slotů.</p>
+                </div>
                 <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
@@ -1247,8 +1409,9 @@ export default function AdminDashboardClient({
                 </button>
               </div>
 
-              {/* Categorization display */}
-              <div className="space-y-6">
+              {/* Categorization display as trees */}
+              <div className="space-y-8">
+                {/* A. Facilities tree */}
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 select-none flex items-center gap-2 pl-1">
                     <Building size={14} className="text-tenant-primary" />
@@ -1257,54 +1420,19 @@ export default function AdminDashboardClient({
                   {facilities.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic mb-4">Zatím nebyly vytvořeny žádné plochy.</p>
                   ) : (
-                    <div className="grid md:grid-cols-2 gap-5">
-                      {facilities.map((res) => (
-                        <ResourceCard
+                    <div className="space-y-6">
+                      {facilities.filter(r => !r.attributes?.parentId).map((res) => (
+                        <RenderResourceNode
                           key={res.id}
-                          resource={res}
-                          vertical={tenant.vertical}
-                          openTime={settingsOpenTime}
-                          closeTime={settingsCloseTime}
-                          allResources={resources}
-                          footer={
-                            <div className="flex justify-end gap-2 border-t border-slate-200/40 dark:border-[#1F1F35]/45 pt-4 mt-4 select-none">
-                              <button
-                                onClick={() => setResourceModal({
-                                  open: true,
-                                  mode: "edit",
-                                  data: {
-                                    id: res.id,
-                                    name: res.name,
-                                    type: res.type,
-                                    maxCapacity: res.maxCapacity,
-                                    instructor: "",
-                                    room: "",
-                                    parentId: res.attributes.parentId || "",
-                                    surface: res.attributes.surface || "",
-                                    equipment: res.attributes.equipment || "",
-                                    price: res.attributes.price || ""
-                                  }
-                                })}
-                                className="p-2 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
-                                title="Upravit zdroj"
-                              >
-                                <Edit size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleResourceDelete(res.id)}
-                                className="p-2 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
-                                title="Smazat zdroj"
-                              >
-                                <Trash size={13} />
-                              </button>
-                            </div>
-                          }
+                          res={res}
+                          level={0}
                         />
                       ))}
                     </div>
                   )}
                 </div>
 
+                {/* B. Classes/Programs tree */}
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 select-none flex items-center gap-2 pl-1 pt-6 border-t border-slate-200/40 dark:border-[#1F1F35]/40">
                     <Clock size={14} className="text-tenant-primary" />
@@ -1313,156 +1441,18 @@ export default function AdminDashboardClient({
                   {classesAndPrograms.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic">Zatím nebyly vytvořeny žádné lekce ani programy.</p>
                   ) : (
-                    <div className="grid md:grid-cols-2 gap-5">
-                      {classesAndPrograms.map((res) => (
-                        <ResourceCard
+                    <div className="space-y-6">
+                      {classesAndPrograms.filter(r => !r.attributes?.parentId).map((res) => (
+                        <RenderResourceNode
                           key={res.id}
-                          resource={res}
-                          vertical={tenant.vertical}
-                          openTime={settingsOpenTime}
-                          closeTime={settingsCloseTime}
-                          allResources={resources}
-                          footer={
-                            <div className="flex justify-end gap-2 border-t border-slate-200/40 dark:border-[#1F1F35]/45 pt-4 mt-4 select-none">
-                              <button
-                                onClick={() => setResourceModal({
-                                  open: true,
-                                  mode: "edit",
-                                  data: {
-                                    id: res.id,
-                                    name: res.name,
-                                    type: res.type,
-                                    maxCapacity: res.maxCapacity,
-                                    instructor: res.attributes.instructor || "",
-                                    room: res.attributes.room || "",
-                                    parentId: res.attributes.parentId || "",
-                                    surface: "",
-                                    equipment: "",
-                                    price: res.attributes.price || ""
-                                  }
-                                })}
-                                className="p-2 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
-                                title="Upravit zdroj"
-                              >
-                                <Edit size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleResourceDelete(res.id)}
-                                className="p-2 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
-                                title="Smazat zdroj"
-                              >
-                                <Trash size={13} />
-                              </button>
-                            </div>
-                          }
+                          res={res}
+                          level={0}
                         />
                       ))}
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* TAB 3: SCHEDULE RULES MANAGER */}
-          {activeTab === "rules" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold text-foreground">Aktivní časové sloty programu</h3>
-                <button
-                  disabled={resources.length === 0}
-                  onClick={() => setRuleModal({
-                    open: true, mode: "add",
-                    data: { id: "", resourceId: resources[0]?.id || "", name: "", dayOfWeek: 1, startTime: "12:30", endTime: "14:00", price: 100, maxCapacity: 10, daysOfWeek: [1] }
-                  })}
-                  className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 flex items-center gap-1.5 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Plus size={14} />
-                  Přidat časový slot
-                </button>
-              </div>
-
-              {resources.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl">
-                  Před konfigurací časových slotů musíte vytvořit alespoň jeden zdroj.
-                </div>
-              ) : (
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
-                          <th className="py-2.5 font-semibold">Zdroj</th>
-                          <th className="py-2.5 font-semibold">Název slotu</th>
-                          <th className="py-2.5 font-semibold">Den</th>
-                          <th className="py-2.5 font-semibold">Čas</th>
-                          <th className="py-2.5 font-semibold">Cena</th>
-                          <th className="py-2.5 font-semibold">Max. kapacita</th>
-                          <th className="py-2.5 font-semibold text-right">Akce</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {resources.flatMap(res => res.scheduleRules.map((rule) => (
-                          <tr key={rule.id} className="border-b border-slate-100/50 dark:border-[#1F1F35]/10 hover:bg-tenant-primary/5 dark:hover:bg-tenant-primary/10 transition-colors">
-                            <td className="py-3 font-semibold text-slate-800 dark:text-slate-200">{res.name}</td>
-                            <td className="py-3 text-slate-700 dark:text-slate-300 font-bold">{rule.name}</td>
-                            <td className="py-3">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#1C1C28] text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-[#2A2A40]">
-                                {getDayName(rule.dayOfWeek)}
-                              </span>
-                            </td>
-                            <td className="py-3">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl text-slate-800 dark:text-slate-200 font-mono text-[11px] shadow-sm select-none">
-                                <Clock size={11} className="text-tenant-primary shrink-0" />
-                                {rule.startTime} – {rule.endTime}
-                              </span>
-                            </td>
-                            <td className="py-3">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/25 text-tenant-primary uppercase tracking-wide select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
-                                {rule.price} Kč
-                              </span>
-                            </td>
-                            <td className="py-3 font-bold text-slate-700 dark:text-slate-300">
-                              <span className="inline-flex items-center gap-1.5">
-                                <Users size={12} className="text-slate-400 dark:text-zinc-500 shrink-0" />
-                                {rule.maxCapacity}
-                              </span>
-                            </td>
-                            <td className="py-3 text-right space-x-1.5 select-none">
-                              <button
-                                onClick={() => setRuleModal({
-                                  open: true,
-                                  mode: "edit",
-                                  data: {
-                                    id: rule.id,
-                                    resourceId: res.id,
-                                    name: rule.name,
-                                    dayOfWeek: rule.dayOfWeek ?? 1,
-                                    startTime: rule.startTime,
-                                    endTime: rule.endTime,
-                                    price: parseFloat(rule.price),
-                                    maxCapacity: rule.maxCapacity,
-                                    daysOfWeek: rule.dayOfWeek !== null ? [rule.dayOfWeek] : []
-                                  }
-                                })}
-                                className="p-1.5 rounded-lg bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm inline-flex cursor-pointer"
-                              >
-                                <Edit size={11} />
-                              </button>
-                              <button
-                                onClick={() => handleRuleDelete(rule.id)}
-                                className="p-1.5 rounded-lg bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm inline-flex cursor-pointer"
-                              >
-                                <Trash size={11} />
-                              </button>
-                            </td>
-                          </tr>
-                        )))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1688,7 +1678,7 @@ export default function AdminDashboardClient({
               {/* Tab Header - Outside Card */}
               <div>
                 <h3 className="text-sm font-bold text-foreground">Vzhled a nastavení portálu</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Konfigurujte přizpůsobené vizuální parametry, přístupy a provozní dobu pro tuto instanci portálu.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Konfigurujte přizpůsobené vizuální parametry, přístupy a slogan pro tuto instanci portálu.</p>
               </div>
 
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
@@ -1819,6 +1809,31 @@ export default function AdminDashboardClient({
                   </div>
                 </div>
 
+                {/* Save button - Outside Card at bottom */}
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={isSavingSettings}
+                    className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-xl font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <Save size={14} />
+                    {isSavingSettings ? "Ukládání..." : "Uložit nastavení portálu"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* TAB 7: OPERATING HOURS */}
+          {activeTab === "operating" && (
+            <div className="space-y-6">
+              {/* Tab Header - Outside Card */}
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Provozní doba a kalendářní omezení</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Konfigurujte provozní dobu a časové rozmezí kalendáře pro zákazníky.</p>
+              </div>
+
+              <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 {/* CARD 2: Provozní doba */}
                 <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
                   <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
@@ -1840,31 +1855,47 @@ export default function AdminDashboardClient({
                           <div>
                             <label className="block text-slate-500 dark:text-zinc-400 mb-1.5 font-bold uppercase tracking-wider text-[9px]">Čas zahájení</label>
                             <div className="relative flex items-center">
-                              <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500" />
-                              <input
-                                type="text"
-                                required
-                                pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
-                                value={settingsOpenTime}
-                                onChange={(e) => setSettingsOpenTime(e.target.value)}
-                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono text-xs outline-none shadow-sm"
-                                placeholder="08:00"
-                              />
+                              <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setActiveTimePicker({
+                                    id: "settingsOpenTime",
+                                    rect,
+                                    value: settingsOpenTime,
+                                    onChange: (val) => setSettingsOpenTime(val)
+                                  });
+                                }}
+                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                              >
+                                {settingsOpenTime}
+                                <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                              </button>
                             </div>
                           </div>
                           <div>
                             <label className="block text-slate-500 dark:text-zinc-400 mb-1.5 font-bold uppercase tracking-wider text-[9px]">Čas ukončení</label>
                             <div className="relative flex items-center">
-                              <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500" />
-                              <input
-                                type="text"
-                                required
-                                pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
-                                value={settingsCloseTime}
-                                onChange={(e) => setSettingsCloseTime(e.target.value)}
-                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono text-xs outline-none shadow-sm"
-                                placeholder="22:00"
-                              />
+                              <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setActiveTimePicker({
+                                    id: "settingsCloseTime",
+                                    rect,
+                                    value: settingsCloseTime,
+                                    onChange: (val) => setSettingsCloseTime(val)
+                                  });
+                                }}
+                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                              >
+                                {settingsCloseTime}
+                                <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -1884,27 +1915,47 @@ export default function AdminDashboardClient({
                         <div className="flex items-center gap-2 text-slate-600 dark:text-zinc-350">
                           <span className="font-semibold text-[11px]">Otevřít od:</span>
                           <div className="relative flex items-center w-24">
-                            <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500" />
-                            <input 
-                              type="text" 
-                              value={presetOpenTime}
-                              onChange={(e) => setPresetOpenTime(e.target.value)}
-                              placeholder="08:00" 
-                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono text-foreground outline-none transition-all shadow-sm"
-                            />
+                            <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setActiveTimePicker({
+                                  id: "presetOpenTime",
+                                  rect,
+                                  value: presetOpenTime,
+                                  onChange: (val) => setPresetOpenTime(val)
+                                });
+                              }}
+                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
+                            >
+                              {presetOpenTime}
+                              <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                            </button>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-slate-600 dark:text-zinc-350">
                           <span className="font-semibold text-[11px]">Zavřít do:</span>
                           <div className="relative flex items-center w-24">
-                            <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500" />
-                            <input 
-                              type="text" 
-                              value={presetCloseTime}
-                              onChange={(e) => setPresetCloseTime(e.target.value)}
-                              placeholder="22:00" 
-                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono text-foreground outline-none transition-all shadow-sm"
-                            />
+                            <Clock size={11} className="absolute left-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setActiveTimePicker({
+                                  id: "presetCloseTime",
+                                  rect,
+                                  value: presetCloseTime,
+                                  onChange: (val) => setPresetCloseTime(val)
+                                });
+                              }}
+                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
+                            >
+                              {presetCloseTime}
+                              <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                            </button>
                           </div>
                         </div>
                         <div className="flex items-center select-none">
@@ -1976,37 +2027,55 @@ export default function AdminDashboardClient({
                             <td className="py-4 px-5">
                               <div className="relative flex items-center w-24">
                                 <Clock size={11} className={`absolute left-2.5 transition-colors ${day.closed ? "text-slate-300 dark:text-zinc-700" : "text-slate-400 dark:text-zinc-500"}`} />
-                                <input
-                                  type="text"
-                                  pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                                <button
+                                  type="button"
                                   disabled={day.closed}
-                                  value={day.openTime}
-                                  onChange={(e) => {
-                                    const updated = [...settingsOpeningHours];
-                                    updated[idx].openTime = e.target.value;
-                                    setSettingsOpeningHours(updated);
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setActiveTimePicker({
+                                      id: `day-${idx}-openTime`,
+                                      rect,
+                                      value: day.openTime,
+                                      onChange: (val) => {
+                                        const updated = [...settingsOpeningHours];
+                                        updated[idx].openTime = val;
+                                        setSettingsOpeningHours(updated);
+                                      }
+                                    });
                                   }}
-                                  className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm"
-                                  placeholder="08:00"
-                                />
+                                  className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
+                                >
+                                  {day.openTime}
+                                  <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                                </button>
                               </div>
                             </td>
                             <td className="py-4 px-5">
                               <div className="relative flex items-center w-24">
-                                <Clock size={11} className={`absolute left-2.5 transition-colors ${day.closed ? "text-slate-300 dark:text-zinc-700" : "text-slate-400 dark:text-zinc-500"}`} />
-                                <input
-                                  type="text"
-                                  pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                                <Clock size={11} className={`absolute left-2.5 transition-colors pointer-events-none ${day.closed ? "text-slate-300 dark:text-zinc-700" : "text-slate-400 dark:text-zinc-500"}`} />
+                                <button
+                                  type="button"
                                   disabled={day.closed}
-                                  value={day.closeTime}
-                                  onChange={(e) => {
-                                    const updated = [...settingsOpeningHours];
-                                    updated[idx].closeTime = e.target.value;
-                                    setSettingsOpeningHours(updated);
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setActiveTimePicker({
+                                      id: `day-${idx}-closeTime`,
+                                      rect,
+                                      value: day.closeTime,
+                                      onChange: (val) => {
+                                        const updated = [...settingsOpeningHours];
+                                        updated[idx].closeTime = val;
+                                        setSettingsOpeningHours(updated);
+                                      }
+                                    });
                                   }}
-                                  className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 rounded-xl pl-7 pr-2.5 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm"
-                                  placeholder="22:00"
-                                />
+                                  className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
+                                >
+                                  {day.closeTime}
+                                  <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                                </button>
                               </div>
                             </td>
                             <td className="py-4 px-5 text-right">
@@ -2044,7 +2113,7 @@ export default function AdminDashboardClient({
                     className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-xl font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <Save size={14} />
-                    {isSavingSettings ? "Ukládání..." : "Uložit nastavení portálu"}
+                    {isSavingSettings ? "Ukládání..." : "Uložit provozní dobu"}
                   </button>
                 </div>
               </form>
@@ -2102,202 +2171,219 @@ export default function AdminDashboardClient({
 
       {/* 1. Resource CRUD Modal */}
       {resourceModal.open && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
-            <h3 className="text-base font-bold text-foreground mb-4">
-              {resourceModal.mode === "add" ? "Vytvořit rezervovatelný zdroj" : "Upravit detaily zdroje"}
+        <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-200">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-7 rounded-[2rem] shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
+            <button
+              type="button"
+              onClick={() => setResourceModal({ ...resourceModal, open: false })}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-tenant-primary via-indigo-500 to-[#3B82F6] bg-clip-text text-transparent mb-1 font-sans select-none">
+              {resourceModal.mode === "add" ? "Vytvořit zdroj" : "Upravit detaily zdroje"}
             </h3>
-            <form onSubmit={handleResourceSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Název zdroje</label>
-                <input
-                  type="text"
-                  required
-                  value={resourceModal.data.name}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: { ...resourceModal.data, name: e.target.value }
-                  })}
-                  className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  placeholder="např. Laboratoř biologie"
-                />
-              </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              {resourceModal.mode === "add" ? "Nakonfigurujte vlastnosti nového zdroje níže:" : "Upravte parametry zdroje níže:"}
+            </p>
+            <form onSubmit={handleResourceSubmit} className="space-y-6 text-xs">
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-3xl border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
+                  <Building size={14} className="text-tenant-primary dark:text-[#A78BFA]" />
+                  Parametry rezervovatelného zdroje
+                </p>
 
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Typ zdroje</label>
-                <select
-                  value={resourceModal.data.type}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: { ...resourceModal.data, type: e.target.value }
-                  })}
-                  className="select-field bg-slate-100/40 dark:bg-[#131322]/40 border border-[#E2E2ED]/60 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                >
-                  <option value="SPACE">PROSTOR (Sportoviště / Hřiště / Místnost)</option>
-                  <option value="SEAT">MÍSTO (Sedadlo / Konkrétní místo)</option>
-                  <option value="COURSE_PROGRAM">PROGRAM (Pravidelná lekce / Kurz)</option>
-                </select>
-                <details className="group mt-2">
-                  <summary className="cursor-pointer text-[10px] text-tenant-primary font-semibold select-none flex items-center gap-1 group-open:mb-2 hover:underline">
-                    <span>Zobrazit nápovědu k typům plochy</span>
-                  </summary>
-                  <div className="p-3 bg-white/20 dark:bg-[#151522]/30 rounded-xl border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
-                    <span className="font-bold text-foreground block">Jak se typ SPACE zobrazuje na veřejném webu?</span>
-                    <span>
-                      V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
-                    </span>
-                    <div className="space-y-1 pt-1">
-                      <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
-                      <ul className="list-disc list-inside space-y-0.5 pl-1">
-                        <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
-                        <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu &bdquo;1/2&ldquo; či &bdquo;sektor&ldquo;).</li>
-                      </ul>
+                <div>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Název zdroje</label>
+                  <input
+                    type="text"
+                    required
+                    value={resourceModal.data.name}
+                    onChange={(e) => setResourceModal({
+                      ...resourceModal,
+                      data: { ...resourceModal.data, name: e.target.value }
+                    })}
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    placeholder="např. Laboratoř biologie"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Typ zdroje</label>
+                  <select
+                    value={resourceModal.data.type}
+                    onChange={(e) => setResourceModal({
+                      ...resourceModal,
+                      data: { ...resourceModal.data, type: e.target.value }
+                    })}
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                  >
+                    <option value="SPACE">PROSTOR (Sportoviště / Hřiště / Místnost)</option>
+                    <option value="SEAT">MÍSTO (Sedadlo / Konkrétní místo)</option>
+                    <option value="COURSE_PROGRAM">PROGRAM (Pravidelná lekce / Kurz)</option>
+                  </select>
+                  <details className="group mt-2">
+                    <summary className="cursor-pointer text-[10px] text-tenant-primary font-semibold select-none flex items-center gap-1 group-open:mb-2 hover:underline">
+                      <span>Zobrazit nápovědu k typům plochy</span>
+                    </summary>
+                    <div className="p-3 bg-white/20 dark:bg-[#151522]/30 rounded-xl border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
+                      <span className="font-bold text-foreground block">Jak se typ SPACE zobrazuje na veřejném webu?</span>
+                      <span>
+                        V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
+                      </span>
+                      <div className="space-y-1 pt-1">
+                        <span className="font-semibold text-foreground block">Výchozí nastavení (Možnost 1 - Velikost plochy):</span>
+                        <ul className="list-disc list-inside space-y-0.5 pl-1">
+                          <li><strong>Celé hřiště</strong> (pokud nemá nadřazené hřiště).</li>
+                          <li><strong>Polovina hřiště</strong> (pokud má nastavený nadřazený prvek nebo obsahuje v názvu &bdquo;1/2&ldquo; či &bdquo;sektor&ldquo;).</li>
+                        </ul>
+                      </div>
+                      <div className="space-y-1.5 pt-1">
+                        <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
+                        <ol className="list-decimal list-inside space-y-1 pl-1">
+                          <li>
+                            <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
+                          </li>
+                          <li>
+                            <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>&bdquo;Jednorázový pronájem&ldquo;</em>, <em>&bdquo;Dlouhodobý trénink&ldquo;</em> nebo <em>&bdquo;Turnajový slot&ldquo;</em>. Vhodné, pokud nabízíte různé obchodní modely.
+                          </li>
+                          <li>
+                            <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>&bdquo;Fotbalové hřiště&ldquo;</em>, <em>&bdquo;Tenisový kurt&ldquo;</em>, <em>&bdquo;Beachvolejbal&ldquo;</em> nebo <em>&bdquo;Dráha&ldquo;</em>. Užitečné pro multi-sportovní areály.
+                          </li>
+                          <li>
+                            <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
+                          </li>
+                          <li>
+                            <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
+                          </li>
+                        </ol>
+                      </div>
                     </div>
-                    <div className="space-y-1.5 pt-1">
-                      <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
-                      <ol className="list-decimal list-inside space-y-1 pl-1">
-                        <li>
-                          <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
-                        </li>
-                        <li>
-                          <strong>Možnost 3 (Typ pronájmu/použití):</strong> Např. <em>&bdquo;Jednorázový pronájem&ldquo;</em>, <em>&bdquo;Dlouhodobý trénink&ldquo;</em> nebo <em>&bdquo;Turnajový slot&ldquo;</em>. Vhodné, pokud nabízíte různé obchodní modely.
-                        </li>
-                        <li>
-                          <strong>Možnost 4 (Konkrétní typ sportoviště):</strong> Např. <em>&bdquo;Fotbalové hřiště&ldquo;</em>, <em>&bdquo;Tenisový kurt&ldquo;</em>, <em>&bdquo;Beachvolejbal&ldquo;</em> nebo <em>&bdquo;Dráha&ldquo;</em>. Užitečné pro multi-sportovní areály.
-                        </li>
-                        <li>
-                          <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
-                        </li>
-                        <li>
-                          <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
-                        </li>
-                      </ol>
+                  </details>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Maximální kapacita</label>
+                  <input
+                    type="number"
+                    required
+                    value={resourceModal.data.maxCapacity}
+                    onChange={(e) => setResourceModal({
+                      ...resourceModal,
+                      data: { ...resourceModal.data, maxCapacity: parseInt(e.target.value, 10) || 0 }
+                    })}
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Cena (Kč / hodina nebo za lekci)</label>
+                  <input
+                    type="text"
+                    value={resourceModal.data.price}
+                    onChange={(e) => setResourceModal({
+                      ...resourceModal,
+                      data: { ...resourceModal.data, price: e.target.value }
+                    })}
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    placeholder="např. 500 nebo Dle dohody"
+                  />
+                </div>
+
+                {/* Conditionally display attributes depending on SPACE vs COURSE_PROGRAM */}
+                {(resourceModal.data.type === "SPACE" || resourceModal.data.type === "SEAT") ? (
+                  <>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Povrch</label>
+                      <input
+                        type="text"
+                        value={resourceModal.data.surface}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, surface: e.target.value }
+                        })}
+                        className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        placeholder="např. Umělá tráva 3. generace"
+                      />
                     </div>
-                  </div>
-                </details>
-              </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vybavení</label>
+                      <input
+                        type="text"
+                        value={resourceModal.data.equipment}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, equipment: e.target.value }
+                        })}
+                        className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        placeholder="např. Přenosné branky"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Lektor / Instruktor</label>
+                      <input
+                        type="text"
+                        value={resourceModal.data.instructor}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, instructor: e.target.value }
+                        })}
+                        className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        placeholder="např. RNDr. Pavel Černý"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Místnost</label>
+                      <input
+                        type="text"
+                        value={resourceModal.data.room}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, room: e.target.value }
+                        })}
+                        className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        placeholder="např. Učebna C"
+                      />
+                    </div>
+                  </>
+                )}
 
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Maximální kapacita</label>
-                <input
-                  type="number"
-                  required
-                  value={resourceModal.data.maxCapacity}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: { ...resourceModal.data, maxCapacity: parseInt(e.target.value, 10) || 0 }
-                  })}
-                  className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Cena (Kč / hodina nebo za lekci)</label>
-                <input
-                  type="text"
-                  value={resourceModal.data.price}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: { ...resourceModal.data, price: e.target.value }
-                  })}
-                  className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  placeholder="např. 500 nebo Dle dohody"
-                />
-              </div>
-
-              {/* Conditionally display attributes depending on SPACE vs COURSE_PROGRAM */}
-              {(resourceModal.data.type === "SPACE" || resourceModal.data.type === "SEAT") ? (
-                <>
-                  <div>
-                    <label className="block text-muted-foreground mb-1 font-semibold">Povrch</label>
-                    <input
-                      type="text"
-                      value={resourceModal.data.surface}
-                      onChange={(e) => setResourceModal({
-                        ...resourceModal,
-                        data: { ...resourceModal.data, surface: e.target.value }
-                      })}
-                      className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                      placeholder="např. Umělá tráva 3. generace"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-muted-foreground mb-1 font-semibold">Vybavení</label>
-                    <input
-                      type="text"
-                      value={resourceModal.data.equipment}
-                      onChange={(e) => setResourceModal({
-                        ...resourceModal,
-                        data: { ...resourceModal.data, equipment: e.target.value }
-                      })}
-                      className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                      placeholder="např. Přenosné branky"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-muted-foreground mb-1 font-semibold">Lektor / Instruktor</label>
-                    <input
-                      type="text"
-                      value={resourceModal.data.instructor}
-                      onChange={(e) => setResourceModal({
-                        ...resourceModal,
-                        data: { ...resourceModal.data, instructor: e.target.value }
-                      })}
-                      className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                      placeholder="např. RNDr. Pavel Černý"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-muted-foreground mb-1 font-semibold">Místnost</label>
-                    <input
-                      type="text"
-                      value={resourceModal.data.room}
-                      onChange={(e) => setResourceModal({
-                        ...resourceModal,
-                        data: { ...resourceModal.data, room: e.target.value }
-                      })}
-                      className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                      placeholder="např. Učebna C"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Nadřazená oblast / Hřiště (Nadřazený prvek)</label>
-                <select
-                  value={resourceModal.data.parentId}
-                  onChange={(e) => setResourceModal({
-                    ...resourceModal,
-                    data: { ...resourceModal.data, parentId: e.target.value }
-                  })}
-                  className="select-field bg-slate-100/40 dark:bg-[#131322]/40 border border-[#E2E2ED]/60 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                >
-                  <option value="">Žádný (Nadřazený prvek)</option>
-                  {resources
-                    .filter((r) => r.id !== resourceModal.data.id)
-                    .map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                </select>
+                <div>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Nadřazená oblast / Hřiště (Nadřazený prvek)</label>
+                  <select
+                    value={resourceModal.data.parentId}
+                    onChange={(e) => setResourceModal({
+                      ...resourceModal,
+                      data: { ...resourceModal.data, parentId: e.target.value }
+                    })}
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                  >
+                    <option value="">Žádný (Nadřazený prvek)</option>
+                    {resources
+                      .filter((r) => r.id !== resourceModal.data.id)
+                      .map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setResourceModal({ ...resourceModal, open: false })}
-                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1D1D2C] dark:hover:bg-[#2A2A40] text-slate-700 dark:text-zinc-350 hover:scale-105 active:scale-95 transition-all text-xs font-bold flex-1 text-center cursor-pointer"
+                  className="py-3 px-4 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
                 >
                   Zrušit
                 </button>
                 <button
                   type="submit"
-                  className="py-2.5 px-4 rounded-xl bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-sm shadow-tenant-primary/15"
+                  className="py-3 px-4 rounded-2xl bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
                 >
                   Uložit
                 </button>
@@ -2307,308 +2393,115 @@ export default function AdminDashboardClient({
         </div>
       )}
 
-      {/* 2. Schedule Rule CRUD Modal */}
-      {ruleModal.open && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
-            <h3 className="text-base font-bold text-foreground mb-4">
-              {ruleModal.mode === "add" ? "Přidat rozvrhový slot programu" : "Upravit detaily rozvrhového slotu"}
-            </h3>
-            <form onSubmit={handleRuleSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Přiřazený zdroj</label>
-                <select
-                  disabled={ruleModal.mode === "edit"}
-                  value={ruleModal.data.resourceId}
-                  onChange={(e) => setRuleModal({
-                    ...ruleModal,
-                    data: { ...ruleModal.data, resourceId: e.target.value }
-                  })}
-                  className="select-field bg-slate-100/40 dark:bg-[#131322]/40 border border-[#E2E2ED]/60 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none disabled:opacity-50"
-                >
-                  {resources.map(res => (
-                    <option key={res.id} value={res.id}>{res.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Název rozvrhového slotu</label>
-                <input
-                  type="text"
-                  required
-                  value={ruleModal.data.name}
-                  onChange={(e) => setRuleModal({
-                    ...ruleModal,
-                    data: { ...ruleModal.data, name: e.target.value }
-                  })}
-                  className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  placeholder="např. Učebna: Přírodopis"
-                />
-              </div>
-
-              {/* Day Selection - Select for edit, checkboxes for add */}
-              {ruleModal.mode === "edit" ? (
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Den v týdnu</label>
-                  <select
-                    value={ruleModal.data.dayOfWeek}
-                    onChange={(e) => setRuleModal({
-                      ...ruleModal,
-                      data: { ...ruleModal.data, dayOfWeek: parseInt(e.target.value, 10) }
-                    })}
-                    className="select-field bg-slate-100/40 dark:bg-[#131322]/40 border border-[#E2E2ED]/60 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  >
-                    <option value={1}>Pondělí</option>
-                    <option value={2}>Úterý</option>
-                    <option value={3}>Středa</option>
-                    <option value={4}>Čtvrtek</option>
-                    <option value={5}>Pátek</option>
-                    <option value={6}>Sobota</option>
-                    <option value={0}>Neděle</option>
-                  </select>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="block text-muted-foreground font-semibold">Opakování ve dnech</label>
-                  <div className="grid grid-cols-3 gap-2 border border-slate-200/50 dark:border-[#1F1F35] p-3 rounded-xl bg-white/20 dark:bg-[#131322]/30 text-slate-700 dark:text-zinc-350">
-                    {[
-                      { val: 1, label: "Po" },
-                      { val: 2, label: "Út" },
-                      { val: 3, label: "St" },
-                      { val: 4, label: "Čt" },
-                      { val: 5, label: "Pá" },
-                      { val: 6, label: "So" },
-                      { val: 0, label: "Ne" }
-                    ].map(day => (
-                      <div key={day.val} className="flex items-center gap-1.5">
-                        <input
-                          type="checkbox"
-                          id={`chk-day-${day.val}`}
-                          checked={ruleModal.data.daysOfWeek.includes(day.val)}
-                          onChange={(e) => {
-                            const current = [...ruleModal.data.daysOfWeek];
-                            if (e.target.checked) {
-                              current.push(day.val);
-                            } else {
-                              const idx = current.indexOf(day.val);
-                              if (idx > -1) current.splice(idx, 1);
-                            }
-                            setRuleModal({
-                              ...ruleModal,
-                              data: { ...ruleModal.data, daysOfWeek: current }
-                            });
-                          }}
-                          className="h-3.5 w-3.5 rounded text-tenant-primary focus:ring-tenant-primary/20"
-                        />
-                        <label htmlFor={`chk-day-${day.val}`} className="cursor-pointer font-medium">{day.label}</label>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Bulk Select Helper Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setRuleModal({
-                        ...ruleModal,
-                        data: { ...ruleModal.data, daysOfWeek: [1, 2, 3, 4, 5, 6, 0] }
-                      })}
-                      className="px-2 py-1 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-tenant-primary/10 hover:border-tenant-primary/30 rounded text-[10px] font-semibold text-slate-600 dark:text-zinc-350 transition-colors cursor-pointer"
-                    >
-                      Každý den
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRuleModal({
-                        ...ruleModal,
-                        data: { ...ruleModal.data, daysOfWeek: [1, 2, 3, 4, 5] }
-                      })}
-                      className="px-2 py-1 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-tenant-primary/10 hover:border-tenant-primary/30 rounded text-[10px] font-semibold text-slate-600 dark:text-zinc-350 transition-colors cursor-pointer"
-                    >
-                      Všední dny (Po-Pá)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRuleModal({
-                        ...ruleModal,
-                        data: { ...ruleModal.data, daysOfWeek: [6, 0] }
-                      })}
-                      className="px-2 py-1 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-tenant-primary/10 hover:border-tenant-primary/30 rounded text-[10px] font-semibold text-slate-600 dark:text-zinc-350 transition-colors cursor-pointer"
-                    >
-                      Víkendy (So-Ne)
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Čas zahájení (HH:MM)</label>
-                  <input
-                    type="text"
-                    required
-                    value={ruleModal.data.startTime}
-                    onChange={(e) => setRuleModal({
-                      ...ruleModal,
-                      data: { ...ruleModal.data, startTime: e.target.value }
-                    })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none font-mono"
-                    placeholder="např. 12:30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Čas ukončení (HH:MM)</label>
-                  <input
-                    type="text"
-                    required
-                    value={ruleModal.data.endTime}
-                    onChange={(e) => setRuleModal({
-                      ...ruleModal,
-                      data: { ...ruleModal.data, endTime: e.target.value }
-                    })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none font-mono"
-                    placeholder="např. 14:00"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Cena (Kč)</label>
-                  <input
-                    type="number"
-                    required
-                    value={ruleModal.data.price}
-                    onChange={(e) => setRuleModal({
-                      ...ruleModal,
-                      data: { ...ruleModal.data, price: parseFloat(e.target.value) || 0 }
-                    })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Maximální kapacita</label>
-                  <input
-                    type="number"
-                    required
-                    value={ruleModal.data.maxCapacity}
-                    onChange={(e) => setRuleModal({
-                      ...ruleModal,
-                      data: { ...ruleModal.data, maxCapacity: parseInt(e.target.value, 10) || 0 }
-                    })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setRuleModal({ ...ruleModal, open: false })}
-                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1D1D2C] dark:hover:bg-[#2A2A40] text-slate-700 dark:text-zinc-350 hover:scale-105 active:scale-95 transition-all text-xs font-bold flex-1 text-center cursor-pointer"
-                >
-                  Zrušit
-                </button>
-                <button
-                  type="submit"
-                  className="py-2.5 px-4 rounded-xl bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-sm shadow-tenant-primary/15"
-                >
-                  Uložit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* 3. IoT Device Register Modal */}
       {deviceModal.open && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white/90 dark:bg-[#0B0B12]/90 backdrop-blur-2xl border border-slate-200/50 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl shadow-black/40 relative transition-all duration-300">
-            <h3 className="text-base font-bold text-foreground mb-4">
-              {deviceModal.mode === "add" ? "Registrovat fyzické přístupové zařízení" : "Upravit parametry zařízení"}
+        <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-200">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full max-h-[90vh] overflow-y-auto p-7 rounded-[2rem] shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
+            <button
+              type="button"
+              onClick={() => setDeviceModal({ ...deviceModal, open: false })}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-tenant-primary via-indigo-500 to-[#3B82F6] bg-clip-text text-transparent mb-1 font-sans select-none">
+              {deviceModal.mode === "add" ? "Registrovat zařízení" : "Upravit parametry zařízení"}
             </h3>
-            <form onSubmit={handleDeviceSubmit} className="space-y-4 text-xs">
-              {deviceModal.mode === "add" && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              {deviceModal.mode === "add" ? "Zadejte parametry nového přístupového IoT terminálu:" : "Upravte konfiguraci zařízení níže:"}
+            </p>
+            <form onSubmit={handleDeviceSubmit} className="space-y-6 text-xs">
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-3xl border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
+                  <Smartphone size={14} className="text-tenant-primary dark:text-[#A78BFA]" />
+                  Parametry přístupového zařízení
+                </p>
+
+                {deviceModal.mode === "add" && (
+                  <div>
+                    <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Unikátní ID čtečky (hardwarový klíč)</label>
+                    <input
+                      type="text"
+                      required
+                      value={deviceModal.data.id}
+                      onChange={(e) => setDeviceModal({
+                        ...deviceModal,
+                        data: { ...deviceModal.data, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }
+                      })}
+                      className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
+                      placeholder="např. brana_zapad_01"
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Unikátní ID čtečky (hardwarový klíč)</label>
+                  <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Název čtečky (umístění)</label>
                   <input
                     type="text"
                     required
-                    value={deviceModal.data.id}
+                    value={deviceModal.data.name}
                     onChange={(e) => setDeviceModal({
                       ...deviceModal,
-                      data: { ...deviceModal.data, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }
+                      data: { ...deviceModal.data, name: e.target.value }
                     })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none font-mono"
-                    placeholder="např. brana_zapad_01"
+                    className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    placeholder="např. Hlavní vstupní turniket"
                   />
                 </div>
-              )}
 
-              <div>
-                <label className="block text-muted-foreground mb-1 font-semibold">Název čtečky (umístění)</label>
-                <input
-                  type="text"
-                  required
-                  value={deviceModal.data.name}
-                  onChange={(e) => setDeviceModal({
-                    ...deviceModal,
-                    data: { ...deviceModal.data, name: e.target.value }
-                  })}
-                  className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none"
-                  placeholder="např. Hlavní vstupní turniket"
-                />
-              </div>
+                {deviceModal.mode === "add" && (
+                  <div>
+                    <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Tajný API přístupový token (prostý text)</label>
+                    <input
+                      type="text"
+                      required
+                      value={deviceModal.data.token}
+                      onChange={(e) => setDeviceModal({
+                        ...deviceModal,
+                        data: { ...deviceModal.data, token: e.target.value }
+                      })}
+                      className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
+                      placeholder="Zadejte tajný token pro ověřování zařízení"
+                    />
+                    <p className="text-[10px] text-slate-450 dark:text-slate-500 mt-1.5 font-medium leading-relaxed">
+                      Tento token se v databázi ukládá jako hash (SHA-256) a nelze jej zpětně obnovit ani zobrazit.
+                    </p>
+                  </div>
+                )}
 
-              {deviceModal.mode === "add" && (
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-semibold">Tajný API přístupový token (prostý text)</label>
-                  <input
-                    type="text"
-                    required
-                    value={deviceModal.data.token}
-                    onChange={(e) => setDeviceModal({
-                      ...deviceModal,
-                      data: { ...deviceModal.data, token: e.target.value }
-                    })}
-                    className="input-field bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none font-mono"
-                    placeholder="Zadejte tajný token pro ověřování zařízení"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">
-                    Tento token se v databázi ukládá jako hash (SHA-256) a nelze jej zpětně obnovit ani zobrazit.
-                  </p>
+                <div className="flex items-center justify-between py-1 border-t border-slate-200/40 dark:border-[#2A2A40]/30 mt-3 pt-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Aktivní stav zařízení</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">Povolit skenování a ověřování vstupenek</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="dev-active"
+                      checked={deviceModal.data.active}
+                      onChange={(e) => setDeviceModal({
+                        ...deviceModal,
+                        data: { ...deviceModal.data, active: e.target.checked }
+                      })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                  </label>
                 </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="dev-active"
-                  checked={deviceModal.data.active}
-                  onChange={(e) => setDeviceModal({
-                    ...deviceModal,
-                    data: { ...deviceModal.data, active: e.target.checked }
-                  })}
-                  className="h-4 w-4 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40] text-tenant-primary rounded focus:ring-tenant-primary/20 focus:ring-1"
-                />
-                <label htmlFor="dev-active" className="text-foreground font-semibold cursor-pointer select-none">
-                  Zařízení je aktivní a povoluje skenování vstupů
-                </label>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setDeviceModal({ ...deviceModal, open: false })}
-                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1D1D2C] dark:hover:bg-[#2A2A40] text-slate-700 dark:text-zinc-350 hover:scale-105 active:scale-95 transition-all text-xs font-bold flex-1 text-center cursor-pointer"
+                  className="py-3 px-4 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
                 >
                   Zrušit
                 </button>
                 <button
                   type="submit"
-                  className="py-2.5 px-4 rounded-xl bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-sm shadow-tenant-primary/15"
+                  className="py-3 px-4 rounded-2xl bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
                 >
                   Uložit zařízení
                 </button>
@@ -2666,9 +2559,17 @@ export default function AdminDashboardClient({
           tagline: settingsTagline,
           openTime: settingsOpenTime,
           closeTime: settingsCloseTime,
+          openingHours: settingsOpeningHours,
           adminEmails: settingsAdminEmails
         }}
       />
+
+      {activeTimePicker && (
+        <TimePickerDropdown 
+          picker={activeTimePicker} 
+          onClose={() => setActiveTimePicker(null)} 
+        />
+      )}
 
     </div>
   );

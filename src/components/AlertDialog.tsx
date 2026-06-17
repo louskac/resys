@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, Info } from "lucide-react";
 
 interface AlertDialogProps {
   isOpen: boolean;
@@ -18,36 +18,51 @@ export default function AlertDialog({
   title,
   message,
   onClose,
-  okLabel = "OK"
+  okLabel = "Rozumím"
 }: AlertDialogProps) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
-      <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-6 rounded-3xl shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-xs text-left">
-        <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-3.5 flex items-center gap-2 select-none">
+      <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-7 rounded-[2rem] shadow-[0_20px_50px_rgba(112,0,255,0.15)] relative transition-all duration-300 text-center flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
+        
+        {/* Animated Icon Circle */}
+        <div className="flex items-center justify-center">
           {type === "success" ? (
-            <Check className="text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 p-0.5 rounded-full" size={18} />
+            <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center animate-bounce shadow-[0_0_20px_rgba(16,185,129,0.2)] border border-emerald-500/20">
+              <Check className="text-emerald-500 dark:text-emerald-450" size={26} />
+            </div>
           ) : type === "error" ? (
-            <AlertCircle className="text-rose-500 dark:text-rose-455 bg-rose-500/10 p-0.5 rounded-full" size={18} />
+            <div className="h-14 w-14 rounded-full bg-rose-500/10 dark:bg-rose-500/15 flex items-center justify-center animate-[shake_0.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/20">
+              <AlertCircle className="text-rose-550 dark:text-rose-450" size={26} />
+            </div>
           ) : (
-            <AlertCircle className="text-[#7000FF] dark:text-[#A78BFA] bg-[#7000FF]/10 p-0.5 rounded-full" size={18} />
+            <div className="h-14 w-14 rounded-full bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(112,0,255,0.2)] border border-purple-500/20">
+              <Info className="text-purple-550 dark:text-purple-400" size={26} />
+            </div>
           )}
+        </div>
+
+        {/* Title */}
+        <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200 tracking-tight select-none">
           {title}
         </h3>
-        <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 whitespace-pre-line font-medium">
+
+        {/* Description Message */}
+        <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-xs font-semibold whitespace-pre-line -mt-1 max-w-[90%]">
           {message}
         </p>
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200"
-          >
-            {okLabel}
-          </button>
-        </div>
+
+        {/* Action Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full mt-2 py-3 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] hover:shadow-[0_6px_20px_rgba(112,0,255,0.4)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+        >
+          {okLabel}
+        </button>
       </div>
     </div>
   );
 }
+

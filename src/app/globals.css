@@ -529,4 +529,10 @@ body {
   animation: blob-orbit-3 7s ease-in-out infinite;
 }
 
+/* Custom styling for HTML5 time inputs to hide default WebKit indicator */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
 

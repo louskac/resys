@@ -98,6 +98,7 @@ export default function AdminAIAssistant({
   const handleSendRef = useRef<any>(null);
   const lastInputWasVoiceRef = useRef(false);
   const isVoiceOutputEnabledRef = useRef(isVoiceOutputEnabled);
+  const toolCallQueueRef = useRef<any[]>([]);
 
   // Sync isVoiceOutputEnabled with ref
   useEffect(() => {
@@ -269,6 +270,29 @@ export default function AdminAIAssistant({
           deviceName: null,
           tagline: null
         }));
+
+        // Process next call from queue ref
+        if (toolCallQueueRef.current.length > 0) {
+          const nextCall = toolCallQueueRef.current.shift();
+          setTimeout(() => {
+            console.log("Executing queued tool call from ref:", nextCall.name, nextCall.args);
+            executeToolCall(nextCall);
+            
+            const helperText = `Otevírám další předvyplněný formulář pro: "${nextCall.args.name || nextCall.name}".`;
+            
+            // Add a helper notification message from the assistant
+            setMessages(prev => [
+              ...prev,
+              {
+                role: "assistant",
+                content: helperText
+              }
+            ]);
+            
+            // Speak the transition helper notification
+            speakText(helperText);
+          }, 800);
+        }
       }
     };
 
@@ -445,14 +469,17 @@ export default function AdminAIAssistant({
 
       setMessages(prev => [...prev, replyMessage]);
 
-      if (replyMessage.content && lastInputWasVoiceRef.current) {
+      if (replyMessage.content) {
         speakText(replyMessage.content);
       }
 
       if (data.toolCalls && data.toolCalls.length > 0) {
-        data.toolCalls.forEach((call: any) => {
-          executeToolCall(call);
-        });
+        const [firstCall, ...remainingCalls] = data.toolCalls;
+        // Execute the first tool call immediately
+        executeToolCall(firstCall);
+        
+        // Queue the remaining calls
+        toolCallQueueRef.current = remainingCalls;
       }
 
     } catch (err: any) {

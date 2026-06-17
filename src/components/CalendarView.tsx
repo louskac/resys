@@ -234,6 +234,13 @@ export default function CalendarView({
 
   const rootResources = resources.filter(r => !r.parentId);
 
+  // Helper to trace all ancestors of a resource (n-level nesting)
+  const getAncestors = (id: string): string[] => {
+    const res = resources.find(r => r.id === id);
+    if (!res || !res.parentId) return [];
+    return [res.parentId, ...getAncestors(res.parentId)];
+  };
+
   // Slugify helper to make resource names URL-friendly
   const slugify = (text: string) => {
     return text
@@ -274,8 +281,12 @@ export default function CalendarView({
   const activeRootId = (() => {
     const rootFromUrl = searchParams.get("root") || searchParams.get("rootId");
     const matchedRes = findResourceBySlugOrId(rootFromUrl);
-    if (matchedRes && rootResources.some(r => r.id === matchedRes.id)) {
-      return matchedRes.id;
+    if (matchedRes) {
+      const ancestors = getAncestors(matchedRes.id);
+      const rootAncestorId = ancestors.length > 0 ? ancestors[ancestors.length - 1] : matchedRes.id;
+      if (rootResources.some(r => r.id === rootAncestorId)) {
+        return rootAncestorId;
+      }
     }
     return rootResources[0]?.id || "";
   })();
@@ -284,8 +295,8 @@ export default function CalendarView({
     const resFromUrl = searchParams.get("resource") || searchParams.get("resourceId");
     const matchedRes = findResourceBySlugOrId(resFromUrl);
     if (matchedRes && resources.some(r => r.id === matchedRes.id)) {
-      const isChildOfActiveRoot = matchedRes.id === activeRootId || matchedRes.parentId === activeRootId;
-      if (isChildOfActiveRoot) {
+      const isDescendantOfActiveRoot = matchedRes.id === activeRootId || getAncestors(matchedRes.id).includes(activeRootId);
+      if (isDescendantOfActiveRoot) {
         return matchedRes.id;
       }
     }
@@ -1271,27 +1282,43 @@ export default function CalendarView({
         </div>
       )}
 
-      {/* Sub-resource Selector (if children exist for the active root) */}
+      {/* Chained Sub-resource Selectors (n-level nesting) */}
       {(() => {
-        const children = resources.filter(r => r.parentId === activeRootId);
-        if (children.length === 0) return null;
-        
-        const activeRoot = resources.find(r => r.id === activeRootId);
-        return (
-          <div className="mb-6">
-            <UnifiedSwitcher<string>
-              options={[
-                { value: activeRootId, label: `Vše (${activeRoot?.name || "Vše"})` },
-                ...children.map((child) => ({
-                  value: child.id,
-                  label: child.name
-                }))
-              ]}
-              activeValue={selectedResourceId}
-              onChange={selectResource}
-            />
-          </div>
-        );
+        const getPathFromRoot = (currentId: string): string[] => {
+          const res = resources.find(r => r.id === currentId);
+          if (!res || !res.parentId) return [currentId];
+          return [...getPathFromRoot(res.parentId), currentId];
+        };
+        const path = getPathFromRoot(selectedResourceId);
+        const selectors: React.ReactNode[] = [];
+
+        for (let i = 0; i < path.length; i++) {
+          const parentId = path[i];
+          const children = resources.filter(r => r.parentId === parentId);
+          if (children.length === 0) continue;
+
+          const parentRes = resources.find(r => r.id === parentId);
+          const activeVal = path[i + 1] || parentId;
+
+          selectors.push(
+            <div key={parentId} className="mb-4">
+              <UnifiedSwitcher<string>
+                options={[
+                  { value: parentId, label: `Celé (${parentRes?.name || "Celé"})` },
+                  ...children.map((child) => ({
+                    value: child.id,
+                    label: child.name
+                  }))
+                ]}
+                activeValue={activeVal}
+                onChange={(val) => {
+                  selectResource(val);
+                }}
+              />
+            </div>
+          );
+        }
+        return selectors;
       })()}
 
       {/* Main Grid View */}

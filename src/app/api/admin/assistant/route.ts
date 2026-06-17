@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Format database context for administrative assistance
     const resourcesContext = (resources || []).map((r: any) => 
-      `- Resource Name: "${r.name}" (ID: ${r.id}, Type: ${r.type}, Capacity: ${r.maxCapacity})${r.attributes?.room ? `, Room: ${r.attributes.room}` : ""}${r.attributes?.instructor ? `, Instructor: ${r.attributes.instructor}` : ""}`
+      `- Resource Name: "${r.name}" (ID: ${r.id}, Type: ${r.type}, Capacity: ${r.maxCapacity})${r.attributes?.parentId ? `, Parent ID: ${r.attributes.parentId}` : ""}${r.attributes?.price ? `, Price: ${r.attributes.price}` : ""}${r.attributes?.surface ? `, Surface: ${r.attributes.surface}` : ""}${r.attributes?.room ? `, Room: ${r.attributes.room}` : ""}${r.attributes?.instructor ? `, Instructor: ${r.attributes.instructor}` : ""}`
     ).join("\n");
 
     const rulesContext = (resources || []).flatMap((r: any) => 
@@ -69,6 +69,10 @@ export async function POST(req: NextRequest) {
     const logsSummary = (checkinLogs || []).slice(0, 8).map((log: any) => 
       `- Scanned: ${formatISOToDateTime(log.scannedAt)} by ${log.userName} (${log.userEmail}) on device "${log.deviceName}" for resource "${log.resourceName}" -> Result: ${log.result}`
     ).join("\n");
+
+    const openingHoursContext = (settingsForm?.openingHours || []).map((oh: any) => 
+      `- ${oh.name} (Day Index ${oh.dayOfWeek}): ${oh.closed ? "CLOSED" : `${oh.openTime} - ${oh.closeTime}`}`
+    ).join("\n") || `- Default Operating Hours: ${settingsForm?.openTime || "08:00"} - ${settingsForm?.closeTime || "22:00"}`;
 
     let verticalDescription = "";
     if (tenantVertical === "SPORTS_GROUND") {
@@ -95,13 +99,14 @@ You are currently helping the administrator of the venue "${tenantName || "ReSys
 === VENUE TYPE & TERMINOLOGY ===
 ${verticalDescription || "Use the resource names exactly as defined in the context."}
 ${tenantAiInstructions ? `\n=== CUSTOM VENUE INSTRUCTIONS & RULES ===\n${tenantAiInstructions}\n` : ""}
-Your job is to assist the property manager (administrator) with configuring their venue, setting reservation rules, overseeing check-ins, and altering portal themes.
+Your job is to assist the property manager (administrator) with configuring their venue, setting operating hours, overseeing check-ins, and altering portal themes.
 
 === SAFETY & SECURITY GUARDRAILS ===
-1. NO DELETIONS: You are strictly forbidden from deleting resources, deleting schedule rules, deleting IoT devices, or cancelling bookings directly. 
-2. IF DELETION REQUESTED: You must politely refuse. Explain that for security reasons, deletions of resources, slots, or devices must be done manually by the admin in the UI using the red delete (trash) icons. 
-3. DRAFTING MODALS UX: To add or edit resources, schedule rules, or devices, do not modify the database directly. Instead, call the drafting tools (like 'draft_resource', 'draft_rule', 'draft_device'). This will open the corresponding form modal in the admin's browser and pre-populate the fields for their final review and confirmation.
-4. VALIDATIONS: 
+1. NO DELETIONS: You are strictly forbidden from deleting resources, deleting IoT devices, or cancelling bookings directly. 
+2. IF DELETION REQUESTED: You must politely refuse. Explain that for security reasons, deletions of resources or devices must be done manually by the admin in the UI using the red delete (trash) icons. 
+3. DRAFTING MODALS UX: To add or edit resources or devices, do not modify the database directly. Instead, call the drafting tools (like 'draft_resource', 'draft_device'). This will open the corresponding form modal in the admin's browser and pre-populate the fields for their final review and confirmation.
+4. SEQUENTIAL TASK QUEUEING: If a user request affects multiple resources (such as setting the price of a parent resource and all its child sub-resources/sectors), you MUST call 'draft_resource' once for each affected resource in a single turn. Do not ask for confirmation between each sub-resource. The system will queue them in the UI and open them sequentially.
+5. VALIDATIONS: 
    - Capacity values must be positive numbers between 1 and 1000.
    - Prices must be non-negative.
    - Start times must be before end times, formatted as HH:MM.
@@ -111,10 +116,10 @@ Your job is to assist the property manager (administrator) with configuring thei
 - Active Tab on Administrator Screen: "${activeTab || "overview"}"
 - Active Date context: ${activeDate || "today"}
 - Current Date/Time: ${new Date().toISOString()}
+- Venue Operating Hours:
+${openingHoursContext}
 - Existing Resources:
 ${resourcesContext || "- None registered yet"}
-- Configured Schedule Rules (Time Slots):
-${rulesContext || "- None registered yet"}
 - Active IoT Devices:
 ${devicesContext || "- None configured"}
 - Recent Bookings context:
@@ -143,7 +148,7 @@ You have access to tools to control the admin screen layout and form modals:`;
               properties: {
                 tab: {
                   type: "STRING",
-                  description: "The target tab: 'overview', 'resources', 'rules', 'bookings', 'devices', 'settings'."
+                  description: "The target tab: 'overview', 'resources', 'bookings', 'devices', 'operating', 'settings'."
                 }
               },
               required: ["tab"]
@@ -201,57 +206,6 @@ You have access to tools to control the admin screen layout and form modals:`;
                 }
               },
               required: ["mode", "name"]
-            }
-          },
-          {
-            name: "draft_rule",
-            description: "Opens the Schedule Rule (time slot) modal and pre-fills form fields.",
-            parameters: {
-              type: "OBJECT",
-              properties: {
-                mode: {
-                  type: "STRING",
-                  description: "Either 'add' or 'edit'."
-                },
-                id: {
-                  type: "STRING",
-                  description: "Rule ID (required if mode is 'edit')."
-                },
-                resourceId: {
-                  type: "STRING",
-                  description: "ID of the target resource this rule applies to."
-                },
-                name: {
-                  type: "STRING",
-                  description: "Descriptive name of the time slot, e.g. 'Odpolední trénink'."
-                },
-                daysOfWeek: {
-                  type: "ARRAY",
-                  items: { type: "INTEGER" },
-                  description: "Array of days of week (0=Sunday, 1=Monday, ..., 6=Saturday) for bulk scheduling."
-                },
-                dayOfWeek: {
-                  type: "INTEGER",
-                  description: "Single day of week (required if mode is 'edit')."
-                },
-                startTime: {
-                  type: "STRING",
-                  description: "Start time in HH:MM format, e.g., '14:30'."
-                },
-                endTime: {
-                  type: "STRING",
-                  description: "End time in HH:MM format, e.g., '16:00'."
-                },
-                price: {
-                  type: "NUMBER",
-                  description: "Hourly or flat price in CZK."
-                },
-                maxCapacity: {
-                  type: "INTEGER",
-                  description: "Capacity limit for this slot."
-                }
-              },
-              required: ["mode", "resourceId", "name", "startTime", "endTime"]
             }
           },
           {
