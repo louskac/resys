@@ -660,8 +660,16 @@ export default function HostConsole() {
                   </div>
                   
                   {/* Avatar with gradient matching brand colors */}
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary/25 to-primary/5 dark:from-primary/30 dark:to-primary/10 border border-primary/20 dark:border-primary/30 text-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-primary/5">
-                    {session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "SA"}
+                  <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary/25 to-primary/5 dark:from-primary/30 dark:to-primary/10 border border-primary/20 dark:border-primary/30 text-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-primary/5 overflow-hidden">
+                    {session.user?.avatarUrl ? (
+                      <img
+                        src={session.user.avatarUrl}
+                        alt={session.user.name || "Avatar"}
+                        className="h-full w-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "SA"
+                    )}
                   </div>
                   
                   <button

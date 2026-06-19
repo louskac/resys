@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
       guestEmail,
       weekStart,
       recurrencePattern,
-      recurrenceCount
+      recurrenceCount,
+      partnerId
     } = body;
 
     if (!tenantId || dayIndex === undefined) {
@@ -78,6 +79,13 @@ export async function POST(request: NextRequest) {
         let finalResourceId = resourceId;
         let rule: any = null;
         let tenant: any = null;
+
+        let partner = null;
+        if (partnerId) {
+          partner = await tx.partner.findFirst({
+            where: { id: partnerId, tenantId, active: true }
+          });
+        }
 
         if (scheduleRuleId) {
           // --- Case A: Booking a pre-configured program slot / class ---
@@ -338,60 +346,93 @@ export async function POST(request: NextRequest) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
           }
 
-          // --- User Booking Limits (Daily & Weekly) ---
-          const startOfDay = new Date(reservedFrom);
-          startOfDay.setUTCHours(0, 0, 0, 0);
-          const endOfDay = new Date(reservedFrom);
-          endOfDay.setUTCHours(23, 59, 59, 999);
-
-          const endOfWeek = new Date(occStartOfWeek);
-          endOfWeek.setUTCDate(occStartOfWeek.getUTCDate() + 6);
-          endOfWeek.setUTCHours(23, 59, 59, 999);
-
-          // Check daily booking duration limit (Max 4 hours / 240 minutes)
-          const dailyBookings = await tx.booking.findMany({
-            where: {
-              tenantId,
-              userEmail,
-              status: "CONFIRMED",
-              reservedFrom: {
-                gte: startOfDay,
-                lte: endOfDay,
-              },
-            },
-          });
-
-          const dailyMinutes = dailyBookings.reduce((sum, b) => {
-            return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
-          }, 0);
-
-          const newDurationMin = Math.round((reservedTo.getTime() - reservedFrom.getTime()) / 60000);
-
-          if (dailyMinutes + newDurationMin > 240) {
-            const formattedDate = occTargetDate.toISOString().split("T")[0];
-            throw new Error(`DAILY_LIMIT_EXCEEDED:${formattedDate}:${Math.round(dailyMinutes)}:${newDurationMin}`);
+          // --- Calculate Price ---
+          let basePrice = 0.00;
+          if (scheduleRuleId && rule) {
+            basePrice = Number(rule.price) || 0;
+          } else {
+            // Case B resource details
+            const resource = tenant.resources.find((r: any) => r.id === finalResourceId);
+            const hourlyRate = Number((resource?.attributes as any)?.price) || 0;
+            const durationHours = (reservedTo.getTime() - reservedFrom.getTime()) / (1000 * 60 * 60);
+            basePrice = hourlyRate * durationHours;
           }
 
-          // Check weekly booking duration limit (Max 20 hours / 1200 minutes)
-          const weeklyBookings = await tx.booking.findMany({
-            where: {
-              tenantId,
-              userEmail,
-              status: "CONFIRMED",
-              reservedFrom: {
-                gte: occStartOfWeek,
-                lte: endOfWeek,
+          if (partner) {
+            basePrice = basePrice * (1 - (partner.discount || 0) / 100);
+          }
+
+          // Round to 2 decimal places
+          const finalPrice = Math.round((basePrice + Number.EPSILON) * 100) / 100;
+
+          // Determine status
+          let bookingStatus = "CONFIRMED";
+          if (isUserAdmin) {
+            bookingStatus = "CONFIRMED";
+          } else if (partner) {
+            bookingStatus = "CONFIRMED";
+          } else if (finalPrice === 0) {
+            bookingStatus = "CONFIRMED";
+          } else {
+            bookingStatus = "PENDING_PAYMENT";
+          }
+
+          // --- User Booking Limits (Daily & Weekly) - Bypassed for admins and partners ---
+          if (!isUserAdmin && !partner) {
+            const startOfDay = new Date(reservedFrom);
+            startOfDay.setUTCHours(0, 0, 0, 0);
+            const endOfDay = new Date(reservedFrom);
+            endOfDay.setUTCHours(23, 59, 59, 999);
+
+            const endOfWeek = new Date(occStartOfWeek);
+            endOfWeek.setUTCDate(occStartOfWeek.getUTCDate() + 6);
+            endOfWeek.setUTCHours(23, 59, 59, 999);
+
+            // Check daily booking duration limit (Max 4 hours / 240 minutes)
+            const dailyBookings = await tx.booking.findMany({
+              where: {
+                tenantId,
+                userEmail,
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+                reservedFrom: {
+                  gte: startOfDay,
+                  lte: endOfDay,
+                },
               },
-            },
-          });
+            });
 
-          const weeklyMinutes = weeklyBookings.reduce((sum, b) => {
-            return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
-          }, 0);
+            const dailyMinutes = dailyBookings.reduce((sum, b) => {
+              return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
+            }, 0);
 
-          if (weeklyMinutes + newDurationMin > 1200) {
-            const formattedDate = occTargetDate.toISOString().split("T")[0];
-            throw new Error(`WEEKLY_LIMIT_EXCEEDED:${formattedDate}:${Math.round(weeklyMinutes)}:${newDurationMin}`);
+            const newDurationMin = Math.round((reservedTo.getTime() - reservedFrom.getTime()) / 60000);
+
+            if (dailyMinutes + newDurationMin > 240) {
+              const formattedDate = occTargetDate.toISOString().split("T")[0];
+              throw new Error(`DAILY_LIMIT_EXCEEDED:${formattedDate}:${Math.round(dailyMinutes)}:${newDurationMin}`);
+            }
+
+            // Check weekly booking duration limit (Max 20 hours / 1200 minutes)
+            const weeklyBookings = await tx.booking.findMany({
+              where: {
+                tenantId,
+                userEmail,
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+                reservedFrom: {
+                  gte: occStartOfWeek,
+                  lte: endOfWeek,
+                },
+              },
+            });
+
+            const weeklyMinutes = weeklyBookings.reduce((sum, b) => {
+              return sum + Math.round((b.reservedTo.getTime() - b.reservedFrom.getTime()) / 60000);
+            }, 0);
+
+            if (weeklyMinutes + newDurationMin > 1200) {
+              const formattedDate = occTargetDate.toISOString().split("T")[0];
+              throw new Error(`WEEKLY_LIMIT_EXCEEDED:${formattedDate}:${Math.round(weeklyMinutes)}:${newDurationMin}`);
+            }
           }
 
           // Create the booking
@@ -405,7 +446,9 @@ export async function POST(request: NextRequest) {
               userEmail,
               reservedFrom,
               reservedTo,
-              status: "CONFIRMED", // Confirm immediately for sandbox dev
+              status: bookingStatus as any,
+              price: finalPrice,
+              partnerId: partner?.id || null,
               recurrenceGroup,
             },
           });
@@ -414,7 +457,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        return { id: createdBookingId };
+        const firstBooking = await tx.booking.findUnique({
+          where: { id: createdBookingId },
+          select: { status: true }
+        });
+
+        return { id: createdBookingId, status: firstBooking?.status };
       }, {
         isolationLevel: "Serializable"
       });
@@ -426,7 +474,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         status: "success",
         bookingId: result.id,
-        message: "Reservation confirmed successfully!",
+        bookingStatus: result.status,
+        message: result.status === "PENDING_PAYMENT"
+          ? "Reservation created, pending payment."
+          : "Reservation confirmed successfully!",
       });
     } catch (error: any) {
       const msg = error.message || "";

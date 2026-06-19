@@ -118,9 +118,17 @@ export async function POST(request: NextRequest) {
 
       if (!targetTenantId) {
         // Fallback checks for actions referencing sub-entities
-        if (action === "rule_upsert" && data?.resourceId) {
-          const res = await prisma.resource.findUnique({ where: { id: data.resourceId } });
-          targetTenantId = res?.tenantId;
+        if (action === "rule_upsert") {
+          if (data?.resourceId) {
+            const res = await prisma.resource.findUnique({ where: { id: data.resourceId } });
+            targetTenantId = res?.tenantId;
+          } else if (data?.id) {
+            const rule = await prisma.scheduleRule.findUnique({
+              where: { id: data.id },
+              include: { resource: true }
+            });
+            targetTenantId = rule?.resource.tenantId;
+          }
         } else if (action === "rule_delete" && data?.id) {
           const rule = await prisma.scheduleRule.findUnique({
             where: { id: data.id },
@@ -534,7 +542,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         let resource;
         if (id) {
           const existing = await prisma.resource.findUnique({ where: { id } });
-          if (!existing || existing.tenantId !== targetTenantId) {
+          if (!existing) {
+            return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+          }
+          if (existing.tenantId !== targetTenantId) {
             return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
           }
           resource = await prisma.resource.update({
@@ -555,7 +566,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
       case "resource_delete": {
         const { id } = data;
         const existing = await prisma.resource.findUnique({ where: { id } });
-        if (!existing || existing.tenantId !== targetTenantId) {
+        if (!existing) {
+          return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+        }
+        if (existing.tenantId !== targetTenantId) {
           return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
         }
         await prisma.resource.delete({ where: { id } });
@@ -618,7 +632,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
             where: { id },
             include: { resource: true }
           });
-          if (!existingRule || existingRule.resource.tenantId !== targetTenantId) {
+          if (!existingRule) {
+            return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+          }
+          if (existingRule.resource.tenantId !== targetTenantId) {
             return NextResponse.json({ error: "Forbidden: Rule does not belong to this tenant" }, { status: 403 });
           }
           const rule = await prisma.scheduleRule.update({
@@ -636,7 +653,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         } else {
           if (resourceId) {
             const resource = await prisma.resource.findUnique({ where: { id: resourceId } });
-            if (!resource || resource.tenantId !== targetTenantId) {
+            if (!resource) {
+              return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+            }
+            if (resource.tenantId !== targetTenantId) {
               return NextResponse.json({ error: "Forbidden: Resource does not belong to this tenant" }, { status: 403 });
             }
           }
@@ -680,7 +700,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
           where: { id },
           include: { resource: true }
         });
-        if (!existing || existing.resource.tenantId !== targetTenantId) {
+        if (!existing) {
+          return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+        }
+        if (existing.resource.tenantId !== targetTenantId) {
           return NextResponse.json({ error: "Forbidden: Rule does not belong to this tenant" }, { status: 403 });
         }
         await prisma.scheduleRule.delete({ where: { id } });
@@ -699,7 +722,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         let device;
         if (id) {
           const existing = await prisma.checkinDevice.findUnique({ where: { id } });
-          if (!existing || existing.tenantId !== targetTenantId) {
+          if (!existing) {
+            return NextResponse.json({ error: "Device not found" }, { status: 404 });
+          }
+          if (existing.tenantId !== targetTenantId) {
             return NextResponse.json({ error: "Forbidden: Device does not belong to this tenant" }, { status: 403 });
           }
           device = await prisma.checkinDevice.update({
@@ -726,7 +752,10 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
       case "device_delete": {
         const { id } = data;
         const existing = await prisma.checkinDevice.findUnique({ where: { id } });
-        if (!existing || existing.tenantId !== targetTenantId) {
+        if (!existing) {
+          return NextResponse.json({ error: "Device not found" }, { status: 404 });
+        }
+        if (existing.tenantId !== targetTenantId) {
           return NextResponse.json({ error: "Forbidden: Device does not belong to this tenant" }, { status: 403 });
         }
         await prisma.checkinDevice.delete({ where: { id } });

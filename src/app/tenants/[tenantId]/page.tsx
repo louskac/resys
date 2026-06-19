@@ -286,8 +286,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   });
 
   // B. Add recurring schedule rules (only for non-sports grounds as they represent templates/classes rather than blockings)
-  if (tenant.vertical !== "SPORTS_GROUND") {
-    tenant.resources.forEach((resource) => {
+  tenant.resources.forEach((resource) => {
+    if (resource.type === "COURSE_PROGRAM") {
       const resAttributes = (resource.attributes as unknown as ResourceAttributes) || {};
       const instructor = resAttributes.instructor || "Staff";
       const room = resAttributes.room || "Room";
@@ -307,12 +307,12 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           startHour,
           durationHours,
           resourceId: resource.id,
-          isOccupied: false,
+          isOccupied: false, // Rules represent available slots, not bookings
           resourceName: resource.name,
         });
       });
-    });
-  }
+    }
+  });
 
   const isOpenNow = (() => {
     try {
@@ -383,7 +383,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             </svg>
             <div className="flex flex-col">
               <span className="font-bold text-foreground text-sm leading-tight">{data.name}</span>
-              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide mt-0.5">{data.verticalName}</span>
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide mt-0.5">Rezervační portál</span>
             </div>
           </div>
 
@@ -441,13 +441,20 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                   </Link>
                 </div>
                 
-                {/* Avatar with gradient matching brand colors */}
                 <Link
                   href={`/tenants/${tenantId}/dashboard`}
-                  className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden"
                   title="Můj profil a rezervace"
                 >
-                  {session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                  {session.user?.avatarUrl ? (
+                    <img
+                      src={session.user.avatarUrl}
+                      alt={session.user.name || "Avatar"}
+                      className="h-full w-full object-cover rounded-xl"
+                    />
+                  ) : (
+                    session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"
+                  )}
                 </Link>
                 
                 <LogoutButton />
@@ -521,7 +528,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             {/* Floating Glass category badge */}
             <span className="absolute top-4 left-4 z-10 backdrop-blur-md bg-black/40 dark:bg-black/60 border border-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 select-none transition-transform duration-300 hover:scale-105">
               <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse" />
-              {data.verticalName}
+              Rezervační portál
             </span>
             
             {/* Subtle soft overlay fade */}
@@ -539,9 +546,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               Vítejte v {data.name}
             </h2>
             <p className="text-slate-600 dark:text-zinc-400 text-[11.5px] font-medium leading-relaxed">
-              {tenant.vertical === "SPORTS_GROUND" 
-                ? `${tagline}. Vyberte si plochu nebo sektor níže, prohlédněte si detaily a obsazenost v kalendáři a rezervujte si svůj termín.`
-                : `${tagline}. Vyberte si program níže, prohlédněte si detaily, volnou kapacitu a rezervujte si své místo.`}
+              {tagline}. Vyberte si z nabídky níže, prohlédněte si detaily a obsazenost v kalendáři a rezervujte si svůj termín.
             </p>
             
             {/* Verified portal banner footer */}
@@ -553,7 +558,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 <span>Ověřený partner <strong>ReSys</strong></span>
               </div>
               <span className="font-semibold text-slate-400 dark:text-zinc-500">
-                {tenant.vertical === "SPORTS_GROUND" ? "Sportoviště" : "Kurzy a lekce"}
+                Rezervační portál
               </span>
             </div>
           </div>
@@ -564,7 +569,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           <div className="col-span-1 md:col-span-2 order-3 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-4 lg:mt-4">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2 select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
-              {tenant.vertical === "SPORTS_GROUND" ? "Dostupné plochy a sektory" : "Dostupné programy a lekce"}
+              {filteredResources.some(r => r.type === "COURSE_PROGRAM") ? "Dostupné programy a lekce" : "Dostupné prostory a sektory"}
             </h3>
           </div>
         )}

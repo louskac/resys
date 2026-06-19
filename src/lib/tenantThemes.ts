@@ -41,6 +41,19 @@ export function getTenantTheme(tenantId: string, vertical: string, tenantName?: 
       gradientEnd: "oklch(0.38 0.18 310)",
     };
   }
+  if (normalized === "zskomenskeho") {
+    return {
+      name: displayName,
+      verticalName: "Rezervační portál",
+      tagline: "Pronájem sportovní haly a tělocvičny ZŠ Komenského online.",
+      primary: "oklch(0.52 0.22 292)", // A rich, vibrant purple/violet
+      primaryHover: "oklch(0.44 0.22 292)",
+      primaryForeground: "#ffffff",
+      accent: "oklch(0.60 0.18 292)",
+      gradientStart: "oklch(0.52 0.22 292)",
+      gradientEnd: "oklch(0.38 0.18 310)",
+    };
+  }
   
   // Dynamic fallback based on Vertical
   switch (vertical) {

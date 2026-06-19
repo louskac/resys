@@ -1,0 +1,333 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { CreditCard, Calendar, Clock, User, Mail, ShieldCheck, ArrowLeft, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
+
+interface SerializedBooking {
+  id: string;
+  resourceName: string;
+  userName: string;
+  userEmail: string;
+  reservedFrom: string;
+  reservedTo: string;
+  status: string;
+  price: string;
+}
+
+interface CheckoutClientProps {
+  tenantId: string;
+  tenantName: string;
+  booking: SerializedBooking;
+  theme: any;
+}
+
+export default function CheckoutClient({ tenantId, tenantName, booking, theme }: CheckoutClientProps) {
+  const [cardName, setCardName] = useState(booking.userName || "");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Auto-redirect if already paid
+  useEffect(() => {
+    if (booking.status === "CONFIRMED" || booking.status === "ATTENDED") {
+      setSuccess(true);
+      setTimeout(() => {
+        window.location.href = `/dashboard`;
+      }, 1500);
+    }
+  }, [booking.status]);
+
+  // Mask card number as XXXX XXXX XXXX XXXX
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 16) value = value.substring(0, 16);
+    const matches = value.match(/\d{1,4}/g);
+    const matchString = matches ? matches.join(" ") : "";
+    setCardNumber(matchString);
+  };
+
+  // Mask expiry as MM/YY
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 4) value = value.substring(0, 4);
+    if (value.length > 2) {
+      value = value.substring(0, 2) + "/" + value.substring(2);
+    }
+    setExpiry(value);
+  };
+
+  // Mask CVV as 3-digit
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 3);
+    setCvv(value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    if (!cardName.trim() || !cardNumber || !expiry || !cvv) {
+      setError("Vyplňte prosím všechny platební údaje.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (cardNumber.replace(/\s/g, "").length < 15) {
+      setError("Číslo platební karty musí mít alespoň 15 nebo 16 číslic.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (expiry.length < 5) {
+      setError("Neplatný formát data expirace (použijte MM/YY).");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (cvv.length < 3) {
+      setError("Neplatný formát CVV (3 číslice).");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/bookings/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          cardName,
+          cardNumber: cardNumber.replace(/\s/g, ""),
+          expiry,
+          cvv,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Platba se nezdařila. Zkontrolujte údaje.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        window.location.href = `/dashboard`;
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setError("Spojení se serverem selhalo. Zkuste to prosím znovu.");
+      setIsSubmitting(false);
+    }
+  };
+
+  const fromDate = new Date(booking.reservedFrom);
+  const toDate = new Date(booking.reservedTo);
+
+  const formattedDate = fromDate.toLocaleDateString("cs-CZ", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const formattedTime = `${String(fromDate.getUTCHours()).padStart(2, "0")}:${String(fromDate.getUTCMinutes()).padStart(2, "0")} – ${String(toDate.getUTCHours()).padStart(2, "0")}:${String(toDate.getUTCMinutes()).padStart(2, "0")}`;
+
+  if (success) {
+    return (
+      <div className="w-full max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in">
+        <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+          <CheckCircle2 size={36} className="animate-scale-in" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">Platba byla úspěšná!</h2>
+          <p className="text-sm text-slate-400 mt-2">Přesměrovávám vás na přehled vašich rezervací...</p>
+        </div>
+        <Loader2 className="animate-spin text-tenant-primary" size={24} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-4xl grid md:grid-cols-12 gap-8 items-start animate-fade-in">
+      
+      {/* LEFT COLUMN: Booking Details */}
+      <div className="md:col-span-5 space-y-6">
+        
+        {/* Back Link */}
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors select-none group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          Zpět do kalendáře
+        </Link>
+
+        {/* Tenant Details */}
+        <div className="space-y-1">
+          <span className="text-[10px] text-tenant-primary font-bold uppercase tracking-widest">{theme.verticalName}</span>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">{tenantName}</h1>
+          <p className="text-xs text-slate-400">{theme.tagline}</p>
+        </div>
+
+        {/* Summary Card */}
+        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl space-y-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Detaily rezervace</h2>
+          
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <Sparkles className="text-tenant-primary shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-medium">Zdroj / Místo</span>
+                <span className="text-sm font-bold text-white">{booking.resourceName}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Calendar className="text-tenant-primary shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-medium">Datum konání</span>
+                <span className="text-sm font-bold text-white capitalize">{formattedDate}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Clock className="text-tenant-primary shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-medium">Časový úsek</span>
+                <span className="text-sm font-bold text-white">{formattedTime} (UTC)</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <User className="text-tenant-primary shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-medium">Rezervováno na</span>
+                <span className="text-sm font-bold text-white">{booking.userName}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5 flex items-center gap-1">
+                  <Mail size={10} />
+                  {booking.userEmail}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Row */}
+          <div className="border-t border-white/5 pt-4 flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Celkem k úhradě</span>
+            <span className="text-xl font-black text-white">{parseFloat(booking.price).toLocaleString("cs-CZ")} Kč</span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Payment Form */}
+      <div className="md:col-span-7 p-6 md:p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl space-y-6">
+        <div>
+          <h2 className="text-lg font-bold text-white">Platební brána</h2>
+          <p className="text-xs text-slate-400 mt-1">Bezpečná simulovaná platba platební kartou.</p>
+        </div>
+
+        {error && (
+          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Card Name */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Jméno na kartě</label>
+            <div className="relative flex items-center">
+              <User className="absolute left-3.5 text-slate-500" size={16} />
+              <input
+                type="text"
+                required
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Jan Novák"
+                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600"
+              />
+            </div>
+          </div>
+
+          {/* Card Number */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Číslo platební karty</label>
+            <div className="relative flex items-center">
+              <CreditCard className="absolute left-3.5 text-slate-500" size={16} />
+              <input
+                type="text"
+                required
+                value={cardNumber}
+                onChange={handleCardNumberChange}
+                placeholder="4242 4242 4242 4242"
+                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono tracking-widest"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* Expiration Date */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Expirace</label>
+              <input
+                type="text"
+                required
+                value={expiry}
+                onChange={handleExpiryChange}
+                placeholder="MM/YY"
+                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono text-center"
+              />
+            </div>
+
+            {/* CVV */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">CVV / CVC</label>
+              <input
+                type="password"
+                required
+                value={cvv}
+                onChange={handleCvvChange}
+                placeholder="•••"
+                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono text-center tracking-widest"
+              />
+            </div>
+          </div>
+
+          {/* Secure Badge */}
+          <div className="flex items-center gap-2 text-[10px] text-slate-450 dark:text-zinc-500 py-1.5 select-none">
+            <ShieldCheck size={14} className="text-emerald-500" />
+            <span>Bezpečné spojení zajištěno standardem SSL.</span>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-tenant-gradient hover:opacity-95 text-white text-xs font-extrabold uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-tenant-primary/10 hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" size={14} />
+                Zpracovávám platbu...
+              </>
+            ) : (
+              <>
+                Zaplatit {parseFloat(booking.price).toLocaleString("cs-CZ")} Kč
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+    </div>
+  );
+}

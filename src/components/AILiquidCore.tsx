@@ -23,11 +23,11 @@ export default function AILiquidCore({
   return (
     <button
       onClick={onClick}
-      className={`fixed bottom-8 left-1/2 -translate-x-1/2 h-12 pl-14 pr-5 rounded-full bg-slate-950/90 dark:bg-[#07070C]/95 backdrop-blur-xl border border-white/10 hover:border-purple-500/40 text-white flex items-center justify-between gap-5 shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_20px_rgba(112,0,255,0.2)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_25px_rgba(112,0,255,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 z-50 cursor-pointer group select-none ${className}`}
+      className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-auto md:h-12 rounded-full bg-slate-950/90 dark:bg-[#07070C]/95 backdrop-blur-xl border border-white/10 hover:border-purple-500/40 text-white flex items-center justify-center md:justify-between gap-0 md:gap-5 shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_20px_rgba(112,0,255,0.2)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_25px_rgba(112,0,255,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 z-50 cursor-pointer group select-none py-0 px-0 md:!pl-16 md:!pr-6 ${className}`}
       title={title}
     >
       {/* Futuristic Siri/Gemini-style Liquid Energy Core docked on the left */}
-      <div className="absolute -left-3 top-1/2 -translate-y-1/2 h-14 w-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:-left-3 md:translate-x-0 h-14 w-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
         {/* Ambient background glow bleeding outside the border */}
         <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#7000FF] via-[#EC4899] to-[#00F5FF] opacity-35 blur-[8px] group-hover:opacity-65 transition-opacity duration-300" />
         
@@ -56,11 +56,11 @@ export default function AILiquidCore({
         </div>
       </div>
 
-      <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">
+      <span className="hidden md:inline-block text-[10px] font-extrabold uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors whitespace-nowrap shrink-0">
         {label}
       </span>
       
-      <div className="flex items-center gap-2 pl-3.5 border-l border-white/10 text-[10px] text-zinc-400 group-hover:text-zinc-200 transition-colors">
+      <div className="hidden md:flex items-center gap-2 pl-3.5 border-l border-white/10 text-[10px] text-zinc-400 group-hover:text-zinc-200 transition-colors">
         {badgeText && (
           <span className="font-mono bg-white/[0.04] border border-white/[0.08] group-hover:border-purple-500/30 rounded px-1.5 py-0.5 select-none font-bold text-[9px] group-hover:text-purple-300 transition-colors">
             {badgeText}

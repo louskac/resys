@@ -39,34 +39,23 @@ interface ResourceCardProps {
 
 // Simple mapping of resource type for Czech UI readability
 const getResourceTypeName = (type: string, vertical: string, name: string, parentId: string | null, siblingsCount: number) => {
-  if (vertical === "SPORTS_GROUND") {
-    switch (type) {
-      case "SPACE": 
-        const nameLower = name.toLowerCase();
-        if (parentId !== null || nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
-          if (siblingsCount === 3) return "Třetina hřiště";
-          if (siblingsCount === 2) return "Polovina hřiště";
-          return "Polovina hřiště";
-        }
-        return "Celé hřiště";
-      case "SEAT": return "Místo k sezení";
-      case "COURSE_PROGRAM": return "Trénink / Lekce";
-      default: return type;
-    }
-  }
   switch (type) {
-    case "SPACE": return "Kapacitní lekce";
-    case "SEAT": return "Sedadlo";
-    case "COURSE_PROGRAM": return "Pravidelný program";
+    case "SPACE": 
+      const nameLower = name.toLowerCase();
+      if (parentId !== null || nameLower.includes("sektor") || nameLower.includes("sector") || nameLower.includes("sektro") || nameLower.includes("1/2")) {
+        if (siblingsCount === 3) return "Třetina plochy";
+        if (siblingsCount === 2) return "Polovina plochy";
+        return "Část plochy";
+      }
+      return "Celý prostor";
+    case "SEAT": return "Místo k sezení";
+    case "COURSE_PROGRAM": return "Trénink / Lekce / Program";
     default: return type;
   }
 };
 
 // Helper to format capacity count with correct Czech inflection
 const formatCapacity = (capacity: number, vertical: string) => {
-  if (vertical === "SPORTS_GROUND") {
-    return capacity === 1 ? "1 skupina" : `${capacity} skupiny`;
-  }
   if (capacity === 1) return "1 místo";
   if (capacity >= 2 && capacity <= 4) return `${capacity} místa`;
   return `${capacity} míst`;
@@ -110,9 +99,9 @@ export default function ResourceCard({
   const typeLabel = getResourceTypeName(resource.type, vertical, resource.name, parentId || null, siblingsCount);
   const capacityLabel = formatCapacity(resource.maxCapacity, vertical);
 
-  const priceLabel = vertical === "SPORTS_GROUND" ? "Cena pronájmu" : "Vstupné";
-  const roomLabel = vertical === "SPORTS_GROUND" ? "Místnost" : "Učebna";
-  const instructorLabel = vertical === "SPORTS_GROUND" ? "Trenér" : "Lektor";
+  const priceLabel = "Cena pronájmu";
+  const roomLabel = "Místnost / Učebna";
+  const instructorLabel = "Trenér / Lektor";
 
   return (
     <div

@@ -68,6 +68,7 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
         orderBy: { createdAt: "desc" },
         include: {
           resource: true,
+          partner: true,
         },
       },
       devices: {
@@ -84,6 +85,16 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
           },
         },
       },
+      partners: {
+        orderBy: { name: "asc" }
+      },
+      invoices: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          partner: true,
+          bookings: true
+        }
+      }
     },
   });
 
@@ -174,6 +185,10 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     reservedFrom: booking.reservedFrom.toISOString(),
     reservedTo: booking.reservedTo.toISOString(),
     status: booking.status,
+    price: booking.price.toString(),
+    partnerId: booking.partnerId,
+    partnerName: booking.partner?.name || null,
+    invoiceId: booking.invoiceId,
     createdAt: booking.createdAt.toISOString(),
     recurrenceGroup: booking.recurrenceGroup,
   }));
@@ -185,12 +200,41 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     logsCount: device.checkinLogs.length,
   }));
 
+  const serializedPartners = tenant.partners.map(p => ({
+    id: p.id,
+    name: p.name,
+    email: p.email,
+    phone: p.phone,
+    companyId: p.companyId,
+    vatId: p.vatId,
+    addressStreet: p.addressStreet,
+    addressCity: p.addressCity,
+    addressZip: p.addressZip,
+    addressCountry: p.addressCountry,
+    discount: p.discount,
+    active: p.active,
+  }));
+
+  const serializedInvoices = tenant.invoices.map(inv => ({
+    id: inv.id,
+    number: inv.number,
+    status: inv.status,
+    issueDate: inv.issueDate.toISOString(),
+    dueDate: inv.dueDate.toISOString(),
+    amount: inv.amount.toString(),
+    partnerName: inv.partner.name,
+    partnerId: inv.partnerId,
+    bookingsCount: inv.bookings.length,
+  }));
+
   return (
     <AdminDashboardClient
       tenant={serializedTenant}
       resources={serializedResources}
       bookings={serializedBookings}
       devices={serializedDevices}
+      partners={serializedPartners}
+      invoices={serializedInvoices}
       checkinLogs={allLogs}
       activeDate={date || formatUTCDate(targetDate)}
       weekStart={formatUTCDate(monday)}

@@ -3,7 +3,7 @@
 import React, { useState, Suspense, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { X, ShieldCheck, User, KeyRound, AlertCircle, Loader2 } from "lucide-react";
+import { X, ShieldCheck, User, KeyRound, AlertCircle, Loader2, Mail, Phone } from "lucide-react";
 
 interface LoginModalProps {
   tenantId: string;
@@ -17,21 +17,39 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
 
   const isOpen = searchParams.get("login") === "true";
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Registration state
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+
+  const clearFormFields = () => {
+    setLoginEmail("");
+    setLoginPassword("");
+    setRegName("");
+    setRegEmail("");
+    setRegPhone("");
+    setRegPassword("");
+    setRegConfirmPassword("");
+    setError(null);
+  };
 
   const handleClose = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("login");
     const query = params.toString();
     router.push(pathname + (query ? `?${query}` : ""));
-    setError(null);
-    setUsername("");
-    setPassword("");
+    clearFormFields();
     setShowAdminLogin(false);
+    setIsRegisterMode(false);
   };
 
   useEffect(() => {
@@ -64,8 +82,8 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
 
     try {
       const result = await signIn("admin-credentials", {
-        username,
-        password,
+        username: loginEmail,
+        password: loginPassword,
         redirect: false,
       });
 
@@ -83,6 +101,67 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (regPassword !== regConfirmPassword) {
+      setError("Hesla se neshodují.");
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setError("Heslo musí mít alespoň 6 znaků.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: regName,
+          email: regEmail,
+          password: regPassword,
+          phone: regPhone || undefined,
+          tenantId: tenantId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Při registraci došlo k chybě.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Automatically sign in upon successful registration
+      const result = await signIn("admin-credentials", {
+        username: regEmail,
+        password: regPassword,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Registrace byla úspěšná, ale nepodařilo se automaticky přihlásit.");
+        setIsRegisterMode(false);
+        setIsLoading(false);
+      } else {
+        localStorage.setItem("post_login_redirect", getCleanRedirectPath());
+        window.location.href = getCleanRedirectPath();
+      }
+    } catch (err) {
+      console.error("Registration submit error:", err);
+      setError("Nastala neočekávaná chyba při registraci.");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div 
       onClick={handleClose}
@@ -95,14 +174,14 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
         {/* Elegant Corner Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer focus:outline-none outline-none"
         >
           <X size={16} />
         </button>
 
         {/* Branding Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="h-12 w-12 bg-slate-100 dark:bg-[#131322]/50 border border-slate-200 dark:border-[#2A2A40] rounded-2xl flex items-center justify-center p-2 shadow-sm mb-3">
+          <div className="h-12 w-12 bg-slate-100 dark:bg-[#131322]/50 border border-slate-200 dark:border-[#2A2A40] rounded-2xl flex items-center justify-center p-2 shadow-sm mb-3 animate-in zoom-in duration-300">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 500 500"
@@ -151,7 +230,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
         </div>
 
         {error && (
-          <div className="bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 text-rose-600 dark:text-rose-450 p-3 rounded-2xl mb-4 flex items-start gap-2 text-xs font-semibold leading-relaxed">
+          <div className="bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 text-rose-600 dark:text-rose-450 p-3 rounded-2xl mb-4 flex items-start gap-2 text-xs font-semibold leading-relaxed animate-in slide-in-from-top duration-200">
             <AlertCircle size={15} className="shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -163,7 +242,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
             <button
               onClick={handleOneidLogin}
               disabled={isLoading}
-              className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-75"
+              className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-75 focus:outline-none outline-none"
             >
               {isLoading ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -176,59 +255,193 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
 
           {/* Credentials Login Form */}
           {showAdminLogin ? (
-            <form onSubmit={handleAdminLogin} className="space-y-3 pt-1">
-              <div className="space-y-1">
-                <label className="block text-muted-foreground font-semibold">Přihlašovací e-mail / Jméno</label>
-                <div className="relative flex items-center">
-                  <User size={13} className="absolute left-3 text-muted-foreground" />
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
-                    style={{ paddingLeft: "2.25rem" }}
-                    placeholder="např. user@gmail.com nebo admin@umelka.cz"
-                  />
-                </div>
+            <div className="space-y-4 pt-1">
+              {/* Tab Selector */}
+              <div className="flex bg-slate-100/50 dark:bg-[#131322]/50 p-1 rounded-xl border border-slate-200/50 dark:border-[#2A2A40]/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegisterMode(false);
+                    clearFormFields();
+                  }}
+                  className={`flex-1 py-1.5 text-center text-[11px] rounded-lg transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
+                    !isRegisterMode
+                      ? "bg-white dark:bg-[#1C1C30] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-[1.02]"
+                      : "text-slate-400 dark:text-zinc-500 hover:text-tenant-primary dark:hover:text-purple-400 font-semibold"
+                  }`}
+                >
+                  Přihlášení
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegisterMode(true);
+                    clearFormFields();
+                  }}
+                  className={`flex-1 py-1.5 text-center text-[11px] rounded-lg transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
+                    isRegisterMode
+                      ? "bg-white dark:bg-[#1C1C30] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-[1.02]"
+                      : "text-slate-400 dark:text-zinc-500 hover:text-tenant-primary dark:hover:text-purple-400 font-semibold"
+                  }`}
+                >
+                  Registrace
+                </button>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-muted-foreground font-semibold">Heslo</label>
-                <div className="relative flex items-center">
-                  <KeyRound size={13} className="absolute left-3 text-muted-foreground" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
-                    style={{ paddingLeft: "2.25rem" }}
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+              {!isRegisterMode ? (
+                <form onSubmit={handleAdminLogin} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Přihlašovací e-mail</label>
+                    <div className="relative flex items-center">
+                      <User size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="email"
+                        required
+                        autoComplete="username"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="např. user@gmail.com"
+                      />
+                    </div>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 bg-slate-800 dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 font-bold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2"
-              >
-                {isLoading && <Loader2 size={13} className="animate-spin" />}
-                {isLoading ? "Ověřování..." : "Přihlásit se"}
-              </button>
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Heslo</label>
+                    <div className="relative flex items-center">
+                      <KeyRound size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
+                  >
+                    {isLoading && <Loader2 size={13} className="animate-spin" />}
+                    {isLoading ? "Ověřování..." : "Přihlásit se"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Celé jméno</label>
+                    <div className="relative flex items-center">
+                      <User size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="text"
+                        required
+                        autoComplete="name"
+                        value={regName}
+                        onChange={(e) => setRegName(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="např. Jan Novák"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">E-mail</label>
+                    <div className="relative flex items-center">
+                      <Mail size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="např. jmeno@email.cz"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Telefon (nepovinné)</label>
+                    <div className="relative flex items-center">
+                      <Phone size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="tel"
+                        autoComplete="tel"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="např. +420777123456"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Heslo (min. 6 znaků)</label>
+                    <div className="relative flex items-center">
+                      <KeyRound size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-muted-foreground font-semibold">Potvrzení hesla</label>
+                    <div className="relative flex items-center">
+                      <KeyRound size={13} className="absolute left-3 text-muted-foreground" />
+                      <input
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        className="input-field pl-9 py-2 bg-slate-100/40 dark:bg-[#131322]/40 border border-slate-200/50 dark:border-[#2A2A40]"
+                        style={{ paddingLeft: "2.25rem" }}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
+                  >
+                    {isLoading && <Loader2 size={13} className="animate-spin" />}
+                    {isLoading ? "Registrace..." : "Vytvořit účet"}
+                  </button>
+                </form>
+              )}
 
               <button
                 type="button"
                 onClick={() => {
                   setShowAdminLogin(false);
+                  setIsRegisterMode(false);
                   setError(null);
                 }}
-                className="w-full text-center text-[10px] text-muted-foreground hover:text-foreground font-semibold mt-2 underline cursor-pointer"
+                className="w-full text-center text-[10px] text-muted-foreground hover:text-tenant-primary font-semibold mt-2 underline cursor-pointer focus:outline-none outline-none"
               >
                 Zpět na přihlášení přes OneiD
               </button>
-            </form>
+            </div>
           ) : (
             <div className="text-center pt-2">
               <button

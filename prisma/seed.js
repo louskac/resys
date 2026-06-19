@@ -59,7 +59,25 @@ async function main() {
     },
   });
 
-  console.log("Seeded Tenants: Sféra (Educational) and Umělka (Sports).");
+  const zskomenskeho = await prisma.tenant.create({
+    data: {
+      id: "zskomenskeho",
+      name: "ZŠ Komenského",
+      domain: "zskomenskeho.localhost:3000",
+      vertical: "SPORTS_GROUND",
+      ssoClientId: "zskomenskeho-sso-client",
+      ssoClientSec: "zskomenskeho-client-secret-xyz",
+      attributes: {
+        tagline: "Rezervační portál sportovišť a tělocvičen ZŠ Komenského",
+        openTime: "08:00",
+        closeTime: "21:00",
+        adminEmails: ["josef.novak@deepvision.cz"],
+        bannerImage: "/uploads/zskomenskeho-banner.jpg",
+      }
+    },
+  });
+
+  console.log("Seeded Tenants: Sféra, Umělka and ZŠ Komenského.");
 
   // Seed Users
   await prisma.user.create({
@@ -88,6 +106,16 @@ async function main() {
       name: "Umělka Administrator",
       role: "ADMIN",
       tenantId: umelka.id,
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "admin@zskomenskeho.cz",
+      passwordHash: hashPassword("zskomenskeho"),
+      name: "ZŠ Komenského Administrator",
+      role: "ADMIN",
+      tenantId: zskomenskeho.id,
     }
   });
 
@@ -266,6 +294,32 @@ async function main() {
     }
   });
 
+  const velkaHala = await prisma.resource.create({
+    data: {
+      tenantId: zskomenskeho.id,
+      name: "Velká sportovní hala",
+      type: "SPACE",
+      maxCapacity: 1,
+      attributes: {
+        surface: "Palubovka",
+        equipment: "Branky na florbal/futsal, basketbalové koše, volejbalová síť",
+      },
+    },
+  });
+
+  const malaTelocvicna = await prisma.resource.create({
+    data: {
+      tenantId: zskomenskeho.id,
+      name: "Malá tělocvična",
+      type: "SPACE",
+      maxCapacity: 1,
+      attributes: {
+        surface: "Parkety",
+        equipment: "Švédské bedny, žebřiny, kruhy, žíněnky",
+      },
+    },
+  });
+
   console.log("Seeded bookable resources.");
 
   // 5. Seed Schedule Rules (Slots)
@@ -345,6 +399,32 @@ async function main() {
     }
   });
 
+  for (let day = 1; day <= 5; day++) {
+    await prisma.scheduleRule.create({
+      data: {
+        resourceId: velkaHala.id,
+        name: "Provozní doba - hala",
+        dayOfWeek: day,
+        startTime: "08:00",
+        endTime: "21:00",
+        price: 600.00,
+        maxCapacity: 1,
+      }
+    });
+
+    await prisma.scheduleRule.create({
+      data: {
+        resourceId: malaTelocvicna.id,
+        name: "Provozní doba - tělocvična",
+        dayOfWeek: day,
+        startTime: "08:00",
+        endTime: "21:00",
+        price: 400.00,
+        maxCapacity: 1,
+      }
+    });
+  }
+
   console.log("Seeded schedule rules.");
 
   // 6. Seed Check-in Devices
@@ -372,6 +452,19 @@ async function main() {
       tokenHash: hashedUmelkaToken,
       active: true,
     },
+  });
+
+  const zskomenskehoToken = "sec_tok_zskomenskeho_xyz123";
+  const hashedZskomenskehoToken = crypto.createHash("sha256").update(zskomenskehoToken).digest("hex");
+
+  await prisma.checkinDevice.create({
+    data: {
+      id: "gate_zskomenskeho_001",
+      tenantId: zskomenskeho.id,
+      name: "Turniket Hlavní Vstup ZŠ",
+      tokenHash: hashedZskomenskehoToken,
+      active: true,
+    }
   });
 
   console.log("Seeded check-in devices.");

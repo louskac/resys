@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock, ChevronDown, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock, ChevronDown, X, Ticket } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
@@ -21,6 +21,13 @@ export interface CalendarEvent {
   lane?: number;
   totalLanes?: number;
   recurrenceGroup?: string | null;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
 }
 
 interface CalendarViewProps {
@@ -62,6 +69,7 @@ interface CalendarViewProps {
     closeTime: string;
     closed: boolean;
   }[];
+  partners?: Partner[];
 }
 
 const SLOT_HEIGHT = 60;
@@ -249,7 +257,9 @@ export default function CalendarView({
   closeTime = "18:00",
   activeDate,
   isAdmin = false,
-  openingHours = defaultOpeningHours
+  openingHours = defaultOpeningHours,
+  partners = [],
+  weekStart
 }: CalendarViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -366,6 +376,12 @@ export default function CalendarView({
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setViewMode("day");
+    }
+  }, []);
+
   const bookingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const closeBookingModalAndRefresh = () => {
@@ -379,6 +395,7 @@ export default function CalendarView({
     setIsBooked(false);
     setGuestName("");
     setGuestEmail("");
+    setSelectedPartnerId("");
     setModalError(null);
     setIsPending(false);
     setRecurrencePattern("none");
@@ -832,9 +849,23 @@ export default function CalendarView({
 
   const isSelectedEventMyBooking = !!(selectedEvent && session?.user?.email && selectedEvent.instructor === session.user.email);
 
+  const [activeTicket, setActiveTicket] = useState<CalendarEvent | null>(null);
+
+  const getSelectedEventDateString = (dayIndex: number) => {
+    if (!weekStart) return "";
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + dayIndex);
+    return date.toLocaleDateString("cs-CZ");
+  };
+
+  const getSelectedEventTimeRange = (event: CalendarEvent) => {
+    return `${formatHourString(event.startHour)} – ${formatHourString(event.startHour + event.durationHours)}`;
+  };
+
   // Guest booking form states
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [selectedPartnerId, setSelectedPartnerId] = useState("");
   const [modalError, setModalError] = useState<{ code: string; message: string } | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -1199,6 +1230,10 @@ export default function CalendarView({
       payload.guestEmail = guestEmail.trim();
     }
 
+    if (isAdmin && selectedPartnerId) {
+      payload.partnerId = selectedPartnerId;
+    }
+
     try {
       setModalError(null);
       const res = await fetch("/api/bookings", {
@@ -1221,8 +1256,18 @@ export default function CalendarView({
         return;
       }
 
+      const data = await res.json();
       setIsBooked(true);
       window.dispatchEvent(new CustomEvent("assistant-booking-success"));
+      
+      if (data.bookingStatus === "PENDING_PAYMENT") {
+        const timer = setTimeout(() => {
+          window.location.href = `/checkout?bookingId=${data.bookingId}`;
+        }, 1500);
+        bookingTimeoutRef.current = timer;
+        return;
+      }
+
       const timer = setTimeout(() => {
         closeBookingModalAndRefresh();
       }, 2000);
@@ -1983,6 +2028,7 @@ export default function CalendarView({
                 setSelectedDayIndex(null);
                 setGuestName("");
                 setGuestEmail("");
+                setSelectedPartnerId("");
                 setModalError(null);
                 window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
               }}
@@ -2341,6 +2387,41 @@ export default function CalendarView({
                     </span>
                   )}
                 </div>
+
+                {isAdmin && partners && partners.length > 0 && (
+                  <div className="mb-3">
+                    <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1 font-bold uppercase tracking-wider">
+                      Přiřadit partnerovi (volitelné)
+                    </label>
+                    <select
+                      value={selectedPartnerId}
+                      onChange={(e) => {
+                        const pid = e.target.value;
+                        setSelectedPartnerId(pid);
+                        if (pid) {
+                          const partner = partners.find(p => p.id === pid);
+                          if (partner) {
+                            setGuestName(partner.name);
+                            setGuestEmail(partner.email);
+                          }
+                        } else {
+                          setGuestName("");
+                          setGuestEmail("");
+                        }
+                        setModalError(null);
+                      }}
+                      className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-250 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all font-medium"
+                    >
+                      <option value="">-- Vyberte partnera (žádný) --</option>
+                      {partners.filter(p => p.active).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1 font-bold uppercase tracking-wider">
                     {isAdmin ? "Jméno a příjmení zákazníka" : "Vaše celé jméno"}
@@ -2394,12 +2475,25 @@ export default function CalendarView({
               </div>
             ) : bookingType === "admin_view" && selectedEvent ? (
               <div className="flex items-center gap-3 w-full">
+                {isSelectedEventMyBooking && (
+                  <button
+                    onClick={() => {
+                      setActiveTicket(selectedEvent);
+                      setBookingType(null);
+                      setSelectedEvent(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all duration-200 bg-gradient-to-tr from-[#7000FF] to-[#8B5CF6] hover:opacity-95 active:scale-98 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer animate-in fade-in zoom-in-95 duration-200"
+                  >
+                    <Ticket size={14} />
+                    Vstupenka
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setBookingType(null);
                     setSelectedEvent(null);
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 border border-slate-200/40 dark:border-slate-700/40 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 border border-slate-200/40 dark:border-slate-700/40 transition-colors cursor-pointer"
                 >
                   Zavřít
                 </button>
@@ -2478,6 +2572,7 @@ export default function CalendarView({
                       setSelectedDayIndex(null);
                       setGuestName("");
                       setGuestEmail("");
+                      setSelectedPartnerId("");
                       setModalError(null);
                       window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
                     }}
@@ -2539,6 +2634,89 @@ export default function CalendarView({
           }
         }}
       />
+
+      {/* Ticket boarding pass modal overlay */}
+      {activeTicket && (
+        <div 
+          onClick={() => setActiveTicket(null)}
+          className="fixed inset-0 bg-[#07070C]/75 backdrop-blur-md flex items-center justify-center p-6 z-55 animate-in fade-in duration-200"
+        >
+          {/* Boarding Pass Ticket representation */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm relative flex flex-col filter drop-shadow-[0_25px_50px_rgba(0,0,0,0.5)] z-10"
+          >
+            {/* Ticket Top Part */}
+            <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#1E1E2F] dark:via-[#0D0D15] dark:to-[#0D0D15] rounded-t-[2.5rem] rounded-b-2xl border-t border-x border-slate-200/60 dark:border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] p-6 pb-4 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+              {/* Metallic Sheen Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
+              
+              {/* Glow badge */}
+              <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-tr from-[#7000FF] to-indigo-500 opacity-[0.12] dark:opacity-20 blur-2xl rounded-full pointer-events-none" />
+              
+              <div className="flex items-center justify-between relative z-20">
+                <span className="font-extrabold text-[10px] uppercase tracking-widest text-[#7000FF] dark:text-[#A78BFA]">
+                  Rezervační portál
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider animate-pulse">
+                  Aktivní vstup
+                </span>
+              </div>
+
+              <div className="relative z-20">
+                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Sportoviště / Plocha</span>
+                <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 leading-tight mt-0.5">{activeTicket.resourceName || activeTicket.name}</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-dashed border-slate-200 dark:border-white/10 mt-2 relative z-20">
+                <div>
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Datum vstupu</span>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{getSelectedEventDateString(activeTicket.dayIndex)}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Časový úsek</span>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{getSelectedEventTimeRange(activeTicket)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticket Divider seam (creating empty notch holes) */}
+            <div className="relative h-[1px] z-20">
+              <div className="absolute left-6 right-6 border-t border-dashed border-slate-300 dark:border-white/10 -translate-y-1/2" />
+            </div>
+
+            {/* Ticket Bottom Part (QR Code) */}
+            <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0D0D15] dark:via-[#0D0D15] dark:to-[#0B0B12] rounded-b-[2.5rem] rounded-t-2xl border-b border-x border-slate-200/60 dark:border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] p-6 pt-4 flex flex-col items-center text-center gap-4 relative overflow-hidden">
+              {/* Metallic Sheen Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
+              
+              <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest relative z-20">Naskenujte QR kód u turniketu</span>
+              
+              {/* Premium looking QR Code visual representation */}
+              <div className="p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md hover:scale-102 transition-transform duration-200 select-none relative z-20">
+                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-2xl relative overflow-hidden text-slate-800">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(activeTicket.id)}`}
+                    alt={`QR Code pro rezervaci ${activeTicket.id}`}
+                    className="h-36 w-36 object-contain"
+                  />
+                </div>
+              </div>
+
+              <code className="text-[10px] font-mono text-slate-550 dark:text-slate-400 uppercase tracking-widest bg-white/70 dark:bg-slate-900/40 py-1 px-3.5 rounded-full border border-slate-200 dark:border-white/[0.05] relative z-20">
+                {activeTicket.id}
+              </code>
+
+              <button
+                onClick={() => setActiveTicket(null)}
+                className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer mt-2 relative z-20 shadow-md shadow-tenant-primary/15 active:scale-[0.98]"
+              >
+                Zavřít vstupenku
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

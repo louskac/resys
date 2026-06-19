@@ -100,6 +100,7 @@ export default async function UserDashboardPage({ params }: DashboardPageProps) 
     reservedFrom: b.reservedFrom.toISOString(),
     reservedTo: b.reservedTo.toISOString(),
     status: b.status,
+    price: b.price.toString(),
     createdAt: b.createdAt.toISOString(),
   }));
 

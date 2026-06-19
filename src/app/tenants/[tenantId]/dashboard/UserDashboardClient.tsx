@@ -39,6 +39,7 @@ interface UserDashboardClientProps {
     reservedFrom: string;
     reservedTo: string;
     status: string;
+    price: string;
     createdAt: string;
   }[];
   checkinLogs: {
@@ -239,8 +240,12 @@ export default function UserDashboardClient({
     }
   };
 
-  const upcomingBookings = bookings.filter((b) => new Date(b.reservedFrom) > new Date());
-  const pastBookings = bookings.filter((b) => new Date(b.reservedFrom) <= new Date());
+  const upcomingBookings = bookings
+    .filter((b) => new Date(b.reservedFrom) > new Date())
+    .sort((a, b) => new Date(a.reservedFrom).getTime() - new Date(b.reservedFrom).getTime());
+  const pastBookings = bookings
+    .filter((b) => new Date(b.reservedFrom) <= new Date())
+    .sort((a, b) => new Date(b.reservedFrom).getTime() - new Date(a.reservedFrom).getTime());
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
@@ -393,9 +398,15 @@ export default function UserDashboardClient({
                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 font-extrabold uppercase tracking-wide">
                               {b.tenantName}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
-                              Potvrzeno
-                            </span>
+                            {b.status === "PENDING_PAYMENT" ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold uppercase tracking-wider">
+                                Čeká na platbu
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                                Potvrzeno
+                              </span>
+                            )}
                           </div>
 
                           <h3 className="font-extrabold text-base text-foreground leading-tight">{b.resourceName}</h3>
@@ -413,17 +424,31 @@ export default function UserDashboardClient({
                         </div>
 
                         <div className="flex items-center gap-2 pt-2 border-t border-border mt-1">
-                          <button
-                            onClick={() => setActiveTicket(b)}
-                            className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                            style={{ 
-                              background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
-                              boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
-                            }}
-                          >
-                            <Ticket size={14} />
-                            Vstupní jízdenka
-                          </button>
+                          {b.status === "PENDING_PAYMENT" ? (
+                            <Link
+                              href={`/checkout?bookingId=${b.id}`}
+                              className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center"
+                              style={{ 
+                                background: `linear-gradient(135deg, oklch(0.65 0.18 55), oklch(0.55 0.18 45))`, // Amber/Orange gradient
+                                boxShadow: `0 4px 12px rgba(245,158,11,0.15)`
+                              }}
+                            >
+                              <CreditCard size={14} />
+                              Zaplatit nyní ({parseFloat(b.price || "0").toLocaleString("cs-CZ")} Kč)
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => setActiveTicket(b)}
+                              className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                              style={{ 
+                                background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
+                                boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
+                              }}
+                            >
+                              <Ticket size={14} />
+                              Vstupenka
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCancelBooking(b.id)}
                             disabled={cancellingId === b.id}
@@ -602,12 +627,15 @@ export default function UserDashboardClient({
                   {/* Basic Data Grid */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="block text-muted-foreground font-semibold">Celé jméno</label>
+                      <label htmlFor="profile-name" className="block text-muted-foreground font-semibold">Celé jméno</label>
                       <div className="relative flex items-center">
                         <UserIcon size={14} className="absolute left-3.5 text-slate-400" />
                         <input
+                          id="profile-name"
+                          name="name"
                           type="text"
                           required
+                          autoComplete="name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           className="input-field pl-10"
@@ -617,11 +645,14 @@ export default function UserDashboardClient({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-muted-foreground font-semibold">Telefonní číslo</label>
+                      <label htmlFor="profile-phone" className="block text-muted-foreground font-semibold">Telefonní číslo</label>
                       <div className="relative flex items-center">
                         <Phone size={14} className="absolute left-3.5 text-slate-400" />
                         <input
+                          id="profile-phone"
+                          name="phone"
                           type="text"
+                          autoComplete="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           className="input-field pl-10 font-mono"
@@ -640,11 +671,14 @@ export default function UserDashboardClient({
                     
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1 sm:col-span-2">
-                        <label className="block text-muted-foreground font-semibold">Firma / Název organizace</label>
+                        <label htmlFor="profile-organization" className="block text-muted-foreground font-semibold">Firma / Název organizace</label>
                         <div className="relative flex items-center">
                           <Building size={14} className="absolute left-3.5 text-slate-400" />
                           <input
+                            id="profile-organization"
+                            name="organization"
                             type="text"
+                            autoComplete="organization"
                             value={organization}
                             onChange={(e) => setOrganization(e.target.value)}
                             placeholder="Např. DeepVision s.r.o."
@@ -655,11 +689,14 @@ export default function UserDashboardClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">Ulice a číslo popisné</label>
+                        <label htmlFor="profile-street" className="block text-muted-foreground font-semibold">Ulice a číslo popisné</label>
                         <div className="relative flex items-center">
                           <MapPin size={14} className="absolute left-3.5 text-slate-400" />
                           <input
+                            id="profile-street"
+                            name="street"
                             type="text"
+                            autoComplete="street-address"
                             value={addressStreet}
                             onChange={(e) => setAddressStreet(e.target.value)}
                             placeholder="Např. 17. listopadu 237"
@@ -670,9 +707,12 @@ export default function UserDashboardClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">Město</label>
+                        <label htmlFor="profile-city" className="block text-muted-foreground font-semibold">Město</label>
                         <input
+                          id="profile-city"
+                          name="city"
                           type="text"
+                          autoComplete="address-level2"
                           value={addressCity}
                           onChange={(e) => setAddressCity(e.target.value)}
                           placeholder="Např. Pardubice"
@@ -681,9 +721,12 @@ export default function UserDashboardClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">PSČ</label>
+                        <label htmlFor="profile-zip" className="block text-muted-foreground font-semibold">PSČ</label>
                         <input
+                          id="profile-zip"
+                          name="zip"
                           type="text"
+                          autoComplete="postal-code"
                           value={addressZip}
                           onChange={(e) => setAddressZip(e.target.value)}
                           placeholder="Např. 530 02"
@@ -692,9 +735,12 @@ export default function UserDashboardClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">Země</label>
+                        <label htmlFor="profile-country" className="block text-muted-foreground font-semibold">Země</label>
                         <input
+                          id="profile-country"
+                          name="country"
                           type="text"
+                          autoComplete="country-name"
                           value={addressCountry}
                           onChange={(e) => setAddressCountry(e.target.value)}
                           placeholder="Např. Česká republika"
@@ -712,11 +758,14 @@ export default function UserDashboardClient({
                     
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">Nové heslo</label>
+                        <label htmlFor="profile-password" className="block text-muted-foreground font-semibold">Nové heslo</label>
                         <div className="relative flex items-center">
                           <KeyRound size={14} className="absolute left-3.5 text-slate-400" />
                           <input
+                            id="profile-password"
+                            name="new-password"
                             type="password"
+                            autoComplete="new-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
@@ -727,11 +776,14 @@ export default function UserDashboardClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-muted-foreground font-semibold">Potvrzení nového hesla</label>
+                        <label htmlFor="profile-confirm-password" className="block text-muted-foreground font-semibold">Potvrzení nového hesla</label>
                         <div className="relative flex items-center">
                           <KeyRound size={14} className="absolute left-3.5 text-slate-400" />
                           <input
+                            id="profile-confirm-password"
+                            name="confirm-password"
                             type="password"
+                            autoComplete="new-password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="••••••••"
@@ -819,10 +871,13 @@ export default function UserDashboardClient({
               <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Naskenujte QR kód u turniketu</span>
               
               {/* Premium looking QR Code visual representation */}
-              <div className="p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md hover:scale-102 transition-transform duration-200">
-                <div className="h-40 w-40 flex flex-col items-center justify-center bg-slate-50 rounded-2xl relative overflow-hidden text-slate-800">
-                  <QrCode size={128} className="text-slate-850 stroke-[1.5]" />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/5 to-transparent pointer-events-none" />
+              <div className="p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md hover:scale-102 transition-transform duration-200 select-none">
+                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-2xl relative overflow-hidden text-slate-800">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(activeTicket.id)}`}
+                    alt={`QR Code pro rezervaci ${activeTicket.id}`}
+                    className="h-36 w-36 object-contain"
+                  />
                 </div>
               </div>
 

@@ -19,6 +19,7 @@ export function proxy(request: NextRequest) {
 
   // Exclude global superadmin host routes, API endpoints and static assets
   if (
+    url.pathname.startsWith("/tenants/") ||
     url.pathname.startsWith("/host") ||
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/uploads/") ||

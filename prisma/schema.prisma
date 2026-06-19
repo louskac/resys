@@ -51,6 +51,8 @@ model Tenant {
   bookings     Booking[]
   devices      CheckinDevice[]
   users        User[]
+  partners     Partner[]
+  invoices     Invoice[]
 }
 
 enum Role {
@@ -128,6 +130,11 @@ model Booking {
   createdAt            DateTime      @default(now())
   checkinLogs          CheckinLog[]
   recurrenceGroup      String?
+  price                Decimal       @db.Decimal(10, 2) @default(0.00)
+  partnerId            String?
+  partner              Partner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  invoiceId            String?
+  invoice              Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, oneidUserId])
 }
@@ -152,4 +159,53 @@ model CheckinLog {
   booking   Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   scannedAt DateTime      @default(now())
   result    CheckinResult
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+model Partner {
+  id             String    @id @default(uuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String    // Partner Company Name
+  email          String    // Billing email
+  phone          String?
+  companyId      String?   // IČO
+  vatId          String?   // DIČ
+  addressStreet  String?
+  addressCity    String?
+  addressZip     String?
+  addressCountry String?   @default("CZ")
+  discount       Int       @default(0) // Percentage discount
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  bookings       Booking[]
+  invoices       Invoice[]
+
+  @@index([tenantId])
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  partnerId     String
+  partner       Partner       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  number        String        // Unique invoice number e.g. "INV-2026-0001"
+  status        InvoiceStatus @default(DRAFT)
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime
+  amount        Decimal       @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  bookings      Booking[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
 }
