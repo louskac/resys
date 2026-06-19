@@ -165,7 +165,7 @@ export default function AdminLoginClient({
                   onChange={(e) => setUsername(e.target.value)}
                   className="input-field pl-10 py-2.5 text-xs bg-secondary/30"
                   style={{ paddingLeft: "2.5rem" }}
-                  placeholder="admin@umelka.cz nebo admin-profile"
+                  placeholder={`admin@${tenantId}.cz`}
                 />
               </div>
             </div>

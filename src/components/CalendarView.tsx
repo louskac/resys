@@ -27,7 +27,30 @@ interface CalendarViewProps {
   tenantId: string;
   initialEvents: CalendarEvent[];
   session: { user?: { name?: string | null; email?: string | null } } | null;
-  resources: { id: string; name: string; parentId?: string | null }[];
+  resources: { 
+    id: string; 
+    name: string; 
+    parentId?: string | null;
+    scheduleRules?: {
+      id: string;
+      name: string;
+      dayOfWeek: number | null;
+      startTime: string;
+      endTime: string;
+      price: string;
+      maxCapacity: number;
+    }[];
+    attributes?: {
+      openTime?: string;
+      closeTime?: string;
+      openingHours?: {
+        dayOfWeek: number;
+        openTime: string;
+        closeTime: string;
+        closed: boolean;
+      }[];
+    };
+  }[];
   openTime?: string;
   closeTime?: string;
   weekStart?: string;
@@ -274,6 +297,11 @@ export default function CalendarView({
     if (suffix && suffix.length === 8) {
       const match = resources.find(r => r.id.startsWith(suffix));
       if (match) return match;
+
+      // Fallback: search by name without the stale ID suffix
+      const namePart = parts.slice(0, -1).join("-");
+      const matchByName = resources.find(r => slugify(r.name) === namePart);
+      if (matchByName) return matchByName;
     }
     return resources.find(r => slugify(r.name) === slugOrId) || null;
   };
@@ -900,6 +928,52 @@ export default function CalendarView({
   }, [isDragging]);
 
   const { calculatedOpenTime, calculatedCloseTime } = React.useMemo(() => {
+    const activeRes = resources.find(r => r.id === selectedResourceId);
+    
+    let currentRes = activeRes;
+    let openTimeVal: string | undefined;
+    let closeTimeVal: string | undefined;
+    
+    while (currentRes) {
+      // 1. Check custom openTime/closeTime attributes
+      if (currentRes.attributes?.openTime && currentRes.attributes?.closeTime) {
+        openTimeVal = currentRes.attributes.openTime;
+        closeTimeVal = currentRes.attributes.closeTime;
+        break;
+      }
+      
+      // 2. Check schedule rules
+      const activeRules = currentRes.scheduleRules || [];
+      if (activeRules.length > 0) {
+        let minMinutes = 24 * 60;
+        let maxMinutes = 0;
+        activeRules.forEach(rule => {
+          const [oh, om] = rule.startTime.split(":").map(Number);
+          const [ch, cm] = rule.endTime.split(":").map(Number);
+          const openVal = oh * 60 + om;
+          const closeVal = ch * 60 + cm;
+          if (openVal < minMinutes) minMinutes = openVal;
+          if (closeVal > maxMinutes) maxMinutes = closeVal;
+        });
+        const minH = Math.floor(minMinutes / 60);
+        const minM = minMinutes % 60;
+        const maxH = Math.floor(maxMinutes / 60);
+        const maxM = maxMinutes % 60;
+        openTimeVal = `${String(minH).padStart(2, "0")}:${String(minM).padStart(2, "0")}`;
+        closeTimeVal = `${String(maxH).padStart(2, "0")}:${String(maxM).padStart(2, "0")}`;
+        break;
+      }
+      
+      // 3. Move to parent
+      const parentId = currentRes.parentId;
+      currentRes = parentId ? resources.find(r => r.id === parentId) : undefined;
+    }
+    
+    if (openTimeVal && closeTimeVal) {
+      return { calculatedOpenTime: openTimeVal, calculatedCloseTime: closeTimeVal };
+    }
+
+    // Default fallback to global tenant opening hours
     if (!openingHours || openingHours.length === 0) {
       return { calculatedOpenTime: openTime, calculatedCloseTime: closeTime };
     }
@@ -929,7 +1003,7 @@ export default function CalendarView({
       calculatedOpenTime: `${String(minH).padStart(2, "0")}:${String(minM).padStart(2, "0")}`,
       calculatedCloseTime: `${String(maxH).padStart(2, "0")}:${String(maxM).padStart(2, "0")}`
     };
-  }, [openingHours, openTime, closeTime]);
+  }, [openingHours, openTime, closeTime, selectedResourceId, resources]);
 
   const TIME_SLOTS = getOpeningSlots(calculatedOpenTime, calculatedCloseTime);
   const startHourOffset = parseInt(calculatedOpenTime.split(":")[0], 10);
@@ -937,8 +1011,70 @@ export default function CalendarView({
   const totalHeightPx = totalSlotsCount * SLOT_HEIGHT;
 
   const isSlotClosed = React.useCallback((dbDayIndex: number, timeStr: string) => {
+    const activeRes = resources.find(r => r.id === selectedResourceId);
+    
+    let currentRes = activeRes;
+    let customOpeningHours: any[] | undefined;
+    let customRules: any[] | undefined;
+    
+    while (currentRes) {
+      // 1. Check openingHours attributes
+      if (currentRes.attributes?.openingHours && currentRes.attributes?.openingHours.length > 0) {
+        customOpeningHours = currentRes.attributes.openingHours;
+        break;
+      }
+      
+      // 2. Check scheduleRules
+      const rules = currentRes.scheduleRules || [];
+      if (rules.length > 0) {
+        customRules = rules;
+        break;
+      }
+      
+      // 3. Move to parent
+      const parentId = currentRes.parentId;
+      currentRes = parentId ? resources.find(r => r.id === parentId) : undefined;
+    }
+
+    const targetDayOfWeek = dbDayIndex === 6 ? 0 : dbDayIndex + 1;
+
+    if (customOpeningHours) {
+      const dayConfig = customOpeningHours.find(d => d.dayOfWeek === targetDayOfWeek);
+      if (!dayConfig) return false;
+      if (dayConfig.closed) return true;
+      
+      const [h, m] = timeStr.split(":").map(Number);
+      const [oh, om] = dayConfig.openTime.split(":").map(Number);
+      const [ch, cm] = dayConfig.closeTime.split(":").map(Number);
+      
+      const timeVal = h * 60 + m;
+      const openVal = oh * 60 + om;
+      const closeVal = ch * 60 + cm;
+      
+      return timeVal < openVal || timeVal >= closeVal;
+    }
+
+    if (customRules) {
+      const dayRules = customRules.filter(r => r.dayOfWeek === targetDayOfWeek);
+      if (dayRules.length === 0) return true; // Closed on this day
+      
+      const [h, m] = timeStr.split(":").map(Number);
+      const timeVal = h * 60 + m;
+      
+      const isWithinAnyRule = dayRules.some(rule => {
+        const [oh, om] = rule.startTime.split(":").map(Number);
+        const [ch, cm] = rule.endTime.split(":").map(Number);
+        const openVal = oh * 60 + om;
+        const closeVal = ch * 60 + cm;
+        return timeVal >= openVal && timeVal < closeVal;
+      });
+      
+      return !isWithinAnyRule;
+    }
+
+    // Default fallback to global tenant opening hours
     if (!openingHours || openingHours.length === 0) return false;
-    const dayConfig = openingHours[dbDayIndex];
+    const dayConfig = openingHours.find(d => d.dayOfWeek === targetDayOfWeek);
     if (!dayConfig) return false;
     if (dayConfig.closed) return true;
     
@@ -951,7 +1087,7 @@ export default function CalendarView({
     const closeVal = ch * 60 + cm;
     
     return timeVal < openVal || timeVal >= closeVal;
-  }, [openingHours]);
+  }, [openingHours, selectedResourceId, resources]);
 
   const events = [
     ...selectedResourceId

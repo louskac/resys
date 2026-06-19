@@ -1,15 +1,18 @@
 "use client";
 
-import React from "react";
-import { Check, AlertCircle, Info } from "lucide-react";
+import React, { useState } from "react";
+import { Check, AlertCircle, Info, Copy } from "lucide-react";
 
 interface AlertDialogProps {
   isOpen: boolean;
-  type: "success" | "error" | "info";
+  type: "success" | "error" | "info" | "confirm";
   title: string;
   message: string;
   onClose: () => void;
+  onConfirm?: () => void;
   okLabel?: string;
+  cancelLabel?: string;
+  copyText?: string;
 }
 
 export default function AlertDialog({
@@ -18,9 +21,25 @@ export default function AlertDialog({
   title,
   message,
   onClose,
-  okLabel = "Rozumím"
+  onConfirm,
+  okLabel = "Rozumím",
+  cancelLabel = "Zrušit",
+  copyText
 }: AlertDialogProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleCopy = async () => {
+    if (!copyText) return;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
@@ -53,14 +72,69 @@ export default function AlertDialog({
           {message}
         </p>
 
-        {/* Action Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full mt-2 py-3 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] hover:shadow-[0_6px_20px_rgba(112,0,255,0.4)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
-        >
-          {okLabel}
-        </button>
+        {/* Copy Box (if provided) */}
+        {copyText && (
+          <div className="w-full mt-2 text-left bg-slate-50/80 dark:bg-[#131322]/80 border border-slate-200/60 dark:border-[#1F1F35] rounded-2xl p-3.5 flex flex-col gap-2 relative group overflow-hidden">
+            <div className="flex justify-between items-center border-b border-slate-200/40 dark:border-[#1F1F35]/40 pb-2 mb-1 select-none">
+              <span className="text-[9px] text-muted-foreground font-extrabold uppercase tracking-widest">Credentials</span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer border text-[10px] font-bold ${
+                  copied
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                    : "bg-white dark:bg-[#1C1C30] border-slate-200 dark:border-[#2E2E4A] hover:bg-slate-50 dark:hover:bg-[#25253D] text-slate-500 dark:text-slate-350 hover:text-slate-700 dark:hover:text-white shadow-sm"
+                }`}
+              >
+                {copied ? (
+                  <>
+                    <Check size={11} />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={11} />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="font-mono text-[10.5px] leading-relaxed text-slate-600 dark:text-slate-350 whitespace-pre-wrap select-all font-semibold">
+              {copyText}
+            </pre>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        {onConfirm ? (
+          <div className="flex gap-3 w-full mt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 border border-slate-200 dark:border-[#2E2E4A] hover:bg-slate-50 dark:hover:bg-[#25253D] rounded-xl text-xs text-slate-600 dark:text-slate-350 font-bold transition-all duration-200 active:scale-[0.98] cursor-pointer"
+            >
+              {cancelLabel}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className="flex-1 py-3 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] hover:shadow-[0_6px_20px_rgba(112,0,255,0.4)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+            >
+              {okLabel}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full mt-2 py-3 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] hover:shadow-[0_6px_20px_rgba(112,0,255,0.4)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+          >
+            {okLabel}
+          </button>
+        )}
       </div>
     </div>
   );

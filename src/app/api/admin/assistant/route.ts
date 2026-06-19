@@ -2,11 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/auth";
 import crypto from "crypto";
+import prisma from "@/lib/prisma";
 
 async function checkTenantAdmin(session: any, tenantId: string) {
   if (!session || !session.user) return false;
-  if (session.user.role === "SUPERADMIN") return true;
-  return session.user.role === "ADMIN" && session.user.tenantId === tenantId;
+  
+  const userRole = session.user.role;
+  const userTenantId = session.user.tenantId;
+  const userEmail = session.user.email || "";
+
+  // 1. Check if user is the explicit ADMIN of this tenant
+  if (userRole === "ADMIN" && userTenantId === tenantId) {
+    return true;
+  }
+
+  // 2. Check if their email is in the tenant's adminEmails list
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { attributes: true }
+    });
+    if (tenant) {
+      const attributes = (tenant.attributes as Record<string, any>) || {};
+      const adminEmails = attributes.adminEmails || [];
+      if (adminEmails.includes(userEmail)) {
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error("Error checking assistant tenant admin authorization:", err);
+  }
+
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -110,6 +137,20 @@ Your job is to assist the property manager (administrator) with configuring thei
    - Capacity values must be positive numbers between 1 and 1000.
    - Prices must be non-negative.
    - Start times must be before end times, formatted as HH:MM.
+
+=== PARENT-CHILD RESOURCE HIERARCHIES (N-LEVEL DEPTH) ===
+- When a user requests a nested structure (e.g., location/building/branch 'Muzeum Praha' containing spaces like 'Gastrostudio' and 'Foyer'):
+  1. The branch/location ('Muzeum Praha') is the parent resource, and the spaces/rooms inside it are child resources.
+  2. You MUST draft the parent resource first. Since child resources require the parent's database UUID for 'parentId', you cannot draft child resources until the parent resource is saved and exists in the context.
+  3. Explain this to the user: 'Nejprve musíme vytvořit hlavní pobočku/objekt (např. Muzeum Praha). Jakmile ho uložíte, zavedeme do něj jednotlivé podřízené prostory a kurzy.'
+  4. Once the parent resource appears in the list of existing resources in the next turn (with its real database UUID), retrieve its ID and use it as 'parentId' when drafting the child resources. Never use placeholder/fake IDs for 'parentId'.
+
+=== MULTI-STEP TASK TRACKING & MEMORY ===
+- When a user asks for a complex setup that requires multiple steps across different branches or categories (e.g., configuring both Prague and Ostrava branches):
+  1. Acknowledge the entire request and outline your plan to the user.
+  2. Keep track of what has been configured and what is pending.
+  3. Do not forget to return to the remaining parts of the user's request once the current part is done. If you finish configuring one branch/location, proactively remind the user and prompt them to configure the next one (e.g., 'Prahu máme připravenou. Nyní přejdeme na pobočku v Ostravě...').
+  4. Always check the 'Existing Resources' list in the context to see what has actually been created, and use it as your source of truth to determine the next pending task.
 
 === CONTEXT ===
 - Tenant ID: "${tenantId}"

@@ -19,6 +19,8 @@ interface PageProps {
   }>;
   searchParams: Promise<{
     date?: string;
+    root?: string;
+    rootId?: string;
   }>;
 }
 
@@ -72,7 +74,7 @@ function getCalendarDayIndex(dayOfWeek: number): number {
 
 export default async function TenantPage({ params, searchParams }: PageProps) {
   const { tenantId } = await params;
-  const { date } = await searchParams;
+  const { date, root, rootId } = await searchParams;
 
   // Helper to format Date to UTC YYYY-MM-DD
   const formatUTCDate = (d: Date) => {
@@ -155,6 +157,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   }
 
   const attributes = (tenant.attributes as unknown as TenantAttributes) || {};
+  const adminEmails = attributes.adminEmails || [];
   const data = getTenantTheme(tenantId, tenant.vertical, tenant.name);
   
   let tagline = data.tagline;
@@ -173,6 +176,85 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
     };
     const formatted = new Date().toLocaleDateString("cs-CZ", options);
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  })();
+
+  // 1. Slugify helper
+  const slugify = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "");
+  };
+
+  const findResourceBySlugOrId = (slugOrId: string | null) => {
+    if (!slugOrId) return null;
+    const exactMatch = tenant.resources.find(r => r.id === slugOrId);
+    if (exactMatch) return exactMatch;
+
+    const parts = slugOrId.split("-");
+    const suffix = parts[parts.length - 1];
+    if (suffix && suffix.length === 8) {
+      const match = tenant.resources.find(r => r.id.startsWith(suffix));
+      if (match) return match;
+    }
+    return tenant.resources.find(r => slugify(r.name) === slugOrId) || null;
+  };
+
+  const getDescendantIds = (resourceId: string): string[] => {
+    const children = tenant.resources.filter(r => (r.attributes as any)?.parentId === resourceId);
+    return [
+      resourceId,
+      ...children.flatMap(child => getDescendantIds(child.id))
+    ];
+  };
+
+  // Find all 1st level (root) resources
+  const rootResources = tenant.resources.filter(r => !(r.attributes as any)?.parentId);
+
+  const rootParam = root || rootId;
+  const activeRoot = (() => {
+    if (rootParam) {
+      const matched = findResourceBySlugOrId(rootParam);
+      if (matched && !(matched.attributes as any)?.parentId) {
+        return matched;
+      }
+      if (matched) {
+        let current = matched;
+        while (current) {
+          const parentId = (current.attributes as any)?.parentId;
+          if (!parentId) break;
+          const parent = tenant.resources.find(r => r.id === parentId);
+          if (!parent) break;
+          current = parent;
+        }
+        return current;
+      }
+    }
+    return rootResources[0]; // Default to first root resource if multiple exist
+  })();
+
+  const filteredResources = activeRoot
+    ? tenant.resources.filter(r => {
+        const descendantIds = getDescendantIds(activeRoot.id);
+        return descendantIds.includes(r.id);
+      })
+    : tenant.resources;
+
+  // Active root open/close times override
+  const activeHours = (() => {
+    if (activeRoot) {
+      const attrs = (activeRoot.attributes as any) || {};
+      if (attrs.openTime && attrs.closeTime) {
+        return { openTime: attrs.openTime, closeTime: attrs.closeTime };
+      }
+    }
+    return { openTime, closeTime };
   })();
 
   const activeResources = tenant.resources;
@@ -340,7 +422,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-1.5 justify-end">
-                    {((session.user as any).role === "ADMIN" || session.user?.email === "admin@deepvision.cz") && (
+                    {((session.user as any).role === "ADMIN" && (session.user as any).tenantId === tenantId || adminEmails.includes(session.user?.email || "")) && (
                       <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
                         Správce
                       </span>
@@ -402,7 +484,17 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             resources={activeResources.map(r => ({ 
               id: r.id, 
               name: r.name,
-              parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null
+              parentId: ((r.attributes as Record<string, unknown>)?.parentId as string) || null,
+              attributes: (r.attributes as any) || {},
+              scheduleRules: r.scheduleRules.map(rule => ({
+                id: rule.id,
+                name: rule.name,
+                dayOfWeek: rule.dayOfWeek,
+                startTime: rule.startTime,
+                endTime: rule.endTime,
+                price: rule.price.toString(),
+                maxCapacity: rule.maxCapacity,
+              }))
             }))}
             openTime={openTime}
             closeTime={closeTime}
@@ -440,7 +532,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             {/* Dynamic Status / Hours Badge */}
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-3 select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Dnes otevřeno: {openTime} - {closeTime}
+              Dnes otevřeno: {activeHours.openTime} - {activeHours.closeTime}
             </span>
             
             <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight mb-2.5 leading-snug">
@@ -468,7 +560,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* Section Heading for Cards */}
-        {activeResources.length > 0 && (
+        {filteredResources.length > 0 && (
           <div className="col-span-1 md:col-span-2 order-3 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-4 lg:mt-4">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2 select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
@@ -478,14 +570,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         )}
 
         {/* Available Spaces Cards */}
-        {activeResources.map((res) => (
+        {filteredResources.map((res) => (
           <ResourceCard
             key={res.id}
             resource={res as any}
             vertical={tenant.vertical}
             openTime={openTime}
             closeTime={closeTime}
-            allResources={activeResources as any}
+            allResources={tenant.resources as any}
             className="col-span-1 order-4 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 lg:h-[400px]"
             footer={
               session ? (

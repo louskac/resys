@@ -15,12 +15,13 @@ export interface AIStep {
 interface AIStepperProps {
   steps: AIStep[];
   className?: string;
+  onStepClick?: (index: number) => void;
 }
 
-export default function AIStepper({ steps, className = "" }: AIStepperProps) {
+export default function AIStepper({ steps, className = "", onStepClick }: AIStepperProps) {
   return (
     <div className={`absolute -top-[24px] left-1/2 -translate-x-1/2 flex items-center gap-6 z-30 select-none ${className}`}>
-      {steps.map((step) => {
+      {steps.map((step, index) => {
         const isCompleted = step.isCompleted;
         const isError = step.isError;
 
@@ -40,7 +41,8 @@ export default function AIStepper({ steps, className = "" }: AIStepperProps) {
         return (
           <div
             key={step.id}
-            className="flex flex-col items-center animate-fadeIn"
+            onClick={() => onStepClick?.(index)}
+            className={`flex flex-col items-center animate-fadeIn ${onStepClick ? "cursor-pointer" : ""}`}
             style={{ animationDelay: step.animationDelay || "0ms" }}
           >
             <div

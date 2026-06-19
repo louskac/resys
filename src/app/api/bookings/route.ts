@@ -46,8 +46,12 @@ export async function POST(request: NextRequest) {
         select: { attributes: true },
       });
       if (tenantObj) {
-        const adminEmails = (tenantObj.attributes as any)?.adminEmails || ["josef.novak@deepvision.cz"];
-        isUserAdmin = adminEmails.includes(activeUserEmail) || activeUserEmail.endsWith("@deepvision.cz");
+        const adminEmails = (tenantObj.attributes as any)?.adminEmails || [];
+        const userRole = (session.user as any).role;
+        const userTenantId = (session.user as any).tenantId;
+        isUserAdmin = 
+          (userRole === "ADMIN" && userTenantId === tenantId) ||
+          adminEmails.includes(activeUserEmail);
       }
     }
 
@@ -95,7 +99,13 @@ export async function POST(request: NextRequest) {
 
           tenant = await tx.tenant.findUnique({
             where: { id: tenantId },
-            include: { resources: true },
+            include: { 
+              resources: {
+                include: {
+                  scheduleRules: true
+                }
+              }
+            },
           });
 
           if (!tenant) {
@@ -113,23 +123,101 @@ export async function POST(request: NextRequest) {
             throw new Error("INVALID_TIME_FORMAT");
           }
 
-          // Validate operating hours
+          // Validate operating hours (support resource-specific rules and parent branch inheritance)
           const attrs = (tenant.attributes as any) || {};
-          const openTime = attrs.openTime || "08:00";
-          const closeTime = attrs.closeTime || "18:00";
 
-          const [openH, openM] = openTime.split(":").map(Number);
-          const [closeH, closeM] = closeTime.split(":").map(Number);
-          const openMinutes = openH * 60 + openM;
-          const closeMinutes = closeH * 60 + closeM;
+          const getActiveRulesForResource = (resId: string): any[] => {
+            const res = tenant.resources.find((r: any) => r.id === resId);
+            if (!res) return [];
+            if (res.scheduleRules && res.scheduleRules.length > 0) {
+              return res.scheduleRules;
+            }
+            const pId = (res.attributes as any)?.parentId;
+            if (pId) {
+              return getActiveRulesForResource(pId);
+            }
+            return [];
+          };
 
-          const [startH, startM] = startTime.split(":").map(Number);
-          const [endH, endM] = endTime.split(":").map(Number);
-          const startMinutes = startH * 60 + startM;
-          const endMinutes = endH * 60 + endM;
+          const activeRules = getActiveRulesForResource(resourceId);
 
-          if (startMinutes < openMinutes || endMinutes > closeMinutes) {
-            throw new Error(`OPERATING_HOURS_EXCEEDED:${openTime}:${closeTime}`);
+          if (activeRules.length > 0) {
+            // Validate against resource-specific rules
+            const utcDay = targetDate.getUTCDay(); // 0 (Sunday) to 6 (Saturday)
+            const dayRules = activeRules.filter((r: any) => r.dayOfWeek === utcDay);
+            if (dayRules.length === 0) {
+              throw new Error("OPERATING_HOURS_EXCEEDED"); // Closed on this day
+            }
+            
+            const [startH, startM] = startTime.split(":").map(Number);
+            const [endH, endM] = endTime.split(":").map(Number);
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+
+            // Must fall completely within at least one rule range for this day
+            const fits = dayRules.some((rule: any) => {
+              const [openH, openM] = rule.startTime.split(":").map(Number);
+              const [closeH, closeM] = rule.endTime.split(":").map(Number);
+              const openMinutes = openH * 60 + openM;
+              const closeMinutes = closeH * 60 + closeM;
+              return startMinutes >= openMinutes && endMinutes <= closeMinutes;
+            });
+
+            if (!fits) {
+              let minOpen = "08:00";
+              let maxClose = "18:00";
+              let minMinutes = 24 * 60;
+              let maxMinutes = 0;
+              dayRules.forEach((rule: any) => {
+                const [oh, om] = rule.startTime.split(":").map(Number);
+                const [ch, cm] = rule.endTime.split(":").map(Number);
+                const openVal = oh * 60 + om;
+                const closeVal = ch * 60 + cm;
+                if (openVal < minMinutes) {
+                  minMinutes = openVal;
+                  minOpen = rule.startTime;
+                }
+                if (closeVal > maxMinutes) {
+                  maxMinutes = closeVal;
+                  maxClose = rule.endTime;
+                }
+              });
+              throw new Error(`OPERATING_HOURS_EXCEEDED:${minOpen}:${maxClose}`);
+            }
+          } else {
+            // Default fallback validation against global tenant operating hours
+            const openingHours = attrs.openingHours || [];
+            let openTime = attrs.openTime || "08:00";
+            let closeTime = attrs.closeTime || "18:00";
+            let closed = false;
+
+            if (openingHours.length > 0) {
+              const utcDay = targetDate.getUTCDay();
+              const dayData = openingHours.find((d: any) => d.dayOfWeek === utcDay);
+              if (dayData) {
+                openTime = dayData.openTime;
+                closeTime = dayData.closeTime;
+                closed = dayData.closed;
+              }
+            }
+
+            if (closed) {
+              throw new Error("OPERATING_HOURS_EXCEEDED");
+            }
+
+            const [openH, openM] = openTime.split(":").map(Number);
+            const [closeH, closeM] = closeTime.split(":").map(Number);
+            const openMinutes = openH * 60 + openM;
+            const closeMinutes = closeH * 60 + closeM;
+
+            const [startH, startM] = startTime.split(":").map(Number);
+            const [endH, endM] = endTime.split(":").map(Number);
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+
+            if (startMinutes < openMinutes || endMinutes > closeMinutes) {
+              throw new Error(`OPERATING_HOURS_EXCEEDED:${openTime}:${closeTime}`);
+            }
           }
         }
 
@@ -435,11 +523,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userEmail = session.user.email || "";
-    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || ["josef.novak@deepvision.cz"];
+    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || [];
+    const userRole = (session.user as any).role;
+    const userTenantId = (session.user as any).tenantId;
 
     const isAuthorized = 
+      (userRole === "ADMIN" && userTenantId === booking.tenantId) ||
       adminEmails.includes(userEmail) || 
-      userEmail.endsWith("@deepvision.cz") ||
       booking.userEmail === userEmail;
 
     if (!isAuthorized) {
@@ -498,11 +588,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     const userEmail = session.user.email || "";
-    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || ["josef.novak@deepvision.cz"];
+    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || [];
+    const userRole = (session.user as any).role;
+    const userTenantId = (session.user as any).tenantId;
 
     const isAuthorized = 
+      (userRole === "ADMIN" && userTenantId === booking.tenantId) ||
       adminEmails.includes(userEmail) || 
-      userEmail.endsWith("@deepvision.cz") ||
       booking.userEmail === userEmail;
 
     if (!isAuthorized) {
@@ -560,33 +652,124 @@ export async function PATCH(request: NextRequest) {
     // Tenant check and operating hours check
     const tenant = await prisma.tenant.findUnique({
       where: { id: booking.tenantId },
-      include: { resources: true },
+      include: { 
+        resources: {
+          include: {
+            scheduleRules: true
+          }
+        } 
+      },
     });
 
     if (!tenant) {
       return makeErrorResponse("TENANT_NOT_FOUND", "Poskytovatel služeb nebyl nalezen.");
     }
 
-    // Validate operating hours
+    // Validate operating hours (support resource-specific rules and parent branch inheritance)
     const attrs = (tenant.attributes as any) || {};
-    const openTime = attrs.openTime || "08:00";
-    const closeTime = attrs.closeTime || "18:00";
 
-    const [openH, openM] = openTime.split(":").map(Number);
-    const [closeH, closeM] = closeTime.split(":").map(Number);
-    const openMinutes = openH * 60 + openM;
-    const closeMinutes = closeH * 60 + closeM;
+    const getActiveRulesForResource = (resId: string): any[] => {
+      const res = tenant.resources.find((r: any) => r.id === resId);
+      if (!res) return [];
+      if (res.scheduleRules && res.scheduleRules.length > 0) {
+        return res.scheduleRules;
+      }
+      const pId = (res.attributes as any)?.parentId;
+      if (pId) {
+        return getActiveRulesForResource(pId);
+      }
+      return [];
+    };
 
-    const [startH, startM] = finalStartTime.split(":").map(Number);
-    const [endH, endM] = finalEndTime.split(":").map(Number);
-    const startMinutes = startH * 60 + startM;
-    const endMinutes = endH * 60 + endM;
+    const activeRules = getActiveRulesForResource(finalResourceId);
 
-    if (startMinutes < openMinutes || endMinutes > closeMinutes) {
-      return makeErrorResponse(
-        "OPERATING_HOURS_EXCEEDED",
-        `Rezervaci lze přesunout pouze do provozní doby (${openTime} – ${closeTime}).`
-      );
+    if (activeRules.length > 0) {
+      const utcDay = reservedFrom.getUTCDay(); // 0 (Sunday) to 6 (Saturday)
+      const dayRules = activeRules.filter((r: any) => r.dayOfWeek === utcDay);
+      if (dayRules.length === 0) {
+        return makeErrorResponse(
+          "OPERATING_HOURS_EXCEEDED",
+          "Tento den má vybraný zdroj zavřeno."
+        );
+      }
+
+      const [startH, startM] = finalStartTime.split(":").map(Number);
+      const [endH, endM] = finalEndTime.split(":").map(Number);
+      const startMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+
+      const fits = dayRules.some((rule: any) => {
+        const [openH, openM] = rule.startTime.split(":").map(Number);
+        const [closeH, closeM] = rule.endTime.split(":").map(Number);
+        const openMinutes = openH * 60 + openM;
+        const closeMinutes = closeH * 60 + closeM;
+        return startMinutes >= openMinutes && endMinutes <= closeMinutes;
+      });
+
+      if (!fits) {
+        let minOpen = "08:00";
+        let maxClose = "18:00";
+        let minMinutes = 24 * 60;
+        let maxMinutes = 0;
+        dayRules.forEach((rule: any) => {
+          const [oh, om] = rule.startTime.split(":").map(Number);
+          const [ch, cm] = rule.endTime.split(":").map(Number);
+          const openVal = oh * 60 + om;
+          const closeVal = ch * 60 + cm;
+          if (openVal < minMinutes) {
+            minMinutes = openVal;
+            minOpen = rule.startTime;
+          }
+          if (closeVal > maxMinutes) {
+            maxMinutes = closeVal;
+            maxClose = rule.endTime;
+          }
+        });
+        return makeErrorResponse(
+          "OPERATING_HOURS_EXCEEDED",
+          `Rezervaci lze přesunout pouze do provozní doby (${minOpen} – ${maxClose}).`
+        );
+      }
+    } else {
+      // Default fallback validation against global tenant operating hours
+      const openingHours = attrs.openingHours || [];
+      let openTime = attrs.openTime || "08:00";
+      let closeTime = attrs.closeTime || "18:00";
+      let closed = false;
+
+      if (openingHours.length > 0) {
+        const utcDay = reservedFrom.getUTCDay();
+        const dayData = openingHours.find((d: any) => d.dayOfWeek === utcDay);
+        if (dayData) {
+          openTime = dayData.openTime;
+          closeTime = dayData.closeTime;
+          closed = dayData.closed;
+        }
+      }
+
+      if (closed) {
+        return makeErrorResponse(
+          "OPERATING_HOURS_EXCEEDED",
+          "Tento den je zavřeno."
+        );
+      }
+
+      const [openH, openM] = openTime.split(":").map(Number);
+      const [closeH, closeM] = closeTime.split(":").map(Number);
+      const openMinutes = openH * 60 + openM;
+      const closeMinutes = closeH * 60 + closeM;
+
+      const [startH, startM] = finalStartTime.split(":").map(Number);
+      const [endH, endM] = finalEndTime.split(":").map(Number);
+      const startMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+
+      if (startMinutes < openMinutes || endMinutes > closeMinutes) {
+        return makeErrorResponse(
+          "OPERATING_HOURS_EXCEEDED",
+          `Rezervaci lze přesunout pouze do provozní doby (${openTime} – ${closeTime}).`
+        );
+      }
     }
 
     // Overlap checks

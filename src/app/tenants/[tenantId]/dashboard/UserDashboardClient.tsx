@@ -96,6 +96,32 @@ export default function UserDashboardClient({
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // General Alert states
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertType, setAlertType] = useState<"success" | "error" | "info" | "confirm">("success");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | undefined>(undefined);
+  const [alertOkLabel, setAlertOkLabel] = useState("Rozumím");
+  const [alertCancelLabel, setAlertCancelLabel] = useState("Zrušit");
+
+  const showModalAlert = (
+    title: string,
+    message: string,
+    type: "success" | "error" | "info" | "confirm" = "info",
+    onConfirm?: () => void,
+    okLabel = "Rozumím",
+    cancelLabel = "Zrušit"
+  ) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOnConfirm(() => onConfirm);
+    setAlertOkLabel(okLabel);
+    setAlertCancelLabel(cancelLabel);
+    setAlertOpen(true);
+  };
+
   // Ticket Modal state
   const [activeTicket, setActiveTicket] = useState<typeof bookings[0] | null>(null);
 
@@ -120,29 +146,34 @@ export default function UserDashboardClient({
     return `${format(from)} - ${format(to)} (UTC)`;
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm("Opravdu chcete zrušit tuto rezervaci?")) {
-      return;
-    }
+  const handleCancelBooking = (bookingId: string) => {
+    showModalAlert(
+      "Zrušit rezervaci?",
+      "Opravdu chcete zrušit tuto rezervaci?",
+      "confirm",
+      async () => {
+        setCancellingId(bookingId);
+        try {
+          const res = await fetch(`/api/bookings?bookingId=${bookingId}`, {
+            method: "DELETE",
+          });
 
-    setCancellingId(bookingId);
-    try {
-      const res = await fetch(`/api/bookings?bookingId=${bookingId}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setBookings(bookings.filter((b) => b.id !== bookingId));
-        alert("Rezervace byla úspěšně zrušena.");
-      } else {
-        alert("Rezervaci se nepodařilo zrušit. Kontaktujte prosím podporu.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Došlo k chybě při rušení rezervace.");
-    } finally {
-      setCancellingId(null);
-    }
+          if (res.ok) {
+            setBookings(bookings.filter((b) => b.id !== bookingId));
+            showModalAlert("Rezervace zrušena", "Rezervace byla úspěšně zrušena.", "success");
+          } else {
+            showModalAlert("Chyba při rušení", "Rezervaci se nepodařilo zrušit. Kontaktujte prosím podporu.", "error");
+          }
+        } catch (err) {
+          console.error(err);
+          showModalAlert("Neočekávaná chyba", "Došlo k chybě při rušení rezervace.", "error");
+        } finally {
+          setCancellingId(null);
+        }
+      },
+      "Zrušit rezervaci",
+      "Zpět"
+    );
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -817,6 +848,17 @@ export default function UserDashboardClient({
         title={profileMessage?.type === "success" ? "Profil aktualizován" : "Uložení selhalo"}
         message={profileMessage?.text || ""}
         onClose={() => setProfileMessage(null)}
+      />
+
+      <AlertDialog
+        isOpen={alertOpen}
+        type={alertType}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+        onConfirm={alertOnConfirm}
+        okLabel={alertOkLabel}
+        cancelLabel={alertCancelLabel}
       />
 
     </div>

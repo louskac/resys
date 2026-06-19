@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { 
   Building, Calendar, Clock, QrCode, ClipboardList, 
@@ -9,7 +9,7 @@ import {
   ArrowLeft, Smartphone, Activity,
   Upload, Eye, List, Move,
   Users, Layers, Wrench, CreditCard, MapPin, User,
-  Type, Mail, Save, X
+  Type, Mail, Save, X, Sparkles
 } from "lucide-react";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -21,6 +21,7 @@ import ResourceCard from "@/components/ResourceCard";
 import { useSession } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
 import AdminAIAssistant from "@/components/AdminAIAssistant";
+import AdminOnboardingWizard from "@/components/AdminOnboardingWizard";
 
 // UTC Date/Time format helpers to avoid client-side timezone shifts
 const formatUTCDate = (dateStr: string) => {
@@ -66,6 +67,9 @@ interface Resource {
     equipment?: string;
     parentId?: string;
     price?: string;
+    openTime?: string;
+    closeTime?: string;
+    openingHours?: OpeningHoursDay[];
   };
   scheduleRules: ResourceRule[];
 }
@@ -120,6 +124,7 @@ interface AdminDashboardClientProps {
       bannerImage?: string;
       bannerPosition?: string;
       openingHours?: OpeningHoursDay[];
+      onboardingCompleted?: boolean;
     };
   };
   resources: Resource[];
@@ -153,6 +158,8 @@ interface TimePickerState {
   rect: DOMRect;
   value: string;
   onChange: (val: string) => void;
+  minTime?: string;
+  maxTime?: string;
 }
 
 function TimePickerDropdown({
@@ -185,28 +192,34 @@ function TimePickerDropdown({
         }}
         className="z-55 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 font-mono text-xs"
       >
-        {getTimeOptions(picker.value).map((t) => {
-          const isSelected = t === picker.value;
-          return (
-            <button
-              key={t}
-              ref={isSelected ? activeRef : undefined}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                picker.onChange(t);
-                onClose();
-              }}
-              className={`w-full text-center py-2 transition-colors border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 cursor-pointer ${
-                isSelected
-                  ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-bold"
-                  : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
-              }`}
-            >
-              {t}
-            </button>
-          );
-        })}
+        {getTimeOptions(picker.value)
+          .filter((t) => {
+            if (picker.minTime && t <= picker.minTime) return false;
+            if (picker.maxTime && t >= picker.maxTime) return false;
+            return true;
+          })
+          .map((t) => {
+            const isSelected = t === picker.value;
+            return (
+              <button
+                key={t}
+                ref={isSelected ? activeRef : undefined}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  picker.onChange(t);
+                  onClose();
+                }}
+                className={`w-full text-center py-2 transition-colors border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 cursor-pointer ${
+                  isSelected
+                    ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-bold"
+                    : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
+                }`}
+              >
+                {t}
+              </button>
+            );
+          })}
       </div>
     </>
   );
@@ -238,6 +251,60 @@ export default function AdminDashboardClient({
   const [activeTab, setActiveTab] = useState<"overview" | "resources" | "rules" | "bookings" | "devices" | "settings" | "operating">("overview");
   const [bookingsSubTab, setBookingsSubTab] = useState<"calendar" | "list">("calendar");
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const rootParam = searchParams.get("root") || searchParams.get("rootId");
+
+  const slugify = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "");
+  };
+
+  const resolvedResourceIdFromUrl = (() => {
+    const firstLevelResources = resources.filter(r => !r.attributes?.parentId);
+    if (!rootParam) {
+      if (firstLevelResources.length > 0) {
+        return firstLevelResources[0].id;
+      }
+      return "global";
+    }
+    const exactMatch = resources.find(r => r.id === rootParam);
+    if (exactMatch) return exactMatch.id;
+
+    const parts = rootParam.split("-");
+    const suffix = parts[parts.length - 1];
+    if (suffix && suffix.length === 8) {
+      const match = resources.find(r => r.id.startsWith(suffix));
+      if (match) return match.id;
+
+      // Fallback: search by name without the stale ID suffix
+      const namePart = parts.slice(0, -1).join("-");
+      const matchByNamePrefix = resources.find(r => slugify(r.name) === namePart);
+      if (matchByNamePrefix) return matchByNamePrefix.id;
+    }
+    const matchByName = resources.find(r => slugify(r.name) === rootParam);
+    if (matchByName) return matchByName.id;
+
+    if (firstLevelResources.length > 0) {
+      return firstLevelResources[0].id;
+    }
+    return "global";
+  })();
+
+  const [selectedOperatingResourceId, setSelectedOperatingResourceId] = useState<string>(resolvedResourceIdFromUrl);
+
+  useEffect(() => {
+    setSelectedOperatingResourceId(resolvedResourceIdFromUrl);
+  }, [resolvedResourceIdFromUrl]);
+
   // Portal settings states
   const initialAttributes = tenant.attributes || {};
   const [settingsTagline, setSettingsTagline] = useState(initialAttributes.tagline || "");
@@ -248,6 +315,66 @@ export default function AdminDashboardClient({
   const [settingsOpeningHours, setSettingsOpeningHours] = useState<OpeningHoursDay[]>(
     initialAttributes.openingHours || defaultOpeningHours
   );
+
+  useEffect(() => {
+    if (selectedOperatingResourceId === "global") {
+      setSettingsOpenTime(initialAttributes.openTime || "08:00");
+      setSettingsCloseTime(initialAttributes.closeTime || "22:00");
+      setSettingsOpeningHours(initialAttributes.openingHours || defaultOpeningHours);
+    } else {
+      const res = resources.find(r => r.id === selectedOperatingResourceId);
+      const attrs = res?.attributes || {};
+      setSettingsOpenTime(attrs.openTime || initialAttributes.openTime || "08:00");
+      setSettingsCloseTime(attrs.closeTime || initialAttributes.closeTime || "22:00");
+      setSettingsOpeningHours(attrs.openingHours || initialAttributes.openingHours || defaultOpeningHours);
+    }
+  }, [selectedOperatingResourceId, tenant.attributes, resources]);
+
+  // Auto-widen calendar view range to cover all configured opening hours
+  useEffect(() => {
+    const openDays = settingsOpeningHours.filter(d => !d.closed);
+    if (openDays.length === 0) return;
+
+    let earliestOpen = settingsOpenTime;
+    let latestClose = settingsCloseTime;
+    let changed = false;
+
+    openDays.forEach(day => {
+      if (day.openTime && day.openTime < earliestOpen) {
+        earliestOpen = day.openTime;
+        changed = true;
+      }
+      if (day.closeTime && day.closeTime > latestClose) {
+        latestClose = day.closeTime;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setSettingsOpenTime(earliestOpen);
+      setSettingsCloseTime(latestClose);
+    }
+  }, [settingsOpeningHours, settingsOpenTime, settingsCloseTime]);
+
+  const earliestOpeningHour = React.useMemo(() => {
+    const openDays = settingsOpeningHours.filter(d => !d.closed);
+    if (openDays.length === 0) return "24:00";
+    let earliest = "24:00";
+    openDays.forEach(d => {
+      if (d.openTime && d.openTime < earliest) earliest = d.openTime;
+    });
+    return earliest;
+  }, [settingsOpeningHours]);
+
+  const latestClosingHour = React.useMemo(() => {
+    const openDays = settingsOpeningHours.filter(d => !d.closed);
+    if (openDays.length === 0) return "00:00";
+    let latest = "00:00";
+    openDays.forEach(d => {
+      if (d.closeTime && d.closeTime > latest) latest = d.closeTime;
+    });
+    return latest;
+  }, [settingsOpeningHours]);
   
   // Preset helpers for opening hours
   const [presetOpenTime, setPresetOpenTime] = useState("08:00");
@@ -257,11 +384,21 @@ export default function AdminDashboardClient({
 
   const initialAdminEmails = Array.isArray(initialAttributes.adminEmails)
     ? initialAttributes.adminEmails.join(", ")
-    : (initialAttributes.adminEmails || "josef.novak@deepvision.cz");
+    : (initialAttributes.adminEmails || "");
   const [settingsAdminEmails, setSettingsAdminEmails] = useState(initialAdminEmails);
   const [settingsAiInstructions, setSettingsAiInstructions] = useState((initialAttributes as any).aiInstructions || "");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+
+  // Onboarding Wizard state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const onboardingCompleted = tenant.attributes?.onboardingCompleted === true;
+    if (resources.length === 0 && !onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+  }, [resources.length, tenant.attributes]);
 
   // Drag-to-reposition states & handlers
   const [isDragging, setIsDragging] = useState(false);
@@ -762,55 +899,175 @@ export default function AdminDashboardClient({
   const handleSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSettings(true);
-    
-    // Parse admin emails back into an array
-    const emailsArray = settingsAdminEmails
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email.length > 0);
-
-    const dataToSend = {
-      id: tenant.id,
-      attributes: {
-        ...(tenant.attributes || {}),
-        tagline: settingsTagline,
-        openTime: settingsOpenTime,
-        closeTime: settingsCloseTime,
-        bannerImage: settingsBannerImage,
-        bannerPosition: settingsBannerPosition,
-        openingHours: settingsOpeningHours,
-        adminEmails: emailsArray,
-        aiInstructions: settingsAiInstructions,
-      }
-    };
 
     try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "tenant_settings_update", data: dataToSend })
-      });
-      if (res.ok) {
-        window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení nastavení portálu", success: true } }));
-        setNotification({
-          type: "success",
-          title: "Nastavení aktualizována",
-          message: "Nastavení portálu byla úspěšně aktualizována!",
-          onClose: () => router.refresh()
+      if (activeTab === "settings") {
+        // Parse admin emails back into an array
+        const emailsArray = settingsAdminEmails
+          .split(",")
+          .map((email) => email.trim())
+          .filter((email) => email.length > 0);
+
+        const dataToSend = {
+          id: tenant.id,
+          attributes: {
+            ...(tenant.attributes || {}),
+            tagline: settingsTagline,
+            bannerImage: settingsBannerImage,
+            bannerPosition: settingsBannerPosition,
+            adminEmails: emailsArray,
+            aiInstructions: settingsAiInstructions,
+          }
+        };
+
+        const res = await fetch("/api/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "tenant_settings_update", data: dataToSend })
         });
+        if (!res.ok) throw new Error("Nepodařilo se uložit nastavení portálu.");
       } else {
-        setNotification({
-          type: "error",
-          title: "Uložení selhalo",
-          message: "Při ukládání nastavení došlo k chybě."
-        });
+        // Validate calendar range bounds
+        const openDays = settingsOpeningHours.filter(d => !d.closed);
+        if (openDays.length > 0) {
+          let earliest = "24:00";
+          let latest = "00:00";
+          openDays.forEach(d => {
+            if (d.openTime && d.openTime < earliest) earliest = d.openTime;
+            if (d.closeTime && d.closeTime > latest) latest = d.closeTime;
+          });
+
+          if (settingsOpenTime > earliest) {
+            setNotification({
+              type: "error",
+              title: "Neplatný rozsah kalendáře",
+              message: `Čas zahájení kalendáře (${settingsOpenTime}) nemůže být později než nejranější čas otevření (${earliest}).`
+            });
+            setIsSavingSettings(false);
+            return;
+          }
+
+          if (settingsCloseTime < latest) {
+            setNotification({
+              type: "error",
+              title: "Neplatný rozsah kalendáře",
+              message: `Čas ukončení kalendáře (${settingsCloseTime}) nemůže být dříve než nejpozdější čas zavření (${latest}).`
+            });
+            setIsSavingSettings(false);
+            return;
+          }
+        }
+
+        if (selectedOperatingResourceId === "global") {
+          // Parse admin emails back into an array
+          const emailsArray = settingsAdminEmails
+            .split(",")
+            .map((email) => email.trim())
+            .filter((email) => email.length > 0);
+
+          const dataToSend = {
+            id: tenant.id,
+            attributes: {
+              ...(tenant.attributes || {}),
+              tagline: settingsTagline,
+              openTime: settingsOpenTime,
+              closeTime: settingsCloseTime,
+              bannerImage: settingsBannerImage,
+              bannerPosition: settingsBannerPosition,
+              openingHours: settingsOpeningHours,
+              adminEmails: emailsArray,
+              aiInstructions: settingsAiInstructions,
+            }
+          };
+
+          const res = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "tenant_settings_update", data: dataToSend })
+          });
+          if (!res.ok) throw new Error("Nepodařilo se uložit nastavení portálu.");
+        } else {
+          // Save as specific resource attributes and recreate schedule rules
+          const targetRes = resources.find(r => r.id === selectedOperatingResourceId);
+          if (!targetRes) throw new Error("Zdroj nebyl nalezen.");
+
+          // 1. Update resource attributes in DB
+          const resourceData = {
+            id: targetRes.id,
+            tenantId: tenant.id,
+            name: targetRes.name,
+            type: targetRes.type,
+            maxCapacity: targetRes.maxCapacity,
+            attributes: {
+              ...(targetRes.attributes || {}),
+              openTime: settingsOpenTime,
+              closeTime: settingsCloseTime,
+              openingHours: settingsOpeningHours,
+            }
+          };
+
+          const resourceRes = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "resource_upsert", data: resourceData })
+          });
+          if (!resourceRes.ok) throw new Error("Nepodařilo se uložit nastavení zdroje.");
+
+          // 2. Delete existing "Standardní provoz" rules for this resource
+          const standardRules = targetRes.scheduleRules.filter(r => r.name === "Standardní provoz");
+          for (const rule of standardRules) {
+            await fetch("/api/admin", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "rule_delete", data: { id: rule.id, tenantId: tenant.id } })
+            });
+          }
+
+          // 3. Create new standard rules based on updated hours
+          const hourGroups: Record<string, { days: number[]; open: string; close: string }> = {};
+          settingsOpeningHours.forEach(day => {
+            if (day.closed) return;
+            const key = `${day.openTime}-${day.closeTime}`;
+            if (!hourGroups[key]) {
+              hourGroups[key] = { days: [], open: day.openTime, close: day.closeTime };
+            }
+            hourGroups[key].days.push(day.dayOfWeek);
+          });
+
+          for (const key of Object.keys(hourGroups)) {
+            const group = hourGroups[key];
+            const ruleData = {
+              tenantId: tenant.id,
+              resourceId: targetRes.id,
+              name: "Standardní provoz",
+              startTime: group.open,
+              endTime: group.close,
+              price: parseFloat(targetRes.attributes?.price || "0"),
+              maxCapacity: targetRes.maxCapacity || 10,
+              daysOfWeek: group.days
+            };
+            await fetch("/api/admin", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "rule_upsert", data: ruleData })
+            });
+          }
+        }
       }
-    } catch (err) {
+
+      window.dispatchEvent(new CustomEvent("admin-assistant-action-completed", { detail: { action: "uložení nastavení provozu", success: true } }));
+      setNotification({
+        type: "success",
+        title: activeTab === "settings" ? "Nastavení portálu uloženo" : "Provozní doba uložena",
+        message: activeTab === "settings" ? "Nastavení portálu bylo úspěšně uloženo!" : "Provozní doba byla úspěšně uložena!",
+        onClose: () => router.refresh()
+      });
+    } catch (err: any) {
       console.error(err);
       setNotification({
         type: "error",
         title: "Uložení selhalo",
-        message: "Nepodařilo se uložit nastavení."
+        message: err.message || "Při ukládání provozní doby došlo k chybě."
       });
     } finally {
       setIsSavingSettings(false);
@@ -1501,11 +1758,13 @@ export default function AdminDashboardClient({
                   resources={resources.map(r => ({
                     id: r.id,
                     name: r.name,
-                    parentId: r.attributes.parentId || null
+                    parentId: r.attributes.parentId || null,
+                    attributes: r.attributes,
+                    scheduleRules: r.scheduleRules
                   }))}
-                  openTime={settingsOpenTime}
-                  closeTime={settingsCloseTime}
-                  openingHours={settingsOpeningHours}
+                  openTime={tenant.attributes?.openTime || "08:00"}
+                  closeTime={tenant.attributes?.closeTime || "22:00"}
+                  openingHours={tenant.attributes?.openingHours || defaultOpeningHours}
                   isAdmin={true}
                   activeDate={activeDate}
                   weekStart={weekStart}
@@ -1810,7 +2069,15 @@ export default function AdminDashboardClient({
                 </div>
 
                 {/* Save button - Outside Card at bottom */}
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end items-center gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowOnboarding(true)}
+                    className="border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 text-xs py-2.5 px-5 rounded-xl font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles size={14} />
+                    Spustit průvodce nastavením
+                  </button>
                   <button
                     type="submit"
                     disabled={isSavingSettings}
@@ -1832,6 +2099,37 @@ export default function AdminDashboardClient({
                 <h3 className="text-sm font-bold text-foreground">Provozní doba a kalendářní omezení</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Konfigurujte provozní dobu a časové rozmezí kalendáře pro zákazníky.</p>
               </div>
+
+              {/* Branch/Location Selection Tabs */}
+              {(() => {
+                const firstLevelResources = resources.filter(r => !r.attributes?.parentId);
+                if (firstLevelResources.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-[#131322] border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl w-fit">
+                    {firstLevelResources.map((res) => (
+                      <button
+                        key={res.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedOperatingResourceId(res.id);
+                          const params = new URLSearchParams(window.location.search);
+                          const slug = `${slugify(res.name)}-${res.id.slice(0, 8)}`;
+                          params.set("root", slug);
+                          params.delete("rootId");
+                          router.push(`${pathname}?${params.toString()}`, { scroll: false });
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedOperatingResourceId === res.id
+                            ? "bg-white dark:bg-[#1d1d2c] text-tenant-primary dark:text-purple-400 shadow-sm"
+                            : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
+                        }`}
+                      >
+                        {res.name}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 {/* CARD 2: Provozní doba */}
@@ -1865,7 +2163,8 @@ export default function AdminDashboardClient({
                                     id: "settingsOpenTime",
                                     rect,
                                     value: settingsOpenTime,
-                                    onChange: (val) => setSettingsOpenTime(val)
+                                    onChange: (val) => setSettingsOpenTime(val),
+                                    maxTime: settingsCloseTime < earliestOpeningHour ? settingsCloseTime : earliestOpeningHour
                                   });
                                 }}
                                 className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
@@ -1888,7 +2187,8 @@ export default function AdminDashboardClient({
                                     id: "settingsCloseTime",
                                     rect,
                                     value: settingsCloseTime,
-                                    onChange: (val) => setSettingsCloseTime(val)
+                                    onChange: (val) => setSettingsCloseTime(val),
+                                    minTime: settingsOpenTime > latestClosingHour ? settingsOpenTime : latestClosingHour
                                   });
                                 }}
                                 className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
@@ -1925,7 +2225,8 @@ export default function AdminDashboardClient({
                                   id: "presetOpenTime",
                                   rect,
                                   value: presetOpenTime,
-                                  onChange: (val) => setPresetOpenTime(val)
+                                  onChange: (val) => setPresetOpenTime(val),
+                                  maxTime: presetCloseTime
                                 });
                               }}
                               className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
@@ -1948,7 +2249,8 @@ export default function AdminDashboardClient({
                                   id: "presetCloseTime",
                                   rect,
                                   value: presetCloseTime,
-                                  onChange: (val) => setPresetCloseTime(val)
+                                  onChange: (val) => setPresetCloseTime(val),
+                                  minTime: presetOpenTime
                                 });
                               }}
                               className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
@@ -2038,10 +2340,12 @@ export default function AdminDashboardClient({
                                       rect,
                                       value: day.openTime,
                                       onChange: (val) => {
-                                        const updated = [...settingsOpeningHours];
-                                        updated[idx].openTime = val;
+                                        const updated = settingsOpeningHours.map((day, i) =>
+                                          i === idx ? { ...day, openTime: val } : day
+                                        );
                                         setSettingsOpeningHours(updated);
-                                      }
+                                      },
+                                      maxTime: day.closeTime
                                     });
                                   }}
                                   className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
@@ -2065,10 +2369,12 @@ export default function AdminDashboardClient({
                                       rect,
                                       value: day.closeTime,
                                       onChange: (val) => {
-                                        const updated = [...settingsOpeningHours];
-                                        updated[idx].closeTime = val;
+                                        const updated = settingsOpeningHours.map((day, i) =>
+                                          i === idx ? { ...day, closeTime: val } : day
+                                        );
                                         setSettingsOpeningHours(updated);
-                                      }
+                                      },
+                                      minTime: day.openTime
                                     });
                                   }}
                                   className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
@@ -2085,8 +2391,9 @@ export default function AdminDashboardClient({
                                     type="checkbox" 
                                     checked={day.closed}
                                     onChange={(e) => {
-                                      const updated = [...settingsOpeningHours];
-                                      updated[idx].closed = e.target.checked;
+                                      const updated = settingsOpeningHours.map((day, i) =>
+                                        i === idx ? { ...day, closed: e.target.checked } : day
+                                      );
                                       setSettingsOpeningHours(updated);
                                     }}
                                     className="sr-only peer"
@@ -2570,6 +2877,24 @@ export default function AdminDashboardClient({
           onClose={() => setActiveTimePicker(null)} 
         />
       )}
+
+      <AdminOnboardingWizard
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        tenantId={tenant.id}
+        tenantName={tenant.name}
+        tenantVertical={tenant.vertical}
+        initialTagline={settingsTagline}
+        onCompleted={() => {
+          setShowOnboarding(false);
+          setNotification({
+            type: "success",
+            title: "Průvodce dokončen",
+            message: "Váš rezervační portál byl úspěšně spuštěn!",
+            onClose: () => window.location.reload()
+          });
+        }}
+      />
 
     </div>
   );
