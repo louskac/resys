@@ -725,9 +725,20 @@ export default function CalendarView({
   }, [initialEvents, getConflictingResourceIds]);
 
   // Dynamic style mapper based on resource name hashes for any N resources
-  const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false) => {
+  const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false, status?: string) => {
     const nameLower = (resourceName || "").toLowerCase();
     const cursorClass = isOccupied ? (isAdminView ? "cursor-pointer" : "cursor-not-allowed") : "cursor-pointer";
+
+    if (status === "TECHNICAL_BREAK") {
+      return {
+        badgeBg: "bg-slate-550/10 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400 border border-slate-500/15 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase",
+        themeClass: `bg-slate-100/50 dark:bg-slate-900/30 border-l-[4px] border-l-slate-400 border-y border-r border-slate-200/40 dark:border-slate-800/40 text-slate-500 dark:text-slate-400 shadow-sm rounded-2xl ${cursorClass} select-none opacity-80`,
+        textHex: "text-slate-550 dark:text-slate-400",
+        barColor: "bg-slate-400 dark:bg-slate-600",
+        glowColor: "rgba(148,163,184,0.05)",
+        colorName: "slate"
+      };
+    }
 
     // Detect if this resource represents a sector (vs full pitch)
     const isSector = (() => {
@@ -1705,7 +1716,7 @@ export default function CalendarView({
                           const topOffset = (event.startHour - startHourOffset) * HOUR_HEIGHT;
                           const heightVal = event.durationHours * HOUR_HEIGHT;
                           const isMyBooking = !!(session?.user?.email && event.instructor === session.user.email);
-                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin || isMyBooking);
+                          const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin || isMyBooking, event.status);
                           const isWeekView = viewMode === "week";
                           const isNarrow = isWeekView && event.totalLanes && event.totalLanes > 1;
                           const isExtremelyNarrow = isWeekView && event.totalLanes && event.totalLanes >= 3;
@@ -1715,15 +1726,19 @@ export default function CalendarView({
 
                           const cardThemeClass = isDraftEvent
                             ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-dashed border-purple-500/85 text-purple-950 dark:text-purple-200 shadow-md shadow-purple-500/5 cursor-pointer rounded-2xl animate-pulse"
-                            : isPastEvent 
-                              ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
-                              : styles.themeClass;
+                            : event.status === "TECHNICAL_BREAK"
+                              ? styles.themeClass
+                              : isPastEvent 
+                                ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
+                                : styles.themeClass;
 
                           const badgeBgClass = isDraftEvent
                             ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase"
-                            : isPastEvent 
-                              ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
-                              : styles.badgeBg;
+                            : event.status === "TECHNICAL_BREAK"
+                              ? styles.badgeBg
+                              : isPastEvent 
+                                ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
+                                : styles.badgeBg;
 
                           return (
                             <div
@@ -1813,13 +1828,17 @@ export default function CalendarView({
                                       {formatHourString(event.startHour)}
                                     </span>
                                     {event.isOccupied ? (
-                                      <Lock size={9} className="opacity-70 shrink-0" />
+                                      event.status === "TECHNICAL_BREAK" ? (
+                                        <AlertCircle size={9} className="opacity-70 shrink-0" />
+                                      ) : (
+                                        <Lock size={9} className="opacity-70 shrink-0" />
+                                      )
                                     ) : (
                                       <Calendar size={9} className="opacity-70 shrink-0" />
                                     )}
                                   </div>
                                   <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
-                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
+                                    {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                   </h4>
                                 </div>
                               ) : (
@@ -1838,28 +1857,30 @@ export default function CalendarView({
                                     <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
                                       isDraftEvent
                                         ? "font-extrabold text-[10px] md:text-[11px] text-purple-800 dark:text-purple-300"
-                                        : isPastEvent
+                                        : isPastEvent && event.status !== "TECHNICAL_BREAK"
                                           ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
                                           : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
-                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                      {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                     </h4>
                                   </div>
                                   
-                                  {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent || isMyBooking) ? (
+                                  {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent || isMyBooking || event.status === "TECHNICAL_BREAK") ? (
                                     <div className="text-[9px] opacity-80 leading-tight truncate">
                                       <p className="font-semibold text-[9px] truncate">
-                                        {event.isOccupied ? (isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : (isMyBooking ? event.name : "Obsazeno"))) : `Lektor: ${event.instructor}`}
+                                        {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Úklid / Příprava" : isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : (isMyBooking ? event.name : "Obsazeno"))) : `Lektor: ${event.instructor}`}
                                       </p>
                                       <p className="text-[8px] opacity-75 truncate">
-                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : (isAdmin || isMyBooking ? (event.status === "PENDING_PAYMENT" ? "Čeká na platbu" : event.status === "ATTENDED" ? "Odbaveno" : "Potvrzeno") : "Rezervováno")) : `Místnost: ${event.room}`}
+                                        {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Nedostupné" : isDraftEvent ? "Klikněte pro potvrzení" : (isAdmin || isMyBooking ? (event.status === "PENDING_PAYMENT" ? "Čeká na platbu" : event.status === "ATTENDED" ? "Odbaveno" : "Potvrzeno") : "Rezervováno")) : `Místnost: ${event.room}`}
                                       </p>
                                     </div>
                                   ) : (
                                     <div className="flex justify-end items-center opacity-70 mt-1">
                                       {event.isOccupied ? (
-                                        isDraftEvent ? (
+                                        event.status === "TECHNICAL_BREAK" ? (
+                                          <AlertCircle size={10} />
+                                        ) : isDraftEvent ? (
                                           <span className="text-[8px] font-bold text-purple-500">?</span>
                                         ) : (
                                           <Lock size={10} />
@@ -1933,18 +1954,18 @@ export default function CalendarView({
                                     </div>
                                     <div>
                                       <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-50 break-words leading-snug">
-                                        {event.isOccupied ? (isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : (isMyBooking ? `Moje rezervace (${event.name})` : "Obsazeno"))) : event.name}
+                                        {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : (isMyBooking ? `Moje rezervace (${event.name})` : "Obsazeno"))) : event.name}
                                       </h4>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200/40 dark:border-zinc-800/50 text-[10px]">
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Místnost/Povrch</span>
-                                        <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{isDraftEvent ? "Vybraná plocha" : event.room}</span>
+                                        <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{event.status === "TECHNICAL_BREAK" ? "Úklid / Příprava" : isDraftEvent ? "Vybraná plocha" : event.room}</span>
                                       </div>
                                       <div>
                                         <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Status/Kontakt</span>
                                         <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">
-                                          {event.isOccupied ? (isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : (isMyBooking ? `Moje rezervace (${event.instructor})` : "Obsazeno"))) : event.instructor}
+                                          {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Nedostupné" : isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : (isMyBooking ? `Moje rezervace (${event.instructor})` : "Obsazeno"))) : event.instructor}
                                         </span>
                                       </div>
                                     </div>

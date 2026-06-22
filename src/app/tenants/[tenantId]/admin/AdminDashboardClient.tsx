@@ -767,10 +767,40 @@ export default function AdminDashboardClient({
   const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; title: string; message: string; onClose?: () => void } | null>(null);
 
   // Modals / forms states
-  const [resourceModal, setResourceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; type: string; maxCapacity: number; instructor: string; room: string; parentId: string; surface: string; equipment: string; price: string; } }>({
+  const [resourceModal, setResourceModal] = useState<{
+    open: boolean;
+    mode: "add" | "edit";
+    data: {
+      id: string;
+      name: string;
+      type: string;
+      maxCapacity: number;
+      instructor: string;
+      room: string;
+      parentId: string;
+      surface: string;
+      equipment: string;
+      price: string;
+      technicalBreak: boolean;
+      technicalBreakMinutes: number;
+    }
+  }>({
     open: false,
     mode: "add",
-    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
+    data: {
+      id: "",
+      name: "",
+      type: "SPACE",
+      maxCapacity: 10,
+      instructor: "",
+      room: "",
+      parentId: "",
+      surface: "",
+      equipment: "",
+      price: "",
+      technicalBreak: false,
+      technicalBreakMinutes: 15
+    }
   });
 
   const [deviceModal, setDeviceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; token: string; active: boolean; } }>({
@@ -831,6 +861,8 @@ export default function AdminDashboardClient({
         let targetSurface = data.surface || "";
         let targetEquipment = data.equipment || "";
         let targetPrice = data.price || "";
+        let targetTechnicalBreak = data.technicalBreak !== undefined ? data.technicalBreak : false;
+        let targetTechnicalBreakMinutes = data.technicalBreakMinutes !== undefined ? parseInt(data.technicalBreakMinutes, 10) : 15;
 
         // Fallback matching by ID or name in existing resources to preserve other attributes
         const existing = resources.find(r => 
@@ -843,12 +875,14 @@ export default function AdminDashboardClient({
           targetName = existing.name;
           if (!data.type) targetType = existing.type;
           if (data.maxCapacity === undefined) targetMaxCapacity = existing.maxCapacity;
-          if (data.instructor === undefined) targetInstructor = existing.attributes?.instructor || "";
-          if (data.room === undefined) targetRoom = existing.attributes?.room || "";
-          if (data.parentId === undefined) targetParentId = existing.attributes?.parentId || "";
-          if (data.surface === undefined) targetSurface = existing.attributes?.surface || "";
-          if (data.equipment === undefined) targetEquipment = existing.attributes?.equipment || "";
-          if (data.price === undefined) targetPrice = existing.attributes?.price || "";
+          if (data.instructor === undefined) targetInstructor = (existing.attributes as any)?.instructor || "";
+          if (data.room === undefined) targetRoom = (existing.attributes as any)?.room || "";
+          if (data.parentId === undefined) targetParentId = (existing.attributes as any)?.parentId || "";
+          if (data.surface === undefined) targetSurface = (existing.attributes as any)?.surface || "";
+          if (data.equipment === undefined) targetEquipment = (existing.attributes as any)?.equipment || "";
+          if (data.price === undefined) targetPrice = (existing.attributes as any)?.price || "";
+          if (data.technicalBreak === undefined) targetTechnicalBreak = (existing.attributes as any)?.technicalBreak || false;
+          if (data.technicalBreakMinutes === undefined) targetTechnicalBreakMinutes = (existing.attributes as any)?.technicalBreakMinutes || 15;
         }
 
         setResourceModal({
@@ -864,7 +898,9 @@ export default function AdminDashboardClient({
             parentId: targetParentId,
             surface: targetSurface,
             equipment: targetEquipment,
-            price: targetPrice
+            price: targetPrice,
+            technicalBreak: targetTechnicalBreak,
+            technicalBreakMinutes: targetTechnicalBreakMinutes
           }
         });
       }
@@ -1015,7 +1051,9 @@ export default function AdminDashboardClient({
         parentId: resourceModal.data.parentId || undefined,
         surface: resourceModal.data.surface,
         equipment: resourceModal.data.equipment,
-        price: resourceModal.data.price
+        price: resourceModal.data.price,
+        technicalBreak: resourceModal.data.technicalBreak,
+        technicalBreakMinutes: resourceModal.data.technicalBreakMinutes
       }
     };
 
@@ -1557,7 +1595,9 @@ export default function AdminDashboardClient({
                         parentId: resAttrs.parentId || "",
                         surface: resAttrs.surface || "",
                         equipment: resAttrs.equipment || "",
-                        price: resAttrs.price || ""
+                        price: resAttrs.price || "",
+                        technicalBreak: resAttrs.technicalBreak || false,
+                        technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15
                       }
                     })}
                     className="p-3 sm:p-1.5 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
@@ -2156,10 +2196,10 @@ export default function AdminDashboardClient({
                   <h3 className="text-sm font-bold text-foreground">Správa zdrojů a rozvrhů</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">Konfigurace sportovních ploch, sektorů, lekcí a jejich časových slotů.</p>
                 </div>
-                <button
+                 <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
-                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
+                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "", technicalBreak: false, technicalBreakMinutes: 15 }
                   })}
                   className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center gap-1.5 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
                 >
@@ -2169,7 +2209,7 @@ export default function AdminDashboardClient({
                 <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
-                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "" }
+                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "", technicalBreak: false, technicalBreakMinutes: 15 }
                   })}
                   className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-xl active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
                   title="Přidat zdroj"
@@ -3401,6 +3441,45 @@ export default function AdminDashboardClient({
                         </option>
                       ))}
                   </select>
+                </div>
+
+                <div className="border-t border-slate-200/40 dark:border-zinc-800/50 pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">Technická přestávka po rezervaci</label>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Automaticky blokovat čas po každé rezervaci (např. pro úklid nebo přípravu).</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={resourceModal.data.technicalBreak}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, technicalBreak: e.target.checked }
+                        })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                    </label>
+                  </div>
+
+                  {resourceModal.data.technicalBreak && (
+                    <div className="animate-in slide-in-from-top-1 duration-200">
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Doba trvání přestávky (minuty)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={resourceModal.data.technicalBreakMinutes}
+                        onChange={(e) => setResourceModal({
+                          ...resourceModal,
+                          data: { ...resourceModal.data, technicalBreakMinutes: parseInt(e.target.value, 10) || 0 }
+                        })}
+                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                        placeholder="např. 15"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

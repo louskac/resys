@@ -361,27 +361,50 @@ export async function POST(request: NextRequest) {
             reservedTo = new Date(occTargetDate);
             reservedTo.setUTCHours(parseInt(endHourStr, 10), parseInt(endMinStr, 10), 0, 0);
 
-            if (reservedFrom >= reservedTo) {
+             if (reservedFrom >= reservedTo) {
               throw new Error("INVALID_TIME_RANGE");
             }
 
-            // Check for overlapping bookings on conflicting resources
-            const overlapping = await tx.booking.findFirst({
+            // Check for overlapping bookings on conflicting resources, respecting technical breaks
+            const possibleOverlapping = await tx.booking.findMany({
               where: {
                 resourceId: { in: conflictingResourceIds },
                 status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
-                OR: [
-                  {
-                    reservedFrom: { lt: reservedTo },
-                    reservedTo: { gt: reservedFrom },
-                  },
-                ],
+                reservedFrom: { lt: new Date(reservedTo.getTime() + 24 * 60 * 60 * 1000) },
+                reservedTo: { gt: new Date(reservedFrom.getTime() - 24 * 60 * 60 * 1000) },
               },
+            });
+
+            const getBreakMinutes = (rId: string): number => {
+              const res = tenant.resources.find((r: any) => r.id === rId);
+              if (!res) return 0;
+              const attrs = (res.attributes as any) || {};
+              if (attrs.technicalBreak) {
+                return parseInt(attrs.technicalBreakMinutes, 10) || 0;
+              }
+              return 0;
+            };
+
+            const targetBreak = getBreakMinutes(finalResourceId);
+            const newStart = reservedFrom.getTime();
+            const newEnd = reservedTo.getTime();
+            const newBreakMs = targetBreak * 60 * 1000;
+
+            const overlapping = possibleOverlapping.find((b: any) => {
+              const existStart = b.reservedFrom.getTime();
+              const existEnd = b.reservedTo.getTime();
+              const existBreakMs = getBreakMinutes(b.resourceId) * 60 * 1000;
+              return newStart < existEnd + existBreakMs && existStart < newEnd + newBreakMs;
             });
 
             if (overlapping) {
               const formattedDate = occTargetDate.toISOString().split("T")[0];
-              throw new Error(`OVERLAP_CONFLICT:${formattedDate}`);
+              const isStandardOverlap = newStart < overlapping.reservedTo.getTime() && overlapping.reservedFrom.getTime() < newEnd;
+              if (isStandardOverlap) {
+                throw new Error(`OVERLAP_CONFLICT:${formattedDate}`);
+              } else {
+                throw new Error(`TECHNICAL_BREAK_CONFLICT:${formattedDate}`);
+              }
             }
           }
 
@@ -554,6 +577,11 @@ export async function POST(request: NextRequest) {
       }
       if (msg === "INVALID_TIME_RANGE") {
         return makeErrorResponse("INVALID_TIME_RANGE", "Čas začátku musí předcházet času konce.");
+      }
+      if (msg.startsWith("TECHNICAL_BREAK_CONFLICT")) {
+        const parts = msg.split(":");
+        const dateStr = parts[1] ? `dne ${parts[1]}` : "v danou dobu";
+        return makeErrorResponse("TECHNICAL_BREAK_CONFLICT", `Vybraný sportovní areál / sektor je ${dateStr} již obsazen (probíhá technická přestávka).`);
       }
       if (msg.startsWith("OVERLAP_CONFLICT") || error.code === "P2034") {
         const parts = msg.split(":");
@@ -890,23 +918,46 @@ export async function PATCH(request: NextRequest) {
       ...getDescendants(finalResourceId),
     ];
 
-    // Check overlaps, ignoring this booking's ID!
-    const overlapping = await prisma.booking.findFirst({
+    // Check overlaps, ignoring this booking's ID, respecting technical breaks
+    const possibleOverlapping = await prisma.booking.findMany({
       where: {
         id: { not: bookingId },
         resourceId: { in: conflictingResourceIds },
         status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
-        OR: [
-          {
-            reservedFrom: { lt: reservedTo },
-            reservedTo: { gt: reservedFrom },
-          },
-        ],
+        reservedFrom: { lt: new Date(reservedTo.getTime() + 24 * 60 * 60 * 1000) },
+        reservedTo: { gt: new Date(reservedFrom.getTime() - 24 * 60 * 60 * 1000) },
       },
     });
 
+    const getBreakMinutes = (rId: string): number => {
+      const res = tenant.resources.find((r: any) => r.id === rId);
+      if (!res) return 0;
+      const attrs = (res.attributes as any) || {};
+      if (attrs.technicalBreak) {
+        return parseInt(attrs.technicalBreakMinutes, 10) || 0;
+      }
+      return 0;
+    };
+
+    const targetBreak = getBreakMinutes(finalResourceId);
+    const newStart = reservedFrom.getTime();
+    const newEnd = reservedTo.getTime();
+    const newBreakMs = targetBreak * 60 * 1000;
+
+    const overlapping = possibleOverlapping.find((b: any) => {
+      const existStart = b.reservedFrom.getTime();
+      const existEnd = b.reservedTo.getTime();
+      const existBreakMs = getBreakMinutes(b.resourceId) * 60 * 1000;
+      return newStart < existEnd + existBreakMs && existStart < newEnd + newBreakMs;
+    });
+
     if (overlapping) {
-      return makeErrorResponse("OVERLAP_CONFLICT", `Vybraný sportovní areál / sektor je v danou dobu již obsazen.`);
+      const isStandardOverlap = newStart < overlapping.reservedTo.getTime() && overlapping.reservedFrom.getTime() < newEnd;
+      if (isStandardOverlap) {
+        return makeErrorResponse("OVERLAP_CONFLICT", `Vybraný sportovní areál / sektor je v danou dobu již obsazen.`);
+      } else {
+        return makeErrorResponse("TECHNICAL_BREAK_CONFLICT", `Vybraný sportovní areál / sektor je v danou dobu již obsazen (probíhá technická přestávka).`);
+      }
     }
 
     // Check daily booking duration limit (Max 4 hours / 240 minutes)

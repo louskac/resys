@@ -59,6 +59,8 @@ interface ResourceAttributes {
   instructor?: string;
   room?: string;
   surface?: string;
+  technicalBreak?: boolean;
+  technicalBreakMinutes?: number;
 }
 
 // Convert "HH:MM" to decimal hours
@@ -294,6 +296,24 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       recurrenceGroup: booking.recurrenceGroup,
       status: booking.status,
     });
+
+    // Add a virtual event for the technical break if enabled
+    if (resAttrs.technicalBreak && resAttrs.technicalBreakMinutes) {
+      const breakDuration = resAttrs.technicalBreakMinutes / 60;
+      calendarEvents.push({
+        id: `${booking.id}-break`,
+        name: "Technická přestávka (úklid)",
+        room: resAttrs.surface || "Hřiště",
+        instructor: "Úklid / Příprava",
+        dayIndex,
+        startHour: endHour,
+        durationHours: breakDuration,
+        resourceId: booking.resourceId,
+        isOccupied: true,
+        resourceName: booking.resource.name,
+        status: "TECHNICAL_BREAK"
+      });
+    }
   });
 
   // B. Add recurring schedule rules (only for non-sports grounds as they represent templates/classes rather than blockings)
