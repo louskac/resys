@@ -59,6 +59,7 @@ export const authOptions: NextAuthOptions = {
               update: {
                 name: "Josef Novák (Dev Mock)",
                 phone: "+420123456789",
+                tenantId: credentials.tenantId,
               },
               create: {
                 id: "9999",
@@ -72,6 +73,7 @@ export const authOptions: NextAuthOptions = {
                 addressZip: "53002",
                 addressCountry: "Česká republika",
                 organization: "DeepVision s.r.o.",
+                tenantId: credentials.tenantId,
               },
             });
           } catch (dbErr) {
@@ -126,6 +128,7 @@ export const authOptions: NextAuthOptions = {
               update: {
                 name,
                 phone,
+                tenantId: credentials.tenantId,
               },
               create: {
                 id: customer.id.toString(),
@@ -133,6 +136,7 @@ export const authOptions: NextAuthOptions = {
                 name,
                 role: "USER",
                 phone,
+                tenantId: credentials.tenantId,
               },
             });
           } catch (dbErr) {

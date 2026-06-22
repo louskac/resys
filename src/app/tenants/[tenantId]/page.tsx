@@ -36,6 +36,7 @@ interface CalendarEvent {
   isOccupied?: boolean;
   resourceName?: string;
   recurrenceGroup?: string | null;
+  status?: string;
 }
 
 interface TenantAttributes {
@@ -112,6 +113,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   const session = await getServerSession(authOptions);
 
   let userBookingsCount = 0;
+  let userPartnerDiscount = 0;
   if (session && session.user?.email) {
     userBookingsCount = await prisma.booking.count({
       where: {
@@ -123,6 +125,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         },
       },
     });
+
+    const dbUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { partner: true }
+    });
+    if (dbUser?.partner && dbUser.partner.active && dbUser.partner.tenantId === tenantId) {
+      userPartnerDiscount = dbUser.partner.discount;
+    }
   }
 
   // Fetch tenant and its resources/rules/bookings from PostgreSQL
@@ -139,7 +149,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       },
       bookings: {
         where: {
-          status: "CONFIRMED",
+          status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
           reservedFrom: {
             gte: monday,
             lt: nextMonday,
@@ -282,6 +292,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       isOccupied: true, // Confirmed bookings are always occupied
       resourceName: booking.resource.name,
       recurrenceGroup: booking.recurrenceGroup,
+      status: booking.status,
     });
   });
 
@@ -574,7 +585,6 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           </div>
         )}
 
-        {/* Available Spaces Cards */}
         {filteredResources.map((res) => (
           <ResourceCard
             key={res.id}
@@ -583,6 +593,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             openTime={openTime}
             closeTime={closeTime}
             allResources={tenant.resources as any}
+            partnerDiscount={userPartnerDiscount}
             className="col-span-1 order-4 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 lg:h-[400px]"
             footer={
               session ? (

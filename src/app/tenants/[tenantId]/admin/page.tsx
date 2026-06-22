@@ -88,6 +88,12 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
       partners: {
         orderBy: { name: "asc" }
       },
+      users: {
+        orderBy: { name: "asc" },
+        include: {
+          partner: true
+        }
+      },
       invoices: {
         orderBy: { createdAt: "desc" },
         include: {
@@ -223,8 +229,27 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     dueDate: inv.dueDate.toISOString(),
     amount: inv.amount.toString(),
     partnerName: inv.partner.name,
+    partnerEmail: inv.partner.email,
     partnerId: inv.partnerId,
     bookingsCount: inv.bookings.length,
+  }));
+
+  const serializedUsers = tenant.users.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    role: u.role,
+    avatarUrl: u.avatarUrl,
+    addressStreet: u.addressStreet,
+    addressCity: u.addressCity,
+    addressZip: u.addressZip,
+    addressCountry: u.addressCountry,
+    organization: u.organization,
+    partnerId: u.partnerId,
+    partnerName: u.partner?.name || null,
+    partnerDiscount: u.partner?.discount || 0,
+    createdAt: u.createdAt.toISOString(),
   }));
 
   return (
@@ -235,6 +260,7 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
       devices={serializedDevices}
       partners={serializedPartners}
       invoices={serializedInvoices}
+      users={serializedUsers}
       checkinLogs={allLogs}
       activeDate={date || formatUTCDate(targetDate)}
       weekStart={formatUTCDate(monday)}

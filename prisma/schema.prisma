@@ -76,6 +76,8 @@ model User {
   addressZip     String?
   addressCountry String?
   organization   String?
+  partnerId      String?
+  partner        Partner?  @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -187,6 +189,7 @@ model Partner {
   updatedAt      DateTime  @updatedAt
   bookings       Booking[]
   invoices       Invoice[]
+  users          User[]
 
   @@index([tenantId])
 }

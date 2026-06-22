@@ -35,6 +35,7 @@ interface ResourceCardProps {
   allResources?: Resource[];
   footer?: React.ReactNode;
   className?: string;
+  partnerDiscount?: number;
 }
 
 // Simple mapping of resource type for Czech UI readability
@@ -69,14 +70,27 @@ export default function ResourceCard({
   allResources = [],
   footer,
   className = "",
+  partnerDiscount = 0,
 }: ResourceCardProps) {
   const firstRule = resource.scheduleRules?.[0];
   const resAttrs = resource.attributes || {};
   
-  const priceText = firstRule 
-    ? `${firstRule.price} Kč` 
-    : resAttrs.price 
-      ? `${resAttrs.price} Kč` 
+  const basePriceVal = firstRule ? firstRule.price : resAttrs.price;
+
+  const calculateDiscountedPrice = (priceVal: string | number | undefined) => {
+    if (!priceVal) return null;
+    const numeric = parseFloat(String(priceVal));
+    if (isNaN(numeric)) return null;
+    const discounted = numeric * (1 - partnerDiscount / 100);
+    return Math.round((discounted + Number.EPSILON) * 100) / 100;
+  };
+
+  const discountedPrice = partnerDiscount > 0 ? calculateDiscountedPrice(basePriceVal) : null;
+
+  const priceText = discountedPrice !== null
+    ? `${discountedPrice} Kč`
+    : basePriceVal 
+      ? `${basePriceVal.toString()} Kč`
       : "Dle dohody";
   
   const timeText = firstRule 
@@ -150,7 +164,21 @@ export default function ResourceCard({
               </span>
               <span className="text-slate-500 dark:text-zinc-400 font-medium">{priceLabel}</span>
             </span>
-            <span className="text-tenant-primary font-bold">{priceText}</span>
+            <div className="flex items-center gap-2">
+              {discountedPrice !== null && basePriceVal && (
+                <span className="text-[10px] text-slate-400 line-through">
+                  {basePriceVal.toString()} Kč
+                </span>
+              )}
+              <span className="text-tenant-primary font-bold flex items-center gap-1.5">
+                {priceText}
+                {discountedPrice !== null && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-extrabold shadow-sm select-none">
+                    Sleva {partnerDiscount}%
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
 
           {resAttrs.surface && (

@@ -24,6 +24,7 @@ import LogoutButton from "@/components/LogoutButton";
 import AdminAIAssistant from "@/components/AdminAIAssistant";
 import AdminOnboardingWizard from "@/components/AdminOnboardingWizard";
 import BillingTab from "./BillingTab";
+import MobileCheckinScanner from "./MobileCheckinScanner";
 
 
 // UTC Date/Time format helpers to avoid client-side timezone shifts
@@ -142,6 +143,7 @@ interface Invoice {
   dueDate: string;
   amount: string;
   partnerName: string;
+  partnerEmail?: string;
   partnerId: string;
   bookingsCount: number;
 }
@@ -168,6 +170,7 @@ interface AdminDashboardClientProps {
   checkinLogs: CheckinLog[];
   partners?: Partner[];
   invoices?: Invoice[];
+  users?: any[];
   activeDate?: string;
   weekStart?: string;
 }
@@ -280,6 +283,7 @@ export default function AdminDashboardClient({
   checkinLogs,
   partners = [],
   invoices = [],
+  users = [],
   activeDate,
   weekStart
 }: AdminDashboardClientProps) {
@@ -297,7 +301,7 @@ export default function AdminDashboardClient({
     operating: "Provozní doba",
     bookings: "Rezervace",
     devices: "IoT zařízení",
-    billing: "Fakturace a partneři",
+    billing: "Lidé a fakturace",
     settings: "Nastavení portálu",
     rules: "Pravidla"
   } as const;
@@ -308,7 +312,7 @@ export default function AdminDashboardClient({
     { value: "operating", label: "Provozní doba", icon: Clock },
     { value: "bookings", label: "Rezervace", icon: Calendar },
     { value: "devices", label: "IoT zařízení", icon: QrCode },
-    { value: "billing", label: "Fakturace a partneři", icon: Coins },
+    { value: "billing", label: "Lidé a fakturace", icon: Users },
     { value: "settings", label: "Nastavení portálu", icon: Settings },
   ] as const;
 
@@ -665,6 +669,9 @@ export default function AdminDashboardClient({
 
   // Onboarding Wizard state
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Mobile check-in scanner overlay state
+  const [isMobileScannerOpen, setIsMobileScannerOpen] = useState(false);
 
   useEffect(() => {
     const onboardingCompleted = tenant.attributes?.onboardingCompleted === true;
@@ -1375,7 +1382,7 @@ export default function AdminDashboardClient({
     
     // A. Add confirmed bookings as occupied calendar overlays
     bookings.forEach((booking) => {
-      if (booking.status !== "CONFIRMED") return;
+      if (booking.status !== "CONFIRMED" && booking.status !== "ATTENDED" && booking.status !== "PENDING_PAYMENT") return;
       const from = new Date(booking.reservedFrom);
       const to = new Date(booking.reservedTo);
 
@@ -1403,6 +1410,7 @@ export default function AdminDashboardClient({
         resourceId: booking.resourceId,
         isOccupied: true,
         resourceName: booking.resourceName,
+        status: booking.status,
       });
     });
 
@@ -1815,8 +1823,8 @@ export default function AdminDashboardClient({
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
             }`}
           >
-            <Coins size={16} />
-            Fakturace a partneři
+            <Users size={16} />
+            Lidé a fakturace
           </button>
 
           <button
@@ -1868,6 +1876,13 @@ export default function AdminDashboardClient({
               </div>
               <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 shrink-0" />
               <button
+                onClick={() => setIsMobileScannerOpen(true)}
+                className="p-2.5 rounded-xl bg-tenant-gradient text-white shrink-0 active:scale-90 transition-all flex items-center justify-center shadow-md shadow-tenant-primary/15 md:hidden"
+                title="Bleskové odbavení lístků"
+              >
+                <Camera size={14} />
+              </button>
+              <button
                 onClick={() => setIsMobileNavOpen(true)}
                 className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white shrink-0 active:scale-90 transition-all flex items-center justify-center bg-slate-50 dark:bg-white/[0.02] border border-slate-200/40 dark:border-white/5"
                 title="Zobrazit navigaci"
@@ -1901,6 +1916,19 @@ export default function AdminDashboardClient({
                     <X size={15} />
                   </button>
                 </div>
+
+                {/* Mobile Ticket Scanner Quick Launch CTA */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileScannerOpen(true);
+                    setIsMobileNavOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2.5 py-4 px-4 bg-tenant-gradient text-white rounded-2xl font-bold shadow-lg shadow-tenant-primary/20 active:scale-98 transition-all cursor-pointer select-none mb-3"
+                >
+                  <Camera size={16} className="animate-pulse" />
+                  <span className="text-[10px] uppercase tracking-widest font-black">Bleskové Odbavení Lístků</span>
+                </button>
 
                 <div className="flex flex-col gap-1.5">
                   {navItems.map((item) => {
@@ -1961,6 +1989,31 @@ export default function AdminDashboardClient({
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-6">
+              {/* Mobile Ticket Scanner Quick Launch Banner */}
+              <div className="p-5 bg-gradient-to-r from-tenant-primary/10 via-tenant-accent/5 to-transparent border border-tenant-primary/20 rounded-3xl relative overflow-hidden group">
+                <div className="flex flex-row justify-between items-center gap-4 relative z-10">
+                  <div className="space-y-1 flex-1">
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-2 select-none uppercase tracking-wider">
+                      <Camera className="text-tenant-primary animate-pulse" size={14} />
+                      Bleskové odbavení lístků (Mobilní skener)
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 max-w-xl leading-relaxed">
+                      Otevřete profesionální celoobrazovkové rozhraní pro nepřetržité skenování QR kódů fotoaparátem s okamžitým zvukovým chrastěním, vibrací a automatickým pokračováním.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileScannerOpen(true)}
+                    className="h-16 w-16 shrink-0 bg-tenant-gradient hover:opacity-95 text-white rounded-2xl shadow-lg shadow-tenant-primary/25 transition-all cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-1 border border-white/10"
+                  >
+                    <Camera size={20} className="animate-pulse" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">Spustit</span>
+                  </button>
+                </div>
+                {/* Glowing light effect */}
+                <div className="absolute right-0 top-0 w-32 h-32 bg-tenant-primary/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+              </div>
+
               {/* Analytics Header Metrics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {/* Resources Metric */}
@@ -2092,113 +2145,7 @@ export default function AdminDashboardClient({
                   </div>
                 )}
               </div>
-              
-              {/* Simulator průchodu */}
-              <div className="mt-8 p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-4">
-                 <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
-                   <Activity size={14} />
-                   Simulátor průchodu (Ověření lístku čtečkou)
-                 </h4>
-                 <p className="text-xs text-slate-500 dark:text-zinc-400">
-                   Nasimulujte průchod a naskenování QR kódu z mobilního zařízení zákazníka na vybrané čtečce.
-                 </p>
-                 
-                 <form onSubmit={handleSimulateCheckin} className="space-y-4 text-xs">
-                   <div className="grid md:grid-cols-2 gap-4">
-                     <div>
-                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Výběr zařízení (čtečky)</label>
-                       <select
-                         value={simSelectedDeviceId}
-                         onChange={(e) => setSimSelectedDeviceId(e.target.value)}
-                         className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
-                       >
-                         {devices.map((dev) => (
-                           <option key={dev.id} value={dev.id}>
-                             {dev.name} ({dev.id})
-                           </option>
-                         ))}
-                       </select>
-                     </div>
-
-                     <div>
-                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Bezpečnostní token čtečky</label>
-                       <input
-                         type="text"
-                         value={simDeviceToken}
-                         onChange={(e) => setSimDeviceToken(e.target.value)}
-                         placeholder="Zadejte bezpečnostní token"
-                         className="w-full text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
-                       />
-                     </div>
-                   </div>
-
-                   <div>
-                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">QR kód (UUID rezervace)</label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="text"
-                          required
-                          value={simQrPayload}
-                          onChange={(e) => setSimQrPayload(e.target.value)}
-                          placeholder="Např. e8b5c928-8687-4482-a0dc-845a76c0245a"
-                          className="w-full sm:flex-1 text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={startScanning}
-                          className="w-full sm:w-auto px-4 py-2.5 bg-tenant-primary/10 hover:bg-tenant-primary/20 text-tenant-primary border border-tenant-primary/25 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap"
-                        >
-                          <Camera size={14} />
-                          Naskenovat mobilem
-                        </button>
-                      </div>
-                      {bookings.length > 0 && (
-                        <div className="mt-2">
-                          <select
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                setSimQrPayload(e.target.value);
-                              }
-                            }}
-                            className="w-full text-xs py-2 px-3 bg-slate-50 dark:bg-[#131322]/30 border border-slate-200/40 dark:border-[#2A2A40]/40 rounded-xl outline-none focus:border-tenant-primary/50 transition-all text-slate-600 dark:text-slate-400"
-                            defaultValue=""
-                          >
-                            <option value="" disabled>--- Rychlý výběr z existujících rezervací ---</option>
-                            {bookings.map((b) => (
-                              <option key={b.id} value={b.id}>
-                                {b.userName} - {b.resourceName} ({b.status === "CONFIRMED" ? "Potvrzeno" : b.status === "ATTENDED" ? "Odbaveno" : b.status})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-
-                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2">
-                     <div className="w-full sm:w-auto">
-                       {simResult && (
-                         <div className={`p-3 rounded-2xl text-[11px] font-semibold border ${
-                           simResult.status === "granted"
-                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                             : simResult.status === "denied"
-                             ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                             : "bg-red-500/10 text-red-600 border-red-500/20"
-                         }`}>
-                           {simResult.message}
-                         </div>
-                       )}
-                     </div>
-                     <button
-                       type="submit"
-                       disabled={simLoading}
-                       className="w-full sm:w-auto bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-xl font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center justify-center"
-                     >
-                       {simLoading ? "Ověřování..." : "Simulovat sken"}
-                     </button>
-                   </div>
-                 </form>
-               </div>
-             </div>
+            </div>
           )}
 
           {/* TAB 2: RESOURCES MANAGER */}
@@ -3197,6 +3144,7 @@ export default function AdminDashboardClient({
               partners={partners}
               invoices={invoices}
               bookings={bookings}
+              users={users}
               router={router}
               theme={theme}
               onModalToggle={setIsBillingModalOpen}
@@ -3752,6 +3700,17 @@ export default function AdminDashboardClient({
             </div>
           </div>
         </div>
+      )}
+
+
+
+      {isMobileScannerOpen && (
+        <MobileCheckinScanner
+          devices={devices}
+          bookings={bookings}
+          onClose={() => setIsMobileScannerOpen(false)}
+          tenantName={tenant.name}
+        />
       )}
 
     </div>

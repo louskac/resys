@@ -27,7 +27,7 @@ export default function AILiquidCore({
       title={title}
     >
       {/* Futuristic Siri/Gemini-style Liquid Energy Core docked on the left */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:-left-3 md:translate-x-0 h-14 w-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+      <div className="absolute left-0 md:-left-3 top-1/2 -translate-y-1/2 h-14 w-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
         {/* Ambient background glow bleeding outside the border */}
         <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#7000FF] via-[#EC4899] to-[#00F5FF] opacity-35 blur-[8px] group-hover:opacity-65 transition-opacity duration-300" />
         

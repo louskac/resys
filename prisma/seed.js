@@ -302,6 +302,7 @@ async function main() {
       maxCapacity: 1,
       attributes: {
         surface: "Palubovka",
+        price: "450",
         equipment: "Branky na florbal/futsal, basketbalové koše, volejbalová síť",
       },
     },
@@ -315,6 +316,7 @@ async function main() {
       maxCapacity: 1,
       attributes: {
         surface: "Parkety",
+        price: "250",
         equipment: "Švédské bedny, žebřiny, kruhy, žíněnky",
       },
     },

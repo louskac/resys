@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
+import { sendSSEUpdate } from "@/lib/sse";
 
 const prisma = new PrismaClient();
 
@@ -59,7 +60,40 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: "denied", reason: "invalid_status", bookingStatus: booking.status });
       }
 
-      const now = new Date();
+      // Convert server UTC time to Europe/Prague local time represented as UTC to match database structure
+      const getLocalAsUtcDate = (d: Date): Date => {
+        try {
+          const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: "Europe/Prague",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          });
+          const parts = formatter.formatToParts(d);
+          
+          let year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
+          for (const part of parts) {
+            if (part.type === "year") year = parseInt(part.value, 10);
+            else if (part.type === "month") month = parseInt(part.value, 10);
+            else if (part.type === "day") day = parseInt(part.value, 10);
+            else if (part.type === "hour") hour = parseInt(part.value, 10);
+            else if (part.type === "minute") minute = parseInt(part.value, 10);
+            else if (part.type === "second") second = parseInt(part.value, 10);
+          }
+          
+          if (hour === 24) hour = 0;
+          return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+        } catch (e) {
+          console.error("Failed to parse Europe/Prague timezone offset, falling back to Prague UTC+2 offset", e);
+          return new Date(d.getTime() + 2 * 60 * 60 * 1000);
+        }
+      };
+
+      const now = getLocalAsUtcDate(new Date());
       const startWindow = new Date(booking.reservedFrom.getTime() - 15 * 60 * 1000); // 15 min early
       const endWindow = new Date(booking.reservedTo.getTime() + 15 * 60 * 1000);    // 15 min late
 
@@ -92,6 +126,9 @@ export async function POST(request: NextRequest) {
           data: { status: "ATTENDED" },
         }),
       ]);
+
+      // Broadcast update to real-time clients so calendar refreshes
+      sendSSEUpdate(booking.tenantId);
 
       return NextResponse.json({
         status: "granted",

@@ -402,6 +402,10 @@ export default function UserDashboardClient({
                               <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold uppercase tracking-wider">
                                 Čeká na platbu
                               </span>
+                            ) : b.status === "ATTENDED" ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-550 dark:text-blue-400 font-bold uppercase tracking-wider">
+                                Odbaveno
+                              </span>
                             ) : (
                               <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
                                 Potvrzeno
@@ -426,7 +430,7 @@ export default function UserDashboardClient({
                         <div className="flex items-center gap-2 pt-2 border-t border-border mt-1">
                           {b.status === "PENDING_PAYMENT" ? (
                             <Link
-                              href={`/checkout?bookingId=${b.id}`}
+                              href={`/tenants/${tenant.id}/checkout?bookingId=${b.id}`}
                               className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center"
                               style={{ 
                                 background: `linear-gradient(135deg, oklch(0.65 0.18 55), oklch(0.55 0.18 45))`, // Amber/Orange gradient
@@ -493,9 +497,19 @@ export default function UserDashboardClient({
                                 <p className="text-[11px]">{formatTimeRange(b.reservedFrom, b.reservedTo)}</p>
                               </td>
                               <td className="p-4 text-right">
-                                <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground font-bold uppercase tracking-wider text-[9px] border border-border">
-                                  Proběhlo
-                                </span>
+                                {b.status === "ATTENDED" ? (
+                                  <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-550 dark:text-blue-400 font-bold uppercase tracking-wider text-[9px] border border-blue-500/25">
+                                    Odbaveno
+                                  </span>
+                                ) : b.status === "PENDING_PAYMENT" ? (
+                                  <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-550 dark:text-amber-400 font-bold uppercase tracking-wider text-[9px] border border-amber-500/25">
+                                    Neuhrazeno
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground font-bold uppercase tracking-wider text-[9px] border border-border">
+                                    Proběhlo
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           ))}

@@ -49,7 +49,7 @@ export default async function TenantCheckoutPage({ params, searchParams }: Check
 
   return (
     <div 
-      className="min-h-screen bg-[#07070C] text-slate-100 flex flex-col items-center justify-center p-4 md:p-8"
+      className="min-h-screen bg-slate-50 dark:bg-[#07070C] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-4 md:p-8 transition-colors duration-250"
       style={{
         backgroundImage: `radial-gradient(circle at 50% 120px, ${theme.primary}12, transparent 45%)`
       }}

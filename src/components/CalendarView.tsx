@@ -21,6 +21,7 @@ export interface CalendarEvent {
   lane?: number;
   totalLanes?: number;
   recurrenceGroup?: string | null;
+  status?: string;
 }
 
 export interface Partner {
@@ -373,8 +374,10 @@ export default function CalendarView({
   };
 
   const [isBooked, setIsBooked] = useState(false);
+  const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -393,6 +396,7 @@ export default function CalendarView({
     setSelectedEvent(null);
     setSelectedDayIndex(null);
     setIsBooked(false);
+    setIsPendingPayment(false);
     setGuestName("");
     setGuestEmail("");
     setSelectedPartnerId("");
@@ -403,7 +407,9 @@ export default function CalendarView({
     router.refresh();
   };
 
-  const baseDate = activeDate ? new Date(`${activeDate}T00:00:00`) : new Date("2026-06-08T00:00:00");
+  const baseDate = activeDate 
+    ? new Date(`${activeDate}T00:00:00`) 
+    : (mounted ? new Date() : new Date("2026-06-22T00:00:00"));
 
   const toLocalDateString = (d: Date) => {
     const year = d.getFullYear();
@@ -534,6 +540,7 @@ export default function CalendarView({
   }
 
   useEffect(() => {
+    setMounted(true);
     const startTimer = setTimeout(() => {
       setCurrentTime(new Date());
     }, 0);
@@ -545,6 +552,35 @@ export default function CalendarView({
       clearInterval(timer);
     };
   }, []);
+
+  // Check for day/week rollover when the tab becomes active or gains focus
+  useEffect(() => {
+    if (!mounted) return;
+
+    const handleFocusOrVisibility = () => {
+      if (document.hidden) return;
+
+      const clientTodayStr = toLocalDateString(new Date());
+      const hasExplicitDate = searchParams.has("date");
+
+      // If user is on the default view (showing today's week) and the date has rolled over
+      if (!hasExplicitDate && activeDate && activeDate !== clientTodayStr) {
+        console.log(`[CalendarView] Date rollover detected (Active: ${activeDate}, Current: ${clientTodayStr}). Auto-refreshing view...`);
+        router.refresh();
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisibility);
+    document.addEventListener("visibilitychange", handleFocusOrVisibility);
+
+    // Run once on mount to handle client/server timezone differences or cached pages
+    handleFocusOrVisibility();
+
+    return () => {
+      window.removeEventListener("focus", handleFocusOrVisibility);
+      document.removeEventListener("visibilitychange", handleFocusOrVisibility);
+    };
+  }, [mounted, activeDate, searchParams, router]);
 
   // Real-time synchronization (Pusher WebSockets + Native Server-Sent Events + Polling fallback)
   useEffect(() => {
@@ -1257,12 +1293,15 @@ export default function CalendarView({
       }
 
       const data = await res.json();
+      if (data.bookingStatus === "PENDING_PAYMENT") {
+        setIsPendingPayment(true);
+      }
       setIsBooked(true);
       window.dispatchEvent(new CustomEvent("assistant-booking-success"));
       
       if (data.bookingStatus === "PENDING_PAYMENT") {
         const timer = setTimeout(() => {
-          window.location.href = `/checkout?bookingId=${data.bookingId}`;
+          window.location.href = `/tenants/${tenantId}/checkout?bookingId=${data.bookingId}`;
         }, 1500);
         bookingTimeoutRef.current = timer;
         return;
@@ -1780,7 +1819,7 @@ export default function CalendarView({
                                     )}
                                   </div>
                                   <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
-                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : (isMyBooking ? "Moje rezervace" : "Obsazeno"))) : event.name}
+                                    {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                   </h4>
                                 </div>
                               ) : (
@@ -1804,7 +1843,7 @@ export default function CalendarView({
                                           : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
                                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
-                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? event.name : (isMyBooking ? "Moje rezervace" : "Obsazeno"))) : event.name}
+                                      {event.isOccupied ? (isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                     </h4>
                                   </div>
                                   
@@ -1814,7 +1853,7 @@ export default function CalendarView({
                                         {event.isOccupied ? (isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : (isMyBooking ? event.name : "Obsazeno"))) : `Lektor: ${event.instructor}`}
                                       </p>
                                       <p className="text-[8px] opacity-75 truncate">
-                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : (isMyBooking ? "Vaše rezervace" : "Rezervováno")) : `Místnost: ${event.room}`}
+                                        {event.isOccupied ? (isDraftEvent ? "Klikněte pro potvrzení" : (isAdmin || isMyBooking ? (event.status === "PENDING_PAYMENT" ? "Čeká na platbu" : event.status === "ATTENDED" ? "Odbaveno" : "Potvrzeno") : "Rezervováno")) : `Místnost: ${event.room}`}
                                       </p>
                                     </div>
                                   ) : (
@@ -2081,6 +2120,22 @@ export default function CalendarView({
                     <span className="text-slate-400 dark:text-slate-500">Plocha / Lekce:</span>
                     <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.resourceName}</span>
                   </div>
+                  {selectedEvent.status && (
+                    <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
+                      <span className="text-slate-400 dark:text-slate-500">Stav:</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        selectedEvent.status === "CONFIRMED"
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          : selectedEvent.status === "ATTENDED"
+                            ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                            : selectedEvent.status === "PENDING_PAYMENT"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                              : "bg-slate-500/10 text-slate-500 border border-slate-500/20"
+                      }`}>
+                        {selectedEvent.status === "CONFIRMED" ? "Potvrzeno" : selectedEvent.status === "PENDING_PAYMENT" ? "Čeká na platbu" : selectedEvent.status === "ATTENDED" ? "Odbaveno" : selectedEvent.status}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
                     <span className="text-slate-400 dark:text-slate-500">Rezervoval:</span>
                     <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.name}</span>
@@ -2125,6 +2180,9 @@ export default function CalendarView({
 
             {!isBooked && bookingType === "custom" && selectedDayIndex !== null && (() => {
               const isCurrentSelectionAvailable = isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration);
+              const activeResource = resources.find(r => r.id === customResourceId);
+              const hourlyRate = Number((activeResource?.attributes as any)?.price) || 0;
+              const estimatedPrice = hourlyRate * customDuration;
               return (
                 <div className="space-y-4 mb-6 bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-2xl border border-slate-200/60 dark:border-[#2A2A40]">
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
@@ -2272,6 +2330,14 @@ export default function CalendarView({
                       )}
                     </div>
                   </div>
+
+                  {/* Price info if > 0 */}
+                  {estimatedPrice > 0 && (
+                    <div className="flex justify-between items-center py-2.5 px-4 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-600 dark:text-emerald-400 select-none animate-in fade-in duration-200">
+                      <span>Cena pronájmu:</span>
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{estimatedPrice.toLocaleString("cs-CZ")} Kč</span>
+                    </div>
+                  )}
 
                   {/* Recurrence Selection Toggle & Form */}
                   <div className="space-y-3 pt-1">
@@ -2460,17 +2526,28 @@ export default function CalendarView({
             {isBooked ? (
               <div className="flex flex-col items-center justify-center py-4 text-[#7000FF] dark:text-[#A78BFA] gap-4">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-bounce shadow-neon-glow">
-                    <Check size={24} className="text-[#7000FF] dark:text-[#A78BFA]" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Rezervace byla úspěšně potvrzena!</span>
+                  {isPendingPayment ? (
+                    <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-pulse shadow-neon-glow">
+                      <span className="w-5 h-5 border-3 border-[#7000FF] dark:border-[#A78BFA] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-bounce shadow-neon-glow">
+                      <Check size={24} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                    </div>
+                  )}
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {isPendingPayment 
+                      ? "Rezervace byla vytvořena! Přesměrováváme k platbě..." 
+                      : "Rezervace byla úspěšně potvrzena!"}
+                  </span>
                 </div>
                 <button
                   type="button"
+                  disabled={isPendingPayment}
                   onClick={closeBookingModalAndRefresh}
-                  className="w-full py-2.5 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200"
+                  className="w-full py-2.5 rounded-xl text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Zavřít
+                  {isPendingPayment ? "Připravuji platbu..." : "Zavřít"}
                 </button>
               </div>
             ) : bookingType === "admin_view" && selectedEvent ? (

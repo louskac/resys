@@ -74,7 +74,9 @@ export function proxy(request: NextRequest) {
     // Rewrite path to: /tenants/[tenantId]/current/path
     url.pathname = `/tenants/${tenantId}${url.pathname}`;
     console.log(`[PROXY REWRITE] Tenant: "${tenantId}", Rewrote path to: "${url.pathname}"`);
-    return NextResponse.rewrite(url);
+    const response = NextResponse.rewrite(url);
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
 
   // Fallback to default pages if no tenant domain matches

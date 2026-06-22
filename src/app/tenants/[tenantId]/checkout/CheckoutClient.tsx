@@ -31,16 +31,30 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [paymentStage, setPaymentStage] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelAndBack = async () => {
+    setIsCancelling(true);
+    try {
+      await fetch(`/api/bookings?bookingId=${booking.id}`, {
+        method: "DELETE"
+      });
+    } catch (e) {
+      console.error("Failed to cancel pending booking on back action:", e);
+    }
+    window.location.href = `/tenants/${tenantId}`;
+  };
 
   // Auto-redirect if already paid
   useEffect(() => {
     if (booking.status === "CONFIRMED" || booking.status === "ATTENDED") {
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = `/dashboard`;
+        window.location.href = `/tenants/${tenantId}/dashboard`;
       }, 1500);
     }
-  }, [booking.status]);
+  }, [booking.status, tenantId]);
 
   // Mask card number as XXXX XXXX XXXX XXXX
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,6 +111,17 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
     }
 
     try {
+      setPaymentStage("Navazování zabezpečeného spojení...");
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      setPaymentStage("Autorizace platby u banky...");
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      setPaymentStage("Ověřování 3D Secure protokolu...");
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      setPaymentStage("Dokončování transakce...");
+
       const res = await fetch("/api/bookings/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,7 +143,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
 
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = `/dashboard`;
+        window.location.href = `/tenants/${tenantId}/dashboard`;
       }, 2000);
     } catch (err) {
       console.error(err);
@@ -141,13 +166,13 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
 
   if (success) {
     return (
-      <div className="w-full max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in">
+      <div className="w-full max-w-md p-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-xl dark:shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in transition-colors duration-250">
         <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400">
           <CheckCircle2 size={36} className="animate-scale-in" />
         </div>
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">Platba byla úspěšná!</h2>
-          <p className="text-sm text-slate-400 mt-2">Přesměrovávám vás na přehled vašich rezervací...</p>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Platba byla úspěšná!</h2>
+          <p className="text-sm text-slate-550 dark:text-slate-400 mt-2">Přesměrovávám vás na přehled vašich rezervací...</p>
         </div>
         <Loader2 className="animate-spin text-tenant-primary" size={24} />
       </div>
@@ -160,57 +185,62 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
       {/* LEFT COLUMN: Booking Details */}
       <div className="md:col-span-5 space-y-6">
         
-        {/* Back Link */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors select-none group"
+        {/* Back Button */}
+        <button 
+          onClick={handleCancelAndBack}
+          disabled={isCancelling || isSubmitting}
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors select-none group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-          Zpět do kalendáře
-        </Link>
+          {isCancelling ? (
+            <Loader2 className="animate-spin" size={14} />
+          ) : (
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          )}
+          Zpět do kalendáře (zrušit rezervaci)
+        </button>
 
         {/* Tenant Details */}
         <div className="space-y-1">
           <span className="text-[10px] text-tenant-primary font-bold uppercase tracking-widest">{theme.verticalName}</span>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">{tenantName}</h1>
-          <p className="text-xs text-slate-400">{theme.tagline}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{tenantName}</h1>
+          <p className="text-xs text-slate-550 dark:text-slate-400">{theme.tagline}</p>
         </div>
 
         {/* Summary Card */}
-        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl space-y-5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Detaily rezervace</h2>
+        <div className="p-6 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-md dark:shadow-none space-y-5 transition-colors duration-250">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-550 dark:text-slate-400">Detaily rezervace</h2>
           
           <div className="space-y-4">
             <div className="flex gap-3">
               <Sparkles className="text-tenant-primary shrink-0 mt-0.5" size={16} />
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Zdroj / Místo</span>
-                <span className="text-sm font-bold text-white">{booking.resourceName}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Zdroj / Místo</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white">{booking.resourceName}</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <Calendar className="text-tenant-primary shrink-0 mt-0.5" size={16} />
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Datum konání</span>
-                <span className="text-sm font-bold text-white capitalize">{formattedDate}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Datum konání</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white capitalize">{formattedDate}</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <Clock className="text-tenant-primary shrink-0 mt-0.5" size={16} />
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Časový úsek</span>
-                <span className="text-sm font-bold text-white">{formattedTime} (UTC)</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Časový úsek</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white">{formattedTime} (UTC)</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <User className="text-tenant-primary shrink-0 mt-0.5" size={16} />
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Rezervováno na</span>
-                <span className="text-sm font-bold text-white">{booking.userName}</span>
-                <span className="text-[11px] text-slate-400 block mt-0.5 flex items-center gap-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Rezervováno na</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white">{booking.userName}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 flex items-center gap-1">
                   <Mail size={10} />
                   {booking.userEmail}
                 </span>
@@ -219,22 +249,37 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
           </div>
 
           {/* Pricing Row */}
-          <div className="border-t border-white/5 pt-4 flex justify-between items-center">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Celkem k úhradě</span>
-            <span className="text-xl font-black text-white">{parseFloat(booking.price).toLocaleString("cs-CZ")} Kč</span>
+          <div className="border-t border-slate-150 dark:border-white/5 pt-4 flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider">Celkem k úhradě</span>
+            <span className="text-xl font-black text-slate-900 dark:text-white">{parseFloat(booking.price).toLocaleString("cs-CZ")} Kč</span>
           </div>
         </div>
       </div>
 
       {/* RIGHT COLUMN: Payment Form */}
-      <div className="md:col-span-7 p-6 md:p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl space-y-6">
+      <div className="md:col-span-7 p-6 md:p-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-lg dark:shadow-xl space-y-6 transition-colors duration-250">
         <div>
-          <h2 className="text-lg font-bold text-white">Platební brána</h2>
-          <p className="text-xs text-slate-400 mt-1">Bezpečná simulovaná platba platební kartou.</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Platební brána</h2>
+          <p className="text-xs text-slate-550 dark:text-slate-400 mt-1">Bezpečná simulovaná platba platební kartou.</p>
         </div>
 
+        {/* Quick Simulator Auto-fill button */}
+        <button
+          type="button"
+          onClick={() => {
+            setCardName(booking.userName || "Jakub Lustyk");
+            setCardNumber("4242 4242 4242 4242");
+            setExpiry("12/29");
+            setCvv("123");
+          }}
+          className="w-full py-2.5 bg-[#7000FF]/5 hover:bg-[#7000FF]/15 dark:bg-white/5 dark:hover:bg-white/10 text-[#7000FF] dark:text-purple-300 hover:text-[#5B00D6] dark:hover:text-white border border-[#7000FF]/25 dark:border-[#7000FF]/30 hover:border-[#7000FF]/50 dark:hover:border-[#7000FF]/60 rounded-2xl text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 select-none"
+        >
+          <Sparkles size={14} className="animate-pulse" />
+          Automaticky vyplnit testovací kartu
+        </button>
+
         {error && (
-          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
+          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-450 dark:text-rose-400 text-xs font-medium animate-in fade-in duration-200">
             {error}
           </div>
         )}
@@ -243,32 +288,32 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
           
           {/* Card Name */}
           <div className="space-y-1.5">
-            <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Jméno na kartě</label>
+            <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Jméno na kartě</label>
             <div className="relative flex items-center">
-              <User className="absolute left-3.5 text-slate-500" size={16} />
+              <User className="absolute left-3.5 text-slate-400 dark:text-slate-500" size={16} />
               <input
                 type="text"
                 required
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
                 placeholder="Jan Novák"
-                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650"
               />
             </div>
           </div>
 
           {/* Card Number */}
           <div className="space-y-1.5">
-            <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Číslo platební karty</label>
+            <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Číslo platební karty</label>
             <div className="relative flex items-center">
-              <CreditCard className="absolute left-3.5 text-slate-500" size={16} />
+              <CreditCard className="absolute left-3.5 text-slate-400 dark:text-slate-500" size={16} />
               <input
                 type="text"
                 required
                 value={cardNumber}
                 onChange={handleCardNumberChange}
                 placeholder="4242 4242 4242 4242"
-                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono tracking-widest"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono tracking-widest"
               />
             </div>
           </div>
@@ -277,33 +322,33 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
             
             {/* Expiration Date */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Expirace</label>
+              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expirace</label>
               <input
                 type="text"
                 required
                 value={expiry}
                 onChange={handleExpiryChange}
                 placeholder="MM/YY"
-                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono text-center"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center"
               />
             </div>
 
             {/* CVV */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">CVV / CVC</label>
+              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">CVV / CVC</label>
               <input
                 type="password"
                 required
                 value={cvv}
                 onChange={handleCvvChange}
                 placeholder="•••"
-                className="w-full bg-[#0D0D15]/85 border border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-600 font-mono text-center tracking-widest"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center tracking-widest"
               />
             </div>
           </div>
 
           {/* Secure Badge */}
-          <div className="flex items-center gap-2 text-[10px] text-slate-450 dark:text-zinc-500 py-1.5 select-none">
+          <div className="flex items-center gap-2 text-[10px] text-slate-550 dark:text-zinc-500 py-1.5 select-none">
             <ShieldCheck size={14} className="text-emerald-500" />
             <span>Bezpečné spojení zajištěno standardem SSL.</span>
           </div>
@@ -317,7 +362,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" size={14} />
-                Zpracovávám platbu...
+                {paymentStage}
               </>
             ) : (
               <>

@@ -7,6 +7,38 @@ import { triggerBookingUpdate } from "@/lib/pusher";
 import { sendSSEUpdate } from "@/lib/sse";
 import crypto from "crypto";
 
+const getLocalAsUtcDate = (d: Date): Date => {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Prague",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+    const parts = formatter.formatToParts(d);
+    
+    let year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
+    for (const part of parts) {
+      if (part.type === "year") year = parseInt(part.value, 10);
+      else if (part.type === "month") month = parseInt(part.value, 10);
+      else if (part.type === "day") day = parseInt(part.value, 10);
+      else if (part.type === "hour") hour = parseInt(part.value, 10);
+      else if (part.type === "minute") minute = parseInt(part.value, 10);
+      else if (part.type === "second") second = parseInt(part.value, 10);
+    }
+    
+    if (hour === 24) hour = 0;
+    return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  } catch (e) {
+    console.error("Failed to parse Europe/Prague timezone offset, falling back to Prague UTC+2 offset", e);
+    return new Date(d.getTime() + 2 * 60 * 60 * 1000);
+  }
+};
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -81,9 +113,21 @@ export async function POST(request: NextRequest) {
         let tenant: any = null;
 
         let partner = null;
-        if (partnerId) {
+        let finalPartnerId = partnerId;
+
+        // If no explicit partnerId is provided, check if the booking user is linked to a partner
+        if (!finalPartnerId && userEmail) {
+          const dbUser = await tx.user.findFirst({
+            where: { email: userEmail, tenantId }
+          });
+          if (dbUser?.partnerId) {
+            finalPartnerId = dbUser.partnerId;
+          }
+        }
+
+        if (finalPartnerId) {
           partner = await tx.partner.findFirst({
-            where: { id: partnerId, tenantId, active: true }
+            where: { id: finalPartnerId, tenantId, active: true }
           });
         }
 
@@ -295,7 +339,7 @@ export async function POST(request: NextRequest) {
             const confirmedCount = await tx.booking.count({
               where: {
                 scheduleRuleId,
-                status: "CONFIRMED",
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
                 reservedFrom: {
                   gte: midnightOcc,
                   lte: endOfDayOcc,
@@ -325,7 +369,7 @@ export async function POST(request: NextRequest) {
             const overlapping = await tx.booking.findFirst({
               where: {
                 resourceId: { in: conflictingResourceIds },
-                status: "CONFIRMED",
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
                 OR: [
                   {
                     reservedFrom: { lt: reservedTo },
@@ -342,7 +386,7 @@ export async function POST(request: NextRequest) {
           }
 
           // --- Validate that the booking is not in the past ---
-          if (reservedFrom < new Date()) {
+          if (reservedFrom < getLocalAsUtcDate(new Date())) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
           }
 
@@ -393,7 +437,7 @@ export async function POST(request: NextRequest) {
               where: {
                 tenantId,
                 userEmail,
-                status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
                 reservedFrom: {
                   gte: startOfDay,
                   lte: endOfDay,
@@ -417,7 +461,7 @@ export async function POST(request: NextRequest) {
               where: {
                 tenantId,
                 userEmail,
-                status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+                status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
                 reservedFrom: {
                   gte: occStartOfWeek,
                   lte: endOfWeek,
@@ -552,10 +596,6 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const bookingId = searchParams.get("bookingId");
     const cancelSeries = searchParams.get("cancelSeries") === "true";
@@ -573,15 +613,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
-    const userEmail = session.user.email || "";
-    const adminEmails = (booking.tenant.attributes as any)?.adminEmails || [];
-    const userRole = (session.user as any).role;
-    const userTenantId = (session.user as any).tenantId;
+    const isPendingPayment = booking.status === "PENDING_PAYMENT";
+    let isAuthorized = isPendingPayment;
 
-    const isAuthorized = 
-      (userRole === "ADMIN" && userTenantId === booking.tenantId) ||
-      adminEmails.includes(userEmail) || 
-      booking.userEmail === userEmail;
+    if (!isAuthorized && session && session.user) {
+      const userEmail = session.user.email || "";
+      const adminEmails = (booking.tenant.attributes as any)?.adminEmails || [];
+      const userRole = (session.user as any).role;
+      const userTenantId = (session.user as any).tenantId;
+
+      isAuthorized = 
+        (userRole === "ADMIN" && userTenantId === booking.tenantId) ||
+        adminEmails.includes(userEmail) || 
+        booking.userEmail === userEmail;
+    }
 
     if (!isAuthorized) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -696,7 +741,7 @@ export async function PATCH(request: NextRequest) {
       return makeErrorResponse("INVALID_TIME_RANGE", "Čas začátku musí předcházet času konce.");
     }
 
-    if (reservedFrom < new Date()) {
+    if (reservedFrom < getLocalAsUtcDate(new Date())) {
       return makeErrorResponse("PAST_BOOKING_NOT_ALLOWED", "Rezervaci nelze přesunout do minulosti.");
     }
 
@@ -850,7 +895,7 @@ export async function PATCH(request: NextRequest) {
       where: {
         id: { not: bookingId },
         resourceId: { in: conflictingResourceIds },
-        status: "CONFIRMED",
+        status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
         OR: [
           {
             reservedFrom: { lt: reservedTo },
@@ -875,7 +920,7 @@ export async function PATCH(request: NextRequest) {
         id: { not: bookingId },
         tenantId: booking.tenantId,
         userEmail: booking.userEmail,
-        status: "CONFIRMED",
+        status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
         reservedFrom: {
           gte: startOfDay,
           lte: endOfDay,
@@ -907,7 +952,7 @@ export async function PATCH(request: NextRequest) {
         id: { not: bookingId },
         tenantId: booking.tenantId,
         userEmail: booking.userEmail,
-        status: "CONFIRMED",
+        status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
         reservedFrom: {
           gte: occStartOfWeek,
           lte: endOfWeek,

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/Providers";
+import ThemeScript from "@/components/ThemeScript";
 import "./globals.css";
 
 const geistSans = {
@@ -28,27 +29,7 @@ export default function RootLayout({
     >
       <head>
         <meta name="color-scheme" content="light dark" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem("color-scheme");
-                  if (!theme) {
-                    theme = "light";
-                  }
-                  if (theme === "dark") {
-                    document.documentElement.classList.add("dark");
-                    document.documentElement.style.colorScheme = "dark";
-                  } else {
-                    document.documentElement.classList.remove("dark");
-                    document.documentElement.style.colorScheme = "light";
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
+        <ThemeScript />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <Providers>{children}</Providers>
