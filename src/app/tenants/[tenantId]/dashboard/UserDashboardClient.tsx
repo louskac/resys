@@ -461,20 +461,23 @@ export default function UserDashboardClient({
                               {b.tenantName}
                             </span>
                             {b.status === "PENDING_PAYMENT" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold uppercase tracking-wider">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                <AlertTriangle size={10} className="stroke-[3]" />
                                 Čeká na platbu
                               </span>
                             ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
                               <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
-                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping" />
                                 Právě probíhá
                               </span>
                             ) : b.status === "ATTENDED" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-550 dark:text-blue-400 font-bold uppercase tracking-wider">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                <CheckCircle size={10} className="stroke-[3]" />
                                 Odbaveno
                               </span>
                             ) : (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                <Check size={10} className="stroke-[3]" />
                                 Potvrzeno
                               </span>
                             )}
@@ -565,15 +568,18 @@ export default function UserDashboardClient({
                               </td>
                               <td className="p-4 text-right">
                                 {b.status === "ATTENDED" ? (
-                                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35] font-bold uppercase tracking-wider text-[9px]">
+                                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35] font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                    <CheckCircle size={9} className="stroke-[2.5]" />
                                     Odbaveno
                                   </span>
                                 ) : b.status === "PENDING_PAYMENT" ? (
-                                  <span className="px-2 py-0.5 rounded bg-rose-500/5 dark:bg-rose-500/10 text-rose-550 dark:text-rose-450 border border-rose-500/15 font-bold uppercase tracking-wider text-[9px]">
+                                  <span className="px-2 py-0.5 rounded bg-rose-500/5 dark:bg-rose-500/10 text-rose-550 dark:text-rose-450 border border-rose-500/15 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                    <AlertTriangle size={9} className="stroke-[2.5]" />
                                     Propadlo (Neuhrazeno)
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-zinc-550 border border-slate-100 dark:border-zinc-800/40 font-bold uppercase tracking-wider text-[9px]">
+                                  <span className="px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-zinc-550 border border-slate-100 dark:border-zinc-800/40 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                    <Clock size={9} className="stroke-[2.5]" />
                                     Proběhlo
                                   </span>
                                 )}
