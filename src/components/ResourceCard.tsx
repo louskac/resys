@@ -21,6 +21,7 @@ export interface Resource {
     room?: string;
     surface?: string;
     equipment?: string;
+    equipmentList?: any[];
     parentId?: string;
     price?: string | number;
   };
@@ -193,7 +194,26 @@ export default function ResourceCard({
             </div>
           )}
 
-          {resAttrs.equipment && (
+          {resAttrs.equipmentList && Array.isArray(resAttrs.equipmentList) && resAttrs.equipmentList.length > 0 ? (
+            <div className="flex flex-col py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5 gap-1">
+              <span className="flex items-center gap-2.5">
+                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                  <Wrench size={11} />
+                </span>
+                <span className="text-slate-500 dark:text-zinc-400 font-medium">Vybavení k zapůjčení</span>
+              </span>
+              <div className="pl-9 space-y-1">
+                {resAttrs.equipmentList.map((eq: any) => (
+                  <div key={eq.id} className="flex justify-between items-center text-[10.5px]">
+                    <span className="text-slate-700 dark:text-slate-350">{eq.name} <span className="text-slate-400">({eq.quantity} ks)</span></span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {eq.category === "default" ? "V ceně" : `+${eq.price} Kč`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : resAttrs.equipment ? (
             <div className="flex items-start justify-between py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5">
               <span className="flex items-center gap-2.5 shrink-0">
                 <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
@@ -203,7 +223,7 @@ export default function ResourceCard({
               </span>
               <span className="text-slate-800 dark:text-slate-200 font-semibold text-right leading-relaxed text-[11px] break-words pl-4 flex-1">{resAttrs.equipment}</span>
             </div>
-          )}
+          ) : null}
 
           {resAttrs.room && (
             <div className="flex items-center justify-between py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5">

@@ -377,6 +377,7 @@ export default function CalendarView({
   const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+  const [isHorizontal, setIsHorizontal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -410,6 +411,31 @@ export default function CalendarView({
   const baseDate = activeDate 
     ? new Date(`${activeDate}T00:00:00`) 
     : (mounted ? new Date() : new Date("2026-06-22T00:00:00"));
+
+  const activeDayDbIndex = React.useMemo(() => {
+    const dayIndex = baseDate.getDay();
+    return dayIndex === 0 ? 6 : dayIndex - 1;
+  }, [baseDate]);
+
+  const horizontalColumns = React.useMemo(() => {
+    const activeRootRes = resources.find(r => r.id === activeRootId);
+    if (!activeRootRes) return resources;
+
+    const getDescendants = (id: string): any[] => {
+      const children = resources.filter(r => r.parentId === id);
+      return [
+        resources.find(r => r.id === id),
+        ...children.flatMap(child => getDescendants(child.id))
+      ].filter(Boolean);
+    };
+
+    const descendants = getDescendants(activeRootId);
+    if (descendants.length <= 1) {
+      // If the selected root has no children, show all root resources
+      return resources.filter(r => !r.parentId);
+    }
+    return descendants;
+  }, [resources, activeRootId]);
 
   const toLocalDateString = (d: Date) => {
     const year = d.getFullYear();
@@ -512,7 +538,10 @@ export default function CalendarView({
   ];
 
   let headerTitle = "";
-  if (viewMode === "day") {
+  if (isHorizontal) {
+    const dayNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
+    headerTitle = `${dayNames[baseDate.getDay()]} ${baseDate.getDate()}. ${baseDate.getMonth() + 1}. ${baseDate.getFullYear()}`;
+  } else if (viewMode === "day") {
     headerTitle = `${baseDate.getDate()}. ${baseDate.getMonth() + 1}. ${baseDate.getFullYear()}`;
   } else if (viewMode === "month") {
     headerTitle = `${monthNamesCzech[baseDate.getMonth()]} ${baseDate.getFullYear()}`;
@@ -1008,11 +1037,11 @@ export default function CalendarView({
   } | null>(null);
 
   // Drag selection states
-  const [dragStartSlot, setDragStartSlot] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
-  const [dragCurrentSlot, setDragCurrentSlot] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
+  const [dragStartSlot, setDragStartSlot] = useState<{ dayIndex: number; timeIndex: number; resourceId?: string } | null>(null);
+  const [dragCurrentSlot, setDragCurrentSlot] = useState<{ dayIndex: number; timeIndex: number; resourceId?: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleCellMouseDown = (e: React.MouseEvent, dayIdx: number, timeIdx: number) => {
+  const handleCellMouseDown = (e: React.MouseEvent, dayIdx: number, timeIdx: number, resourceId?: string) => {
     if (e.button !== 0) return; // Only left-click
     e.preventDefault();
     
@@ -1020,18 +1049,18 @@ export default function CalendarView({
     if (isSlotInPast(dayIdx, timeStr)) return;
     
     setIsDragging(true);
-    setDragStartSlot({ dayIndex: dayIdx, timeIndex: timeIdx });
-    setDragCurrentSlot({ dayIndex: dayIdx, timeIndex: timeIdx });
+    setDragStartSlot({ dayIndex: dayIdx, timeIndex: timeIdx, resourceId });
+    setDragCurrentSlot({ dayIndex: dayIdx, timeIndex: timeIdx, resourceId });
   };
 
-  const handleCellMouseEnter = (dayIdx: number, timeIdx: number) => {
+  const handleCellMouseEnter = (dayIdx: number, timeIdx: number, resourceId?: string) => {
     if (!isDragging || !dragStartSlot) return;
     
     const timeStr = TIME_SLOTS[timeIdx];
     if (isSlotInPast(dayIdx, timeStr)) return;
     
-    if (dayIdx === dragStartSlot.dayIndex) {
-      setDragCurrentSlot({ dayIndex: dayIdx, timeIndex: timeIdx });
+    if (dayIdx === dragStartSlot.dayIndex && (!isHorizontal || resourceId === dragStartSlot.resourceId)) {
+      setDragCurrentSlot({ dayIndex: dayIdx, timeIndex: timeIdx, resourceId });
     }
   };
 
@@ -1047,6 +1076,9 @@ export default function CalendarView({
     
     handleBackgroundCellClick(dayIndex, startTime);
     setCustomDuration(durationHours);
+    if (dragStartSlot.resourceId) {
+      setCustomResourceId(dragStartSlot.resourceId);
+    }
     
     setIsDragging(false);
     setDragStartSlot(null);
@@ -1150,8 +1182,8 @@ export default function CalendarView({
   const totalSlotsCount = TIME_SLOTS.length;
   const totalHeightPx = totalSlotsCount * SLOT_HEIGHT;
 
-  const isSlotClosed = React.useCallback((dbDayIndex: number, timeStr: string) => {
-    const activeRes = resources.find(r => r.id === selectedResourceId);
+  const isSlotClosed = React.useCallback((resId: string, dbDayIndex: number, timeStr: string) => {
+    const activeRes = resources.find(r => r.id === resId);
     
     let currentRes = activeRes;
     let customOpeningHours: any[] | undefined;
@@ -1227,7 +1259,7 @@ export default function CalendarView({
     const closeVal = ch * 60 + cm;
     
     return timeVal < openVal || timeVal >= closeVal;
-  }, [openingHours, selectedResourceId, resources]);
+  }, [openingHours, resources]);
 
   const events = [
     ...selectedResourceId
@@ -1541,15 +1573,44 @@ export default function CalendarView({
           )}
 
           {/* Day/Week/Month Switcher */}
-          <UnifiedSwitcher<"day" | "week" | "month">
-            options={[
-              { value: "day", label: "Den" },
-              { value: "week", label: "Týden" },
-              { value: "month", label: "Měsíc" }
-            ]}
-            activeValue={viewMode}
-            onChange={setViewMode}
-          />
+          {!isHorizontal && (
+            <UnifiedSwitcher<"day" | "week" | "month">
+              options={[
+                { value: "day", label: "Den" },
+                { value: "week", label: "Týden" },
+                { value: "month", label: "Měsíc" }
+              ]}
+              activeValue={viewMode}
+              onChange={setViewMode}
+            />
+          )}
+
+          {/* Simple Toggle Switch for Horizontal View */}
+          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-200/40 dark:bg-[#0F0F1A]/60 border border-[#CBD5E1]/20 dark:border-[#1F1F2E] rounded-2xl shadow-inner select-none">
+            <span className="text-[11.5px] font-bold text-slate-600 dark:text-zinc-400">
+              Horizontální rozvrh
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const nextIsHorizontal = !isHorizontal;
+                setIsHorizontal(nextIsHorizontal);
+                if (nextIsHorizontal && viewMode === "month") {
+                  setViewMode("day");
+                }
+              }}
+              className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${
+                isHorizontal ? "bg-[#7000FF] dark:bg-[#A78BFA]" : "bg-slate-300 dark:bg-slate-700"
+              }`}
+              title="Zobrazit plochy/kurzy vedle sebe pro aktuální den"
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                  isHorizontal ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
 
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#7000FF]/8 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#C084FC] border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
             {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
@@ -1617,6 +1678,415 @@ export default function CalendarView({
       {/* Main Grid View */}
       <div className="overflow-x-auto">
         {viewMode !== "month" ? (
+          isHorizontal ? (
+            <div className="min-w-[760px] border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl overflow-hidden bg-[#FAFAFD] dark:bg-[#07070C]">
+                        {/* Header Row for Horizontal view (Resources as columns) */}
+                        <div 
+                          className="grid border-b bg-[#F5F5FA] dark:bg-[#151522] relative z-10 border-[#E2E2ED] dark:border-[#1F1F2E]"
+                          style={{ gridTemplateColumns: `75px repeat(${horizontalColumns.length}, minmax(120px, 1fr))` }}
+                        >
+                          <div className="p-2.5 text-center font-mono text-[10px] text-muted-foreground border-r border-[#E2E2ED] dark:border-[#1F1F2E] flex items-center justify-center select-none">
+                            Čas
+                          </div>
+                          {horizontalColumns.map((colRes) => (
+                            <div
+                              key={colRes.id}
+                              className="p-2.5 text-center font-semibold text-xs border-r border-[#E2E2ED] dark:border-[#1F1F2E] flex flex-col items-center justify-center gap-0.5 text-slate-700 dark:text-slate-355"
+                            >
+                              <span className="font-extrabold uppercase tracking-wide truncate max-w-full">
+                                {colRes.name}
+                              </span>
+                              <span className="text-[8px] opacity-75 font-mono">
+                                {colRes.attributes?.surface || colRes.attributes?.room || "Plocha"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+            
+                        {/* Body Columns Grid for Horizontal view */}
+                        <div 
+                          className={`grid relative z-20 ${isDragging ? "select-none" : ""}`}
+                          style={{ gridTemplateColumns: `75px repeat(${horizontalColumns.length}, minmax(120px, 1fr))` }}
+                          onMouseUp={commitDragSelection}
+                        >
+                          {/* Column 1: Time scale labels */}
+                          <div className="flex flex-col border-r border-[#E2E2ED] dark:border-[#1F1F2E] bg-slate-100/25 dark:bg-[#07070C]/35 relative z-10">
+                            {TIME_SLOTS.map((time) => (
+                              <div
+                                key={time}
+                                className="h-[60px] border-b border-[#E2E2ED]/30 dark:border-[#1F1F2E]/30 flex items-center justify-center font-mono text-[10px] text-slate-500/70 dark:text-slate-400/60"
+                              >
+                                {time}
+                              </div>
+                            ))}
+                          </div>
+            
+                          {/* Columns 2..N+1: Resource columns */}
+                          {horizontalColumns.map((colRes, colIdx) => {
+                            const colConflictingIds = getConflictingResourceIds(colRes.id);
+                            
+                            // Get all direct bookings or conflicting bookings for this resource on this day
+                            const dayEvents = (events || []).filter((e) => 
+                              e.dayIndex === activeDayDbIndex && 
+                              colConflictingIds.includes(e.resourceId)
+                            );
+            
+                            // Add draft bookings if applicable
+                            if (draftBooking && draftBooking.dayIndex === activeDayDbIndex && colConflictingIds.includes(draftBooking.resourceId)) {
+                              dayEvents.push({
+                                id: "draft-booking-id",
+                                name: draftBooking.userName || "Návrh rezervace",
+                                room: "",
+                                instructor: "Draft",
+                                dayIndex: draftBooking.dayIndex,
+                                startHour: draftBooking.startHour,
+                                durationHours: draftBooking.duration,
+                                resourceId: draftBooking.resourceId,
+                                isOccupied: true,
+                                resourceName: resources.find(r => r.id === draftBooking.resourceId)?.name || "Plocha",
+                                isDraft: true
+                              } as CalendarEvent);
+                            }
+            
+                            // Now line calculation (applies if selected day is today)
+                            const showNowLine = (() => {
+                              if (!currentTime) return false;
+                              const today = new Date(currentTime);
+                              today.setHours(0, 0, 0, 0);
+                              
+                              const targetDayDate = baseDate;
+                              const isSameDay = today.getFullYear() === targetDayDate.getFullYear() &&
+                                                today.getMonth() === targetDayDate.getMonth() &&
+                                                today.getDate() === targetDayDate.getDate();
+                                                
+                              if (!isSameDay) return false;
+                              
+                              const currentHourDec = currentTime.getHours() + currentTime.getMinutes() / 60;
+                              return currentHourDec >= startHourOffset && currentHourDec <= (startHourOffset + totalSlotsCount * 0.5);
+                            })();
+            
+                            const nowLineTop = (() => {
+                              if (!currentTime) return 0;
+                              const currentHourDec = currentTime.getHours() + currentTime.getMinutes() / 60;
+                              return (currentHourDec - startHourOffset) * HOUR_HEIGHT;
+                            })();
+            
+                            return (
+                              <div
+                                key={colRes.id}
+                                className="relative border-r border-[#E2E2ED]/50 dark:border-[#1F1F2E]/50 flex flex-col z-20 hover:z-30"
+                                style={{ height: `${totalHeightPx}px` }}
+                              >
+                                {/* Current Time Indicator Line (Now Line) */}
+                                {showNowLine && (
+                                  <div 
+                                    className="absolute left-0 right-0 border-t-2 border-rose-500 z-30 pointer-events-none flex items-center"
+                                    style={{ top: `${nowLineTop}px` }}
+                                  >
+                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
+                                  </div>
+                                )}
+            
+                                {/* Background slot cells */}
+                                {TIME_SLOTS.map((time, timeIdx) => {
+                                  const isPast = isSlotInPast(activeDayDbIndex, time);
+                                  const isClosed = isSlotClosed(colRes.id, activeDayDbIndex, time);
+                                  const isDisabled = isPast || isClosed;
+                                  const isHighlighted = isDragging && dragStartSlot && dragCurrentSlot &&
+                                    dragStartSlot.resourceId === colRes.id &&
+                                    timeIdx >= Math.min(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex) &&
+                                    timeIdx <= Math.max(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex);
+            
+                                  const [sh, sm] = time.split(":").map(Number);
+                                  const slotDec = sh + sm / 60;
+                                  const isHighlightedByAssistant = highlightedSlot &&
+                                    highlightedSlot.dayIndex === activeDayDbIndex &&
+                                    (highlightedSlot.resourceId === colRes.id) &&
+                                    slotDec >= highlightedSlot.startHour &&
+                                    slotDec < (highlightedSlot.startHour + highlightedSlot.duration);
+            
+                                  return (
+                                    <div
+                                      key={time}
+                                      onMouseDown={(e) => !isDisabled && handleCellMouseDown(e, activeDayDbIndex, timeIdx, colRes.id)}
+                                      onMouseEnter={() => !isDisabled && handleCellMouseEnter(activeDayDbIndex, timeIdx, colRes.id)}
+                                      onMouseUp={!isDisabled ? commitDragSelection : undefined}
+                                      className={`h-[60px] relative group transition-all duration-150 ${
+                                        isDisabled 
+                                          ? "bg-stripes-cosmic border-b border-[#E2E2ED] dark:border-[#1F1F2E] cursor-not-allowed"
+                                          : isHighlighted 
+                                            ? "bg-[#7000FF]/15 dark:bg-[#7000FF]/25 border border-[#7000FF] shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
+                                            : isHighlightedByAssistant
+                                              ? "bg-purple-500/20 dark:bg-purple-500/35 border-y-2 border-dashed border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer z-10"
+                                              : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
+                                      }`}
+                                    >
+                                      {/* Hover select block */}
+                                      {!isDragging && !isDisabled && (
+                                        <div className="absolute inset-0 flex items-center justify-center transition-all pointer-events-none">
+                                          <span className="px-3 py-1.5 rounded-xl text-[9px] font-extrabold text-[#7000FF] dark:text-[#C084FC] bg-white/80 dark:bg-[#131322]/60 border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
+                                            + Rezervovat
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+            
+                                {/* Absolute Event Overlays container */}
+                                <div className="absolute inset-0 pointer-events-none">
+                                  {(() => {
+                                    const visualEvents = layoutDayEvents(dayEvents);
+                                    return visualEvents.map((event) => {
+                                      const topOffset = (event.startHour - startHourOffset) * HOUR_HEIGHT;
+                                      const heightVal = event.durationHours * HOUR_HEIGHT;
+                                      const isMyBooking = !!(session?.user?.email && event.instructor === session.user.email);
+                                      const styles = getResourceStyles(event.resourceName || "", event.isOccupied, isAdmin || isMyBooking, event.status);
+                                      const isNarrow = event.totalLanes && event.totalLanes > 1;
+                                      const isExtremelyNarrow = event.totalLanes && event.totalLanes >= 3;
+                                      const isShort = event.durationHours <= 0.5;
+                                      const isPastEvent = isEventInPast(event.dayIndex, event.startHour, event.durationHours);
+                                      const isDraftEvent = (event as any).isDraft;
+            
+                                      const cardThemeClass = isDraftEvent
+                                        ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-dashed border-purple-500/85 text-purple-950 dark:text-purple-200 shadow-md shadow-purple-500/5 cursor-pointer rounded-2xl animate-pulse"
+                                        : event.status === "TECHNICAL_BREAK"
+                                          ? styles.themeClass
+                                          : isPastEvent 
+                                            ? "bg-[#F1F3F9] dark:bg-[#0E0E16] border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed rounded-2xl shadow-sm"
+                                            : styles.themeClass;
+            
+                                      const badgeBgClass = isDraftEvent
+                                        ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-bold text-[7.5px] tracking-wide rounded-md px-1.5 py-0.5 uppercase"
+                                        : event.status === "TECHNICAL_BREAK"
+                                          ? styles.badgeBg
+                                          : isPastEvent 
+                                            ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300/30 dark:border-zinc-700/30"
+                                            : styles.badgeBg;
+            
+                                      return (
+                                        <div
+                                          key={event.id}
+                                          style={{
+                                            top: `${topOffset + (isShort ? 2 : 4)}px`,
+                                            height: `${heightVal - (isShort ? 4 : 8)}px`,
+                                            left: event.left,
+                                            width: event.width,
+                                            ...(!isPastEvent && !isDraftEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
+                                          }}
+                                          onMouseMove={!isPastEvent && !isDraftEvent ? (e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const x = e.clientX - rect.left;
+                                            const y = e.clientY - rect.top;
+                                            e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                            e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                                          } : undefined}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (isPastEvent) return;
+                                            if (isDraftEvent) {
+                                              setBookingType("custom");
+                                              return;
+                                            }
+                                            if (event.isOccupied) {
+                                              if (isAdmin || isMyBooking) {
+                                                setSelectedEvent(event);
+                                                setBookingType("admin_view");
+                                                return;
+                                              }
+                                              const timeStr = formatHourString(event.startHour);
+                                              handleBackgroundCellClick(event.dayIndex, timeStr);
+                                              setCustomDuration(event.durationHours);
+                                              
+                                              const availableRes = resources.find(r => 
+                                                isResourceAvailable(r.id, event.dayIndex, timeStr, event.durationHours)
+                                              );
+                                              if (availableRes) {
+                                                setCustomResourceId(availableRes.id);
+                                              } else {
+                                                setCustomResourceId(event.resourceId);
+                                              }
+                                              return;
+                                            }
+                                            setSelectedEvent(event);
+                                            setBookingType("event");
+                                          }}
+                                          className={`absolute pointer-events-auto rounded-2xl border flex flex-col transition-all duration-250 backdrop-blur-sm group/card hover:z-40 ${cardThemeClass} ${
+                                            isPastEvent || isDraftEvent ? "" : "hover:scale-[1.015] hover:shadow-neon-glow transition-all duration-300 ease-out"
+                                          } ${
+                                            isShort 
+                                              ? "p-1.5 justify-start gap-0.5" 
+                                              : isNarrow 
+                                                ? "p-2 justify-between" 
+                                                : "p-2.5 justify-between"
+                                          }`}
+                                        >
+                                          {!isPastEvent && !isDraftEvent && (
+                                            <div 
+                                              className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[inherit] z-0"
+                                              style={{
+                                                background: `radial-gradient(100px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--glow-color), transparent 80%)`
+                                              }}
+                                            />
+                                          )}
+                                          {isExtremelyNarrow ? (
+                                            <div className="flex flex-col items-center justify-between h-full w-full overflow-hidden text-center py-0.5 relative z-10">
+                                              <span className="text-[7.5px] font-mono font-bold tracking-tighter opacity-90 block leading-none">
+                                                {formatHourString(event.startHour).split(":")[0]}
+                                              </span>
+                                              {event.isOccupied ? (
+                                                <Lock size={9} className="opacity-90 my-0.5 shrink-0" />
+                                              ) : (
+                                                <Calendar size={9} className="opacity-90 my-0.5 shrink-0" />
+                                              )}
+                                              {!isShort && (
+                                                <span className="text-[7px] font-mono opacity-70 block leading-none">
+                                                  {formatHourString(event.startHour + event.durationHours).split(":")[0]}
+                                                </span>
+                                              )}
+                                            </div>
+                                          ) : isShort ? (
+                                            <div className="flex flex-col h-full justify-center overflow-hidden relative z-10">
+                                              <div className="flex items-center justify-between gap-1 leading-none">
+                                                <span className="text-[8px] font-mono opacity-90 block shrink-0">
+                                                  {formatHourString(event.startHour)}
+                                                </span>
+                                                {event.isOccupied ? (
+                                                  event.status === "TECHNICAL_BREAK" ? (
+                                                    <AlertCircle size={9} className="opacity-70 shrink-0" />
+                                                  ) : (
+                                                    <Lock size={9} className="opacity-70 shrink-0" />
+                                                  )
+                                                ) : (
+                                                  <Calendar size={9} className="opacity-70 shrink-0" />
+                                                )}
+                                              </div>
+                                              <h4 className="font-bold text-[9px] uppercase tracking-wide truncate leading-tight mt-0.5">
+                                                {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
+                                              </h4>
+                                            </div>
+                                          ) : (
+                                            <div className="flex flex-col h-full justify-between w-full overflow-hidden relative z-10">
+                                              <div className="overflow-hidden">
+                                                <div className="flex items-center justify-between gap-1 mb-1">
+                                                  <span className="text-[9px] font-mono opacity-80 block truncate">
+                                                    {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
+                                                  </span>
+                                                  {event.resourceName && event.resourceName !== colRes.name && (
+                                                    <span className={`text-[7px] font-bold px-1 py-0.5 rounded uppercase select-none shrink truncate min-w-0 max-w-[45%] whitespace-nowrap ${badgeBgClass}`}>
+                                                      {formatResourceTag(event.resourceName)}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
+                                                  isDraftEvent
+                                                    ? "font-extrabold text-[10px] md:text-[11px] text-purple-800 dark:text-purple-300"
+                                                    : isPastEvent && event.status !== "TECHNICAL_BREAK"
+                                                      ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
+                                                      : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
+                                                }`}>
+                                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                                  {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
+                                                </h4>
+                                              </div>
+                                              
+                                              {!isNarrow && (!event.isOccupied || isAdmin || isDraftEvent || isMyBooking || event.status === "TECHNICAL_BREAK") ? (
+                                                <div className="text-[9px] opacity-80 leading-tight truncate">
+                                                  <p className="font-semibold text-[9px] truncate">
+                                                    {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Úklid / Příprava" : isDraftEvent ? "Koncept" : (isAdmin ? event.instructor : (isMyBooking ? event.name : "Obsazeno"))) : `Lektor: ${event.instructor}`}
+                                                  </p>
+                                                  <p className="text-[8px] opacity-75 truncate">
+                                                    {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Nedostupné" : isDraftEvent ? "Klikněte pro potvrzení" : (isAdmin || isMyBooking ? (event.status === "PENDING_PAYMENT" ? "Čeká na platbu" : event.status === "ATTENDED" ? "Odbaveno" : "Potvrzeno") : "Rezervováno")) : `Místnost: ${event.room}`}
+                                                  </p>
+                                                </div>
+                                              ) : (
+                                                <div className="flex justify-end items-center opacity-70 mt-1">
+                                                  {event.isOccupied ? (
+                                                    event.status === "TECHNICAL_BREAK" ? (
+                                                      <AlertCircle size={10} />
+                                                    ) : isDraftEvent ? (
+                                                      <span className="text-[8px] font-bold text-purple-500">?</span>
+                                                    ) : (
+                                                      <Lock size={10} />
+                                                    )
+                                                  ) : (
+                                                    <Calendar size={10} />
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+            
+                                          {/* Tooltip on Hover */}
+                                          {(() => {
+                                            const isTopHalf = event.startHour < 12.0;
+                                            const tooltipPositionClass = isTopHalf 
+                                              ? "top-[107%] bottom-auto origin-top" 
+                                              : "bottom-[107%] top-auto origin-bottom";
+            
+                                            const tooltipAlignmentClass = colIdx === 0 
+                                              ? "left-0 translate-x-0" 
+                                              : colIdx === horizontalColumns.length - 1 
+                                                ? "right-0 left-auto translate-x-0" 
+                                                : "left-1/2 -translate-x-1/2";
+            
+                                            const tooltipBorderClass = (() => {
+                                              const color = (styles as any).colorName || "indigo";
+                                              const borderClasses: Record<string, string> = {
+                                                rose: "border-rose-500/25 dark:border-rose-500/20",
+                                                amber: "border-amber-500/25 dark:border-amber-500/20",
+                                                emerald: "border-emerald-500/25 dark:border-emerald-500/20",
+                                                orange: "border-orange-500/25 dark:border-orange-500/20",
+                                                blue: "border-blue-500/25 dark:border-blue-500/20",
+                                                violet: "border-violet-500/25 dark:border-violet-500/20",
+                                                indigo: "border-indigo-500/25 dark:border-indigo-500/20",
+                                                cyan: "border-cyan-500/25 dark:border-cyan-500/20",
+                                              };
+                                              return borderClasses[color] || "border-indigo-500/25 dark:border-indigo-500/20";
+                                            })();
+            
+                                            return (
+                                              <div className={`absolute ${tooltipAlignmentClass} w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-2xl border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`}>
+                                                <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
+                                                  <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
+                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${styles.barColor}`} />
+                                                    {event.resourceName || "Sport field"}
+                                                  </span>
+                                                  <span className="text-[9px] font-mono text-zinc-500 dark:text-slate-400">
+                                                    {formatHourString(event.startHour)} – {formatHourString(event.startHour + event.durationHours)}
+                                                  </span>
+                                                </div>
+                                                <div>
+                                                  <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-50 break-words leading-snug">
+                                                    {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name} [Návrh]` : (isAdmin ? event.name : (isMyBooking ? `Moje rezervace (${event.name})` : "Obsazeno"))) : event.name}
+                                                  </h4>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200/40 dark:border-zinc-800/50 text-[10px]">
+                                                  <div>
+                                                    <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Místnost/Povrch</span>
+                                                    <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">{event.status === "TECHNICAL_BREAK" ? "Úklid / Příprava" : isDraftEvent ? "Vybraná plocha" : event.room}</span>
+                                                  </div>
+                                                  <div>
+                                                    <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Status/Kontakt</span>
+                                                    <span className="text-zinc-800 dark:text-zinc-200 font-semibold break-words">
+                                                      {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? "Nedostupné" : isDraftEvent ? "Předběžná rezervace" : (isAdmin ? `${event.name} (${event.instructor})` : (isMyBooking ? `Moje rezervace (${event.instructor})` : "Obsazeno"))) : event.instructor}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })()}
+                                        </div>
+                                      );
+                                    });
+                                  })()}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+          ) : (
           <div className="min-w-[760px] border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-2xl overflow-hidden bg-[#FAFAFD] dark:bg-[#07070C]">
             
             {/* Header Row */}
@@ -1728,7 +2198,7 @@ export default function CalendarView({
                     {/* Background slot cells */}
                     {TIME_SLOTS.map((time, timeIdx) => {
                       const isPast = isSlotInPast(day.dbDayIndex, time);
-                      const isClosed = isSlotClosed(day.dbDayIndex, time);
+                      const isClosed = isSlotClosed(selectedResourceId, day.dbDayIndex, time);
                       const isDisabled = isPast || isClosed;
                       const isHighlighted = isDragging && dragStartSlot && dragCurrentSlot &&
                         dragStartSlot.dayIndex === day.dbDayIndex &&
@@ -1746,8 +2216,8 @@ export default function CalendarView({
                       return (
                         <div
                           key={time}
-                          onMouseDown={(e) => !isDisabled && handleCellMouseDown(e, day.dbDayIndex, timeIdx)}
-                          onMouseEnter={() => !isDisabled && handleCellMouseEnter(day.dbDayIndex, timeIdx)}
+                          onMouseDown={(e) => !isDisabled && handleCellMouseDown(e, day.dbDayIndex, timeIdx, selectedResourceId)}
+                          onMouseEnter={() => !isDisabled && handleCellMouseEnter(day.dbDayIndex, timeIdx, selectedResourceId)}
                           onMouseUp={!isDisabled ? commitDragSelection : undefined}
                           className={`h-[60px] relative group transition-all duration-150 ${
                             isDisabled 
@@ -2046,6 +2516,7 @@ export default function CalendarView({
 
             </div>
           </div>
+          )
         ) : (
           /* Month View Grid */
           <div className="border border-[#ECECF3] dark:border-[#1F1F2E] rounded-3xl bg-[#FAFAFD] dark:bg-[#07070C] p-6 shadow-neon-glow">

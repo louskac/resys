@@ -15,6 +15,8 @@ export type ErrorCode =
   | "INVALID_DAY_INDEX"
   | "INVALID_TIME_FORMAT"
   | "PAST_BOOKING_NOT_ALLOWED"
+  | "EQUIPMENT_CAPACITY_EXCEEDED"
+  | "INVALID_EQUIPMENT"
   | "SCHEDULE_RULE_NOT_FOUND";
 
 export interface ApiErrorResponse {

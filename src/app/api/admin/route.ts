@@ -69,6 +69,16 @@ export async function GET(request: NextRequest) {
           },
         },
         devices: true,
+        bookings: {
+          where: {
+            status: { in: ["CONFIRMED", "ATTENDED"] },
+            paymentTransactionId: { not: null }
+          },
+          select: {
+            price: true,
+            paymentCutAmount: true
+          }
+        }
       },
     });
     return NextResponse.json(tenants);
@@ -166,14 +176,14 @@ export async function POST(request: NextRequest) {
       }
       
       case "tenant_upsert": {
-        const { id, name, domain, vertical, ssoClientId, ssoClientSec } = data;
+        const { id, name, domain, vertical, ssoClientId, ssoClientSec, paymentCut } = data;
         
         const existingTenant = await prisma.tenant.findUnique({ where: { id } });
         
         const tenant = await prisma.tenant.upsert({
           where: { id },
-          update: { name, domain, vertical, ssoClientId, ssoClientSec },
-          create: { id, name, domain, vertical, ssoClientId, ssoClientSec },
+          update: { name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: Number(paymentCut || 0) },
+          create: { id, name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: Number(paymentCut || 0) },
         });
 
         let adminCreated = false;

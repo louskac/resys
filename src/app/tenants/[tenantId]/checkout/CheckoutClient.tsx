@@ -13,6 +13,7 @@ interface SerializedBooking {
   reservedTo: string;
   status: string;
   price: string;
+  rentedEquipment?: any[] | null;
 }
 
 interface CheckoutClientProps {
@@ -246,6 +247,21 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
                 </span>
               </div>
             </div>
+            {booking.rentedEquipment && Array.isArray(booking.rentedEquipment) && booking.rentedEquipment.length > 0 && (
+              <div className="border-t border-slate-150 dark:border-white/5 pt-4 space-y-2">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Zapůjčené vybavení</span>
+                <div className="space-y-1.5 pl-1">
+                  {booking.rentedEquipment.map((eq: any) => (
+                    <div key={eq.id} className="flex justify-between items-center text-xs">
+                      <span className="text-slate-700 dark:text-slate-350">{eq.name} <span className="text-slate-400">({eq.quantity} ks)</span></span>
+                      <span className="font-semibold text-slate-800 dark:text-white">
+                        {eq.category === "default" ? "V ceně" : `+${eq.price * eq.quantity} Kč`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Pricing Row */}

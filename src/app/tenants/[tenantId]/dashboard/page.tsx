@@ -102,6 +102,7 @@ export default async function UserDashboardPage({ params }: DashboardPageProps) 
     status: b.status,
     price: b.price.toString(),
     createdAt: b.createdAt.toISOString(),
+    rentedEquipment: b.rentedEquipment ? (b.rentedEquipment as any) : null,
   }));
 
   const serializedLogs = checkinLogs.map((log) => ({

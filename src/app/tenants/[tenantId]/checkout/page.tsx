@@ -45,6 +45,7 @@ export default async function TenantCheckoutPage({ params, searchParams }: Check
     reservedTo: booking.reservedTo.toISOString(),
     status: booking.status,
     price: booking.price.toString(),
+    rentedEquipment: booking.rentedEquipment ? (booking.rentedEquipment as any) : null,
   };
 
   return (

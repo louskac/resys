@@ -37,6 +37,7 @@ interface CalendarEvent {
   resourceName?: string;
   recurrenceGroup?: string | null;
   status?: string;
+  rentedEquipment?: any;
 }
 
 interface TenantAttributes {
@@ -295,6 +296,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       resourceName: booking.resource.name,
       recurrenceGroup: booking.recurrenceGroup,
       status: booking.status,
+      rentedEquipment: booking.rentedEquipment ? (booking.rentedEquipment as any) : undefined,
     });
 
     // Add a virtual event for the technical break if enabled

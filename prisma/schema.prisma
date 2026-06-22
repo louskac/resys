@@ -45,6 +45,7 @@ model Tenant {
   vertical     Vertical
   ssoClientId  String
   ssoClientSec String    // Client secret for OneiD SSO
+  paymentCut   Int       @default(0) // Platform cut percentage: 0, 1, 2, or 3 %
   attributes   Json?
   createdAt    DateTime  @default(now())
   resources    Resource[]
@@ -133,10 +134,12 @@ model Booking {
   checkinLogs          CheckinLog[]
   recurrenceGroup      String?
   price                Decimal       @db.Decimal(10, 2) @default(0.00)
+  paymentCutAmount     Decimal       @db.Decimal(10, 2) @default(0.00) // Recorded platform cut fee amount
   partnerId            String?
   partner              Partner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   invoiceId            String?
   invoice              Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  rentedEquipment      Json?
 
   @@index([tenantId, oneidUserId])
 }

@@ -59,6 +59,15 @@ interface ResourceRule {
   maxCapacity: number;
 }
 
+interface EquipmentConfig {
+  id: string;
+  name: string;
+  category: "default" | "extra";
+  price?: number;
+  cooldownMinutes?: number;
+  quantity: number;
+}
+
 interface Resource {
   id: string;
   name: string;
@@ -69,6 +78,7 @@ interface Resource {
     room?: string;
     surface?: string;
     equipment?: string;
+    equipmentList?: EquipmentConfig[];
     parentId?: string;
     price?: string;
     openTime?: string;
@@ -780,6 +790,7 @@ export default function AdminDashboardClient({
       parentId: string;
       surface: string;
       equipment: string;
+      equipmentList?: EquipmentConfig[];
       price: string;
       technicalBreak: boolean;
       technicalBreakMinutes: number;
@@ -797,11 +808,20 @@ export default function AdminDashboardClient({
       parentId: "",
       surface: "",
       equipment: "",
+      equipmentList: [],
       price: "",
       technicalBreak: false,
       technicalBreakMinutes: 15
     }
   });
+
+  // Equipment creator states
+  const [newEqName, setNewEqName] = useState("");
+  const [newEqCategory, setNewEqCategory] = useState<"default" | "extra">("default");
+  const [newEqPrice, setNewEqPrice] = useState(0);
+  const [newEqQuantity, setNewEqQuantity] = useState(1);
+  const [newEqCooldown, setNewEqCooldown] = useState(0); // Bez pauzy by default
+
 
   const [deviceModal, setDeviceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: { id: string; name: string; token: string; active: boolean; } }>({
     open: false,
@@ -860,6 +880,7 @@ export default function AdminDashboardClient({
         let targetParentId = data.parentId || "";
         let targetSurface = data.surface || "";
         let targetEquipment = data.equipment || "";
+        let targetEquipmentList = data.equipmentList || [];
         let targetPrice = data.price || "";
         let targetTechnicalBreak = data.technicalBreak !== undefined ? data.technicalBreak : false;
         let targetTechnicalBreakMinutes = data.technicalBreakMinutes !== undefined ? parseInt(data.technicalBreakMinutes, 10) : 15;
@@ -880,6 +901,7 @@ export default function AdminDashboardClient({
           if (data.parentId === undefined) targetParentId = (existing.attributes as any)?.parentId || "";
           if (data.surface === undefined) targetSurface = (existing.attributes as any)?.surface || "";
           if (data.equipment === undefined) targetEquipment = (existing.attributes as any)?.equipment || "";
+          if (data.equipmentList === undefined) targetEquipmentList = (existing.attributes as any)?.equipmentList || [];
           if (data.price === undefined) targetPrice = (existing.attributes as any)?.price || "";
           if (data.technicalBreak === undefined) targetTechnicalBreak = (existing.attributes as any)?.technicalBreak || false;
           if (data.technicalBreakMinutes === undefined) targetTechnicalBreakMinutes = (existing.attributes as any)?.technicalBreakMinutes || 15;
@@ -898,6 +920,7 @@ export default function AdminDashboardClient({
             parentId: targetParentId,
             surface: targetSurface,
             equipment: targetEquipment,
+            equipmentList: targetEquipmentList,
             price: targetPrice,
             technicalBreak: targetTechnicalBreak,
             technicalBreakMinutes: targetTechnicalBreakMinutes
@@ -1050,7 +1073,10 @@ export default function AdminDashboardClient({
         room: resourceModal.data.room,
         parentId: resourceModal.data.parentId || undefined,
         surface: resourceModal.data.surface,
-        equipment: resourceModal.data.equipment,
+        equipment: resourceModal.data.equipmentList 
+          ? resourceModal.data.equipmentList.map(eq => eq.name).join(", ") 
+          : resourceModal.data.equipment,
+        equipmentList: resourceModal.data.equipmentList,
         price: resourceModal.data.price,
         technicalBreak: resourceModal.data.technicalBreak,
         technicalBreakMinutes: resourceModal.data.technicalBreakMinutes
@@ -1595,6 +1621,7 @@ export default function AdminDashboardClient({
                         parentId: resAttrs.parentId || "",
                         surface: resAttrs.surface || "",
                         equipment: resAttrs.equipment || "",
+                        equipmentList: resAttrs.equipmentList || [],
                         price: resAttrs.price || "",
                         technicalBreak: resAttrs.technicalBreak || false,
                         technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15
@@ -2199,7 +2226,7 @@ export default function AdminDashboardClient({
                  <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
-                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "", technicalBreak: false, technicalBreakMinutes: 15 }
+                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15 }
                   })}
                   className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center gap-1.5 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
                 >
@@ -2209,7 +2236,7 @@ export default function AdminDashboardClient({
                 <button
                   onClick={() => setResourceModal({
                     open: true, mode: "add",
-                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", price: "", technicalBreak: false, technicalBreakMinutes: 15 }
+                    data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15 }
                   })}
                   className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-xl active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
                   title="Přidat zdroj"
@@ -3377,18 +3404,153 @@ export default function AdminDashboardClient({
                         placeholder="např. Umělá tráva 3. generace"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vybavení</label>
-                      <input
-                        type="text"
-                        value={resourceModal.data.equipment}
-                        onChange={(e) => setResourceModal({
-                          ...resourceModal,
-                          data: { ...resourceModal.data, equipment: e.target.value }
-                        })}
-                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
-                        placeholder="např. Přenosné branky"
-                      />
+                    <div className="border border-slate-200/60 dark:border-[#2A2A40] rounded-xl p-4 bg-slate-50/50 dark:bg-slate-900/10 space-y-4">
+                      <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Správa dostupného vybavení</label>
+                      
+                      {/* Current equipment list */}
+                      {resourceModal.data.equipmentList && resourceModal.data.equipmentList.length > 0 ? (
+                        <div className="space-y-2">
+                          {resourceModal.data.equipmentList.map((eq) => (
+                            <div key={eq.id} className="flex justify-between items-center p-2.5 rounded-lg bg-white/60 dark:bg-[#131322]/30 border border-slate-100 dark:border-[#2A2A40] text-xs">
+                              <div className="space-y-0.5">
+                                <span className="font-bold text-slate-800 dark:text-slate-200">{eq.name}</span>
+                                <div className="flex gap-2 text-[10px] text-slate-400">
+                                  <span>Množství: {eq.quantity}x</span>
+                                  <span>•</span>
+                                  <span>{eq.category === "default" ? "V ceně (Default)" : `Extra placené (+${eq.price} Kč)`}</span>
+                                  {eq.category === "extra" && eq.cooldownMinutes !== undefined && eq.cooldownMinutes !== 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <span>
+                                        Pauza: {eq.cooldownMinutes === -1 
+                                          ? "Do příštího dne" 
+                                          : eq.cooldownMinutes >= 60 
+                                            ? `${eq.cooldownMinutes / 60}h` 
+                                            : `${eq.cooldownMinutes} min`}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setResourceModal({
+                                    ...resourceModal,
+                                    data: {
+                                      ...resourceModal.data,
+                                      equipmentList: (resourceModal.data.equipmentList || []).filter(item => item.id !== eq.id)
+                                    }
+                                  });
+                                }}
+                                className="p-1 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 italic">Žádné nakonfigurované vybavení.</p>
+                      )}
+
+                      {/* Add new equipment form */}
+                      <div className="border-t border-slate-200/50 dark:border-[#2A2A40]/50 pt-3 space-y-3">
+                        <span className="block text-[9.5px] text-slate-400 font-bold uppercase">Přidat nové vybavení</span>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="col-span-2">
+                            <input
+                              type="text"
+                              value={newEqName}
+                              onChange={(e) => setNewEqName(e.target.value)}
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none text-slate-800 dark:text-slate-200 font-medium"
+                              placeholder="Název (např. Brusle, Hokejky, Branky)"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] text-slate-400 mb-1">Kategorie</label>
+                            <select
+                              value={newEqCategory}
+                              onChange={(e) => setNewEqCategory(e.target.value as any)}
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                            >
+                              <option value="default">V ceně (Default)</option>
+                              <option value="extra">Extra placené (Půjčovna)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] text-slate-400 mb-1">Množství (ks)</label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={newEqQuantity}
+                              onChange={(e) => setNewEqQuantity(parseInt(e.target.value, 10) || 1)}
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                            />
+                          </div>
+
+                          {newEqCategory === "extra" && (
+                            <>
+                              <div>
+                                <label className="block text-[9px] text-slate-400 mb-1">Cena (Kč)</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={newEqPrice}
+                                  onChange={(e) => setNewEqPrice(parseInt(e.target.value, 10) || 0)}
+                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[9px] text-slate-400 mb-1">Čas na přípravu / údržbu</label>
+                                <select
+                                  value={newEqCooldown}
+                                  onChange={(e) => setNewEqCooldown(parseInt(e.target.value, 10))}
+                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium outline-none"
+                                >
+                                  <option value={0}>Bez pauzy</option>
+                                  <option value={30}>30 minut</option>
+                                  <option value={60}>1 hodina</option>
+                                  <option value={120}>2 hodiny</option>
+                                  <option value={-1}>Do příštího dne</option>
+                                </select>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newEqName.trim()) return;
+                            const newEquip: EquipmentConfig = {
+                              id: "eq_" + Math.random().toString(36).substring(3, 9),
+                              name: newEqName.trim(),
+                              category: newEqCategory,
+                              quantity: newEqQuantity,
+                              price: newEqCategory === "extra" ? newEqPrice : undefined,
+                              cooldownMinutes: newEqCategory === "extra" ? newEqCooldown : undefined
+                            };
+                            setResourceModal({
+                              ...resourceModal,
+                              data: {
+                                ...resourceModal.data,
+                                equipmentList: [...(resourceModal.data.equipmentList || []), newEquip]
+                              }
+                            });
+                            // Reset inputs
+                            setNewEqName("");
+                            setNewEqQuantity(1);
+                            setNewEqPrice(0);
+                            setNewEqCooldown(0); // Bez pauzy by default
+                          }}
+                          disabled={!newEqName.trim()}
+                          className="w-full py-2 bg-tenant-gradient hover:opacity-95 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer"
+                        >
+                          + Přidat vybavení
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (

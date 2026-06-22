@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       weekStart,
       recurrencePattern,
       recurrenceCount,
-      partnerId
+      partnerId,
+      rentedEquipment
     } = body;
 
     if (!tenantId || dayIndex === undefined) {
@@ -413,6 +414,63 @@ export async function POST(request: NextRequest) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
           }
 
+          // --- Validate Rented Equipment Availability & Cooldown ---
+          if (Array.isArray(rentedEquipment) && rentedEquipment.length > 0) {
+            const resource = tenant.resources.find((r: any) => r.id === finalResourceId);
+            const equipList = (resource?.attributes as any)?.equipmentList || [];
+            
+            for (const reqEq of rentedEquipment) {
+              const eqConfig = equipList.find((e: any) => e.id === reqEq.id);
+              if (!eqConfig) {
+                throw new Error("INVALID_EQUIPMENT");
+              }
+              
+              if (eqConfig.category === "extra") {
+                const cooldownMin = Number(eqConfig.cooldownMinutes) || 0;
+                
+                // Query database for overlapping bookings to check quantity limits
+                const overlappingRentals = await tx.booking.findMany({
+                  where: {
+                    resourceId: { in: conflictingResourceIds },
+                    status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
+                    reservedFrom: { lt: reservedTo },
+                    reservedTo: { gt: new Date(reservedFrom.getTime() - 7 * 24 * 60 * 60 * 1000) } // 7-day lookback for long cooldowns
+                  }
+                });
+                
+                let currentRentedQty = 0;
+                overlappingRentals.forEach((b: any) => {
+                  if (!b.rentedEquipment) return;
+                  let eqRentalsList = [];
+                  try {
+                    eqRentalsList = typeof b.rentedEquipment === "string" ? JSON.parse(b.rentedEquipment) : b.rentedEquipment;
+                  } catch (e) {
+                    return;
+                  }
+                  if (!Array.isArray(eqRentalsList)) return;
+                  
+                  const rentedItem = eqRentalsList.find((rItem: any) => rItem.id === reqEq.id);
+                  if (!rentedItem || !rentedItem.quantity) return;
+                  
+                  const bStart = b.reservedFrom.getTime();
+                  const bEnd = b.reservedTo.getTime();
+                  const blockedEnd = bEnd + cooldownMin * 60 * 1000;
+                  
+                  const targetStart = reservedFrom.getTime();
+                  const targetEnd = reservedTo.getTime();
+                  
+                  if (bStart < targetEnd && blockedEnd > targetStart) {
+                    currentRentedQty += Number(rentedItem.quantity) || 0;
+                  }
+                });
+                
+                if (currentRentedQty + (Number(reqEq.quantity) || 0) > (Number(eqConfig.quantity) || 0)) {
+                  throw new Error(`EQUIPMENT_CAPACITY_EXCEEDED:${eqConfig.name}`);
+                }
+              }
+            }
+          }
+
           // --- Calculate Price ---
           let basePrice = 0.00;
           if (scheduleRuleId && rule) {
@@ -429,8 +487,20 @@ export async function POST(request: NextRequest) {
             basePrice = basePrice * (1 - (partner.discount || 0) / 100);
           }
 
+          // Add flat equipment cost (not subject to partner discount)
+          let equipmentCost = 0;
+          if (Array.isArray(rentedEquipment)) {
+            rentedEquipment.forEach((reqEq: any) => {
+              if (reqEq.category === "extra") {
+                equipmentCost += (Number(reqEq.price) || 0) * (Number(reqEq.quantity) || 0);
+              }
+            });
+          }
+
+          const totalBasePrice = basePrice + equipmentCost;
+
           // Round to 2 decimal places
-          const finalPrice = Math.round((basePrice + Number.EPSILON) * 100) / 100;
+          const finalPrice = Math.round((totalBasePrice + Number.EPSILON) * 100) / 100;
 
           // Determine status
           let bookingStatus = "CONFIRMED";
@@ -517,6 +587,7 @@ export async function POST(request: NextRequest) {
               price: finalPrice,
               partnerId: partner?.id || null,
               recurrenceGroup,
+              rentedEquipment: rentedEquipment || null,
             },
           });
           if (i === 0) {
@@ -548,6 +619,14 @@ export async function POST(request: NextRequest) {
       });
     } catch (error: any) {
       const msg = error.message || "";
+      if (msg.startsWith("EQUIPMENT_CAPACITY_EXCEEDED:")) {
+        const parts = msg.split(":");
+        const eqName = parts[1] || "vybavení";
+        return makeErrorResponse("EQUIPMENT_CAPACITY_EXCEEDED", `Kapacita pro zapůjčení "${eqName}" je v tomto čase (včetně doby schnutí/cooldownu) již plně obsazena.`);
+      }
+      if (msg === "INVALID_EQUIPMENT") {
+        return makeErrorResponse("INVALID_EQUIPMENT", "Vybrané doplňkové vybavení není k dispozici pro tento areál.");
+      }
       if (msg === "SCHEDULE_RULE_NOT_FOUND") {
         return makeErrorResponse("SCHEDULE_RULE_NOT_FOUND", "Vybraná lekce nebo časový slot programu nebyly nalezeny. Zkuste prosím obnovit stránku.");
       }

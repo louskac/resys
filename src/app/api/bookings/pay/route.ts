@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
+      include: { tenant: true },
     });
 
     if (!booking) {
@@ -43,12 +44,18 @@ export async function POST(request: NextRequest) {
     // Generate mock transaction ID
     const txId = "tx_mock_" + crypto.randomBytes(8).toString("hex");
 
+    // Calculate cut amount
+    const tenantCutPercent = booking.tenant.paymentCut || 0;
+    const bookingPrice = Number(booking.price || 0);
+    const cutAmount = (bookingPrice * tenantCutPercent) / 100;
+
     // Update booking to CONFIRMED
     const updatedBooking = await prisma.booking.update({
       where: { id: bookingId },
       data: {
         status: "CONFIRMED",
         paymentTransactionId: txId,
+        paymentCutAmount: cutAmount,
       },
     });
 

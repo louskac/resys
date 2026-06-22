@@ -7,7 +7,8 @@ import {
   Plus, Edit, Trash, RotateCcw, Server, Globe, Shield, 
   Activity, ExternalLink, Users, LogOut, KeyRound, Mail, 
   User as UserIcon, ShieldAlert, Loader2, Phone, Briefcase,
-  ArrowLeft, Database, Cpu, Terminal, Building, Lock, Layers
+  ArrowLeft, Database, Cpu, Terminal, Building, Lock, Layers,
+  Percent
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import AlertDialog from "@/components/AlertDialog";
@@ -29,6 +30,8 @@ interface Tenant {
   ssoClientSec: string;
   resources: TenantResource[];
   devices: TenantDevice[];
+  paymentCut?: number;
+  bookings?: { price: string; paymentCutAmount: string }[];
 }
 
 interface DBUser {
@@ -129,6 +132,7 @@ export default function HostConsole() {
     vertical: "SPORTS_GROUND",
     ssoClientId: "oneid-client-id",
     ssoClientSec: "oneid-client-secret",
+    paymentCut: 0,
   });
 
   // User Form states
@@ -264,6 +268,7 @@ export default function HostConsole() {
       vertical: tenant.vertical,
       ssoClientId: tenant.ssoClientId,
       ssoClientSec: tenant.ssoClientSec,
+      paymentCut: tenant.paymentCut || 0,
     });
   };
 
@@ -276,6 +281,7 @@ export default function HostConsole() {
       vertical: "SPORTS_GROUND",
       ssoClientId: "oneid-client-id",
       ssoClientSec: "oneid-client-secret",
+      paymentCut: 0,
     });
   };
 
@@ -767,7 +773,7 @@ export default function HostConsole() {
                               <KeyRound size={12} className="text-slate-400 dark:text-zinc-500" />
                               SSO ID: <span className="text-foreground font-mono font-medium">{tenant.ssoClientId}</span>
                             </p>
-                            <div className="flex gap-4 mt-2 text-muted-foreground pt-2 border-t border-border/60">
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-muted-foreground pt-2 border-t border-border/60">
                               <span className="flex items-center gap-1">
                                 <Database size={11} className="text-slate-400 dark:text-zinc-500" />
                                 Resources: <strong className="text-foreground font-semibold">{tenant.resources?.length || 0}</strong>
@@ -776,6 +782,26 @@ export default function HostConsole() {
                                 <Cpu size={11} className="text-slate-400 dark:text-zinc-500" />
                                 IoT Devices: <strong className="text-foreground font-semibold">{tenant.devices?.length || 0}</strong>
                               </span>
+                              <span className="flex items-center gap-1">
+                                <Percent size={11} className="text-slate-400 dark:text-zinc-500" />
+                                Poplatek (Cut): <strong className="text-foreground font-semibold">{tenant.paymentCut || 0} %</strong>
+                              </span>
+                              {(() => {
+                                const totalRevenue = (tenant.bookings || []).reduce((sum, b) => sum + Number(b.price || 0), 0);
+                                const totalCut = (tenant.bookings || []).reduce((sum, b) => sum + Number(b.paymentCutAmount || 0), 0);
+                                return (
+                                  <>
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      Obrat: <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{totalRevenue.toLocaleString()} Kč</strong>
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#7000FF] dark:bg-[#A78BFA]" />
+                                      Nasbíraný poplatek: <strong className="text-[#7000FF] dark:text-[#A78BFA] font-semibold">{totalCut.toLocaleString()} Kč</strong>
+                                    </span>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -993,6 +1019,24 @@ export default function HostConsole() {
                         <option value="CAPACITY_CLASS">Capacity Class (Fuchsia)</option>
                         <option value="EDUCATIONAL_COURSE">Educational Course (Cyan)</option>
                         <option value="EVENT_TICKETING">Event Ticketing (Amber)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Payment Processing Cut (Fee %)</label>
+                    <div className="relative flex items-center">
+                      <Percent size={13} className="absolute left-3.5 text-muted-foreground pointer-events-none" />
+                      <select
+                        value={formData.paymentCut}
+                        onChange={(e) => setFormData({ ...formData, paymentCut: Number(e.target.value) })}
+                        className="select-field pl-10 cursor-pointer"
+                        style={{ paddingLeft: "2.35rem" }}
+                      >
+                        <option value={0}>0% - Bez poplatku (Platform Free)</option>
+                        <option value={1}>1% Fee Cut</option>
+                        <option value={2}>2% Fee Cut</option>
+                        <option value={3}>3% Fee Cut</option>
                       </select>
                     </div>
                   </div>

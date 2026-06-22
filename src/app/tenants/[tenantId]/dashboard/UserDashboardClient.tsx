@@ -41,6 +41,7 @@ interface UserDashboardClientProps {
     status: string;
     price: string;
     createdAt: string;
+    rentedEquipment?: any[] | null;
   }[];
   checkinLogs: {
     id: string;
@@ -494,6 +495,21 @@ export default function UserDashboardClient({
                               <Clock size={13} className="text-muted-foreground" />
                               {formatTimeRange(b.reservedFrom, b.reservedTo)}
                             </p>
+                            {b.rentedEquipment && Array.isArray(b.rentedEquipment) && b.rentedEquipment.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-dashed border-border/60 text-[11px] text-muted-foreground space-y-1">
+                                <span className="block font-bold text-[9px] uppercase tracking-wider text-slate-400">Půjčené vybavení:</span>
+                                <div className="space-y-0.5 pl-1.5">
+                                  {b.rentedEquipment.map((eq: any) => (
+                                    <div key={eq.id} className="flex justify-between items-center">
+                                      <span>• {eq.name} ({eq.quantity} ks)</span>
+                                      <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                                        {eq.category === "default" ? "V ceně" : `${eq.price * eq.quantity} Kč`}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
