@@ -46,9 +46,50 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: "denied", reason: "unauthorized" }, { status: 401 });
       }
 
-      // 2. Fetch booking and validation windows
+      // 2. Parse and validate QR payload (dynamic vs. static)
+      let bookingId = qrPayload;
+      let isDynamicQr = false;
+
+      if (qrPayload.includes(":")) {
+        const parts = qrPayload.split(":");
+        if (parts.length === 4) {
+          const [parsedBookingId, timestampStr, stateStr, signature] = parts;
+          
+          // Verify cryptographic signature
+          const expectedSig = crypto
+            .createHash("sha256")
+            .update(`${parsedBookingId}:${timestampStr}:${stateStr}:resys-dynamic-qr-secret-key-2026`)
+            .digest("hex");
+            
+          if (signature !== expectedSig) {
+            return NextResponse.json({ status: "denied", reason: "invalid_signature" });
+          }
+
+          // Verify timestamp freshness (max 65 seconds to account for clock skew/network transit)
+          const qrTimestamp = parseInt(timestampStr, 10);
+          const nowMs = Date.now();
+          const ageSeconds = (nowMs - qrTimestamp) / 1000;
+
+          if (isNaN(qrTimestamp) || ageSeconds < -5 || ageSeconds > 65) {
+            return NextResponse.json({ status: "denied", reason: "expired_qr", ageSeconds });
+          }
+
+          bookingId = parsedBookingId;
+          isDynamicQr = true;
+        } else {
+          return NextResponse.json({ status: "denied", reason: "invalid_qr_format" });
+        }
+      } else {
+        // Enforce dynamic QR code. Reject static UUIDs unless they are mock dev bypass tokens.
+        const isMockBypass = qrPayload === "mock_dev_ticket_uuid" || qrPayload.startsWith("mock_") || qrPayload.startsWith("test_");
+        if (!isMockBypass) {
+          return NextResponse.json({ status: "denied", reason: "static_qr_forbidden" });
+        }
+      }
+
+      // Fetch booking using the resolved booking ID
       const booking = await prisma.booking.findUnique({
-        where: { id: qrPayload },
+        where: { id: bookingId },
         include: { resource: true },
       });
 

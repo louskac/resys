@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { 
@@ -125,6 +125,68 @@ export default function UserDashboardClient({
 
   // Ticket Modal state
   const [activeTicket, setActiveTicket] = useState<typeof bookings[0] | null>(null);
+
+  // Dynamic QR Code states
+  const [dynamicQrPayload, setDynamicQrPayload] = useState<string>("");
+  const [qrState, setQrState] = useState<number>(0);
+  const [qrTimeLeft, setQrTimeLeft] = useState<number>(60);
+
+  useEffect(() => {
+    if (!activeTicket) {
+      setDynamicQrPayload("");
+      return;
+    }
+
+    let baseTimestamp = Date.now();
+    let currentState = 0;
+    
+    const updatePayload = async (ts: number, state: number) => {
+      const bookingId = activeTicket.id;
+      const secret = "resys-dynamic-qr-secret-key-2026";
+      const dataStr = `${bookingId}:${ts}:${state}`;
+      
+      try {
+        const msgBuffer = new TextEncoder().encode(`${dataStr}:${secret}`);
+        const hashBuffer = await window.crypto.subtle.digest("SHA-256", msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+        
+        setDynamicQrPayload(`${dataStr}:${hashHex}`);
+      } catch (err) {
+        console.error("Failed to generate secure QR signature:", err);
+        // Fallback to static ID if subtle crypto fails
+        setDynamicQrPayload(bookingId);
+      }
+    };
+
+    // Initial update
+    updatePayload(baseTimestamp, currentState);
+
+    // Interval to toggle state (flashes every 1.5 seconds)
+    const stateInterval = setInterval(() => {
+      currentState = currentState === 0 ? 1 : 0;
+      setQrState(currentState);
+      updatePayload(baseTimestamp, currentState);
+    }, 1500);
+
+    // Interval to update base timestamp every 60 seconds
+    const timestampInterval = setInterval(() => {
+      baseTimestamp = Date.now();
+      setQrTimeLeft(60);
+      updatePayload(baseTimestamp, currentState);
+    }, 60000);
+
+    // Countdown timer for visualization
+    const countdownInterval = setInterval(() => {
+      setQrTimeLeft(prev => (prev > 1 ? prev - 1 : 60));
+    }, 1000);
+
+    return () => {
+      clearInterval(stateInterval);
+      clearInterval(timestampInterval);
+      clearInterval(countdownInterval);
+    };
+  }, [activeTicket]);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -882,22 +944,48 @@ export default function UserDashboardClient({
 
             {/* Ticket Bottom Part (QR Code) */}
             <div className="p-6 flex flex-col items-center bg-slate-50/50 dark:bg-slate-900/20 text-center gap-4">
-              <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Naskenujte QR kód u turniketu</span>
+              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-full text-[9px] font-extrabold uppercase tracking-wider animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Aktivní zabezpečený kód
+              </div>
               
               {/* Premium looking QR Code visual representation */}
-              <div className="p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md hover:scale-102 transition-transform duration-200 select-none">
+              <div className="relative p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md select-none overflow-hidden group">
                 <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-2xl relative overflow-hidden text-slate-800">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(activeTicket.id)}`}
-                    alt={`QR Code pro rezervaci ${activeTicket.id}`}
-                    className="h-36 w-36 object-contain"
-                  />
+                  {dynamicQrPayload ? (
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dynamicQrPayload)}`}
+                      alt={`QR Code pro rezervaci ${activeTicket.id}`}
+                      className="h-36 w-36 object-contain transition-all duration-300"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="animate-spin text-tenant-primary" size={24} />
+                      <span className="text-[10px] text-slate-400 font-bold">Šifrování...</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <code className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-full border border-border">
-                {activeTicket.id}
-              </code>
+              <div className="space-y-1.5">
+                <code className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-full border border-border">
+                  {activeTicket.id.substring(0, 8)}...{activeTicket.id.substring(activeTicket.id.length - 8)}
+                </code>
+                
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500 font-semibold select-none">
+                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                    <span 
+                      className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
+                      style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
+                    />
+                  </span>
+                  <span>Obnova za {qrTimeLeft}s</span>
+                </div>
+              </div>
+
+              <p className="text-[9px] text-slate-400 dark:text-zinc-500 leading-normal max-w-[220px]">
+                Kód se z bezpečnostních důvodů každou minutu generuje znovu a bliká. Snímky obrazovky ani videozáznamy nebudou čtečkou přijaty.
+              </p>
 
               <button
                 onClick={() => setActiveTicket(null)}

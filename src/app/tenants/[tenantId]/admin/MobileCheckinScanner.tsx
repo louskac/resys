@@ -291,6 +291,12 @@ export default function MobileCheckinScanner({
           ? `Lístek nemá platný stav (${data.bookingStatus || "neznámý"}). Musí být ve stavu CONFIRMED.`
           : data.reason === "unknown_ticket"
           ? "Neznámý kód lístku (UUID neexistuje)."
+          : data.reason === "expired_qr"
+          ? "QR kód vypršel (expiroval). Požádejte uživatele o zobrazení aktuálního kódu na displeji."
+          : data.reason === "static_qr_forbidden"
+          ? "Použití statického snímku obrazovky je zakázáno. Kód musí být načten živě z aplikace."
+          : data.reason === "invalid_signature"
+          ? "Neplatný podpis QR kódu (detekován pokus o padělání nebo stará verze aplikace)."
           : `Přístup odepřen: ${data.reason || "neznámá chyba"}`;
 
         setScanResult({
