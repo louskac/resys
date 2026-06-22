@@ -303,10 +303,10 @@ export default function UserDashboardClient({
   };
 
   const upcomingBookings = bookings
-    .filter((b) => new Date(b.reservedFrom) > new Date())
+    .filter((b) => new Date(b.reservedTo) > new Date())
     .sort((a, b) => new Date(a.reservedFrom).getTime() - new Date(b.reservedFrom).getTime());
   const pastBookings = bookings
-    .filter((b) => new Date(b.reservedFrom) <= new Date())
+    .filter((b) => new Date(b.reservedTo) <= new Date())
     .sort((a, b) => new Date(b.reservedFrom).getTime() - new Date(a.reservedFrom).getTime());
 
   return (
@@ -464,6 +464,11 @@ export default function UserDashboardClient({
                               <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold uppercase tracking-wider">
                                 Čeká na platbu
                               </span>
+                            ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                                Právě probíhá
+                              </span>
                             ) : b.status === "ATTENDED" ? (
                               <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-550 dark:text-blue-400 font-bold uppercase tracking-wider">
                                 Odbaveno
@@ -560,15 +565,15 @@ export default function UserDashboardClient({
                               </td>
                               <td className="p-4 text-right">
                                 {b.status === "ATTENDED" ? (
-                                  <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-550 dark:text-blue-400 font-bold uppercase tracking-wider text-[9px] border border-blue-500/25">
+                                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35] font-bold uppercase tracking-wider text-[9px]">
                                     Odbaveno
                                   </span>
                                 ) : b.status === "PENDING_PAYMENT" ? (
-                                  <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-550 dark:text-amber-400 font-bold uppercase tracking-wider text-[9px] border border-amber-500/25">
-                                    Neuhrazeno
+                                  <span className="px-2 py-0.5 rounded bg-rose-500/5 dark:bg-rose-500/10 text-rose-550 dark:text-rose-450 border border-rose-500/15 font-bold uppercase tracking-wider text-[9px]">
+                                    Propadlo (Neuhrazeno)
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground font-bold uppercase tracking-wider text-[9px] border border-border">
+                                  <span className="px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-zinc-550 border border-slate-100 dark:border-zinc-800/40 font-bold uppercase tracking-wider text-[9px]">
                                     Proběhlo
                                   </span>
                                 )}
