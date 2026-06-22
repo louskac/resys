@@ -54,15 +54,11 @@ export default function MobileCheckinScanner({
   } | null>(null);
   
   // Timer for auto-resume
-  const [resumeTimeLeft, setResumeTimeLeft] = useState(0);
-
   // Refs for media and scan loops
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const resumeTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Synchronous status refs to prevent scanning race conditions
   const isCheckingInRef = useRef(false);
@@ -278,7 +274,6 @@ export default function MobileCheckinScanner({
           userName: data.userName,
           resourceName: data.resourceName,
         });
-        startResumeTimer();
       } else {
         playBeep("error");
         triggerHaptic("error");
@@ -303,7 +298,6 @@ export default function MobileCheckinScanner({
           status: "denied",
           message: reasonMsg,
         });
-        startResumeTimer();
       }
     } catch (err) {
       console.error(err);
@@ -315,44 +309,18 @@ export default function MobileCheckinScanner({
         status: "error",
         message: "Chyba připojení k serveru.",
       });
-      startResumeTimer();
     } finally {
       setIsCheckingIn(false);
       isCheckingInRef.current = false;
     }
   };
 
-  // Launch countdown and timer to automatically resume scanning
-  const startResumeTimer = () => {
-    const duration = 2500; // 2.5 seconds
-    setResumeTimeLeft(2.5);
-
-    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-
-    const intervalTime = 100;
-    let timeRemaining = 2.5;
-
-    countdownIntervalRef.current = setInterval(() => {
-      timeRemaining = Math.max(0, timeRemaining - intervalTime / 1000);
-      setResumeTimeLeft(timeRemaining);
-    }, intervalTime);
-
-    resumeTimerRef.current = setTimeout(() => {
-      resumeScanning();
-    }, duration);
-  };
-
   const resumeScanning = () => {
-    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-    
     // Clear refs synchronously BEFORE state update and loop start
     hasResultRef.current = false;
     isCheckingInRef.current = false;
 
     setScanResult(null);
-    setResumeTimeLeft(0);
     setManualCode("");
     
     if (isScanning) {
@@ -404,7 +372,6 @@ export default function MobileCheckinScanner({
               status: "error",
               message: "Chyba čtení: V obrázku nebyl nalezen QR kód."
             });
-            startResumeTimer();
           }
         }
       };
@@ -676,22 +643,15 @@ export default function MobileCheckinScanner({
               <button
                 type="button"
                 onClick={resumeScanning}
-                className="w-full py-4 rounded-2xl text-xs font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all relative overflow-hidden flex items-center justify-center bg-white shadow-lg shadow-black/10"
+                className="w-full py-4 rounded-2xl text-xs font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all hover:bg-slate-100 flex items-center justify-center bg-white shadow-lg shadow-black/10"
                 style={{
                   color: scanResult.status === "granted" ? "#047857" : "#be123c",
                 }}
               >
-                <span className="relative z-10">
-                  Skenovat další ({resumeTimeLeft.toFixed(1)}s)
+                <span className="flex items-center gap-2">
+                  Skenovat další kód
+                  <ArrowRight size={13} className="stroke-[2.5]" />
                 </span>
-                
-                <div 
-                  className="absolute left-0 bottom-0 h-1 transition-all duration-100 ease-linear"
-                  style={{
-                    backgroundColor: scanResult.status === "granted" ? "#a7f3d0" : "#fecdd3",
-                    width: `${(resumeTimeLeft / 2.5) * 100}%`
-                  }}
-                />
               </button>
             </div>
           </div>
