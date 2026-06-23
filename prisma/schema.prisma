@@ -39,26 +39,37 @@ enum CheckinResult {
 
 // SaaS Tenant Configuration
 model Tenant {
-  id           String    @id // e.g., "sfera", "umelka", "motogp"
-  name         String
-  domain       String    @unique // e.g., "rezervace.sferapardubice.eu"
-  vertical     Vertical
-  ssoClientId  String
-  ssoClientSec String    // Client secret for OneiD SSO
-  paymentCut   Int       @default(0) // Platform cut percentage: 0, 1, 2, or 3 %
-  attributes   Json?
-  createdAt    DateTime  @default(now())
-  resources    Resource[]
-  bookings     Booking[]
-  devices      CheckinDevice[]
-  users        User[]
-  partners     Partner[]
-  invoices     Invoice[]
+  id                 String    @id // e.g., "sfera", "umelka", "motogp"
+  name               String
+  domain             String    @unique // e.g., "rezervace.sferapardubice.eu"
+  vertical           Vertical
+  ssoClientId        String
+  ssoClientSec       String    // Client secret for OneiD SSO
+  paymentCut         Int       @default(3) // Platform cut percentage: 0, 1, 2, or 3 %
+  attributes         Json?
+  createdAt          DateTime  @default(now())
+  resources          Resource[]
+  bookings           Booking[]
+  devices            CheckinDevice[]
+  users              User[]
+  partners           Partner[]
+  invoices           Invoice[]
+  
+  // B2B SaaS Subscription Billing
+  stripeCustomerId   String?   @unique
+  subscriptionId     String?   @unique
+  subscriptionPlan   String    @default("FREE_TRIAL") // "FREE_TRIAL", "STARTER", "PRO", "ENTERPRISE"
+  subscriptionStatus String    @default("TRIALING")   // "TRIALING", "ACTIVE", "PAST_DUE", "CANCELED"
+  trialEndsAt        DateTime?
+  maxResourcesLimit  Int       @default(10)           // Limit resource counts based on tier
+  maxDevicesLimit    Int       @default(3)            // Limit checkin device counts based on tier
+  auditLogs          AuditLog[]
 }
 
 enum Role {
   SUPERADMIN
   ADMIN
+  RECEPTIONIST
   USER
 }
 
@@ -146,13 +157,20 @@ model Booking {
 
 // Physical scanning devices (turnstiles, tablets)
 model CheckinDevice {
-  id          String       @id @default(uuid())
-  tenantId    String
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name        String
-  tokenHash   String       @unique // Hashed API token for verification
-  active      Boolean      @default(true)
-  checkinLogs CheckinLog[]
+  id               String       @id @default(uuid())
+  tenantId         String
+  tenant           Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name             String
+  tokenHash        String       @unique // Hashed API token for verification
+  active           Boolean      @default(true)
+  checkinLogs      CheckinLog[]
+  
+  // IoT Fleet Management & Syncing
+  pairingCode      String?      @unique
+  pairingExpiresAt DateTime?
+  lastSeenAt       DateTime?
+  status           String       @default("OFFLINE") // "ONLINE", "OFFLINE", "MAINTENANCE"
+  firmwareVersion  String?
 }
 
 // Checkin scan events
@@ -194,6 +212,13 @@ model Partner {
   invoices       Invoice[]
   users          User[]
 
+  // B2B Partner Credits & Financials
+  creditBalance      Decimal   @db.Decimal(10, 2) @default(0.00)
+  creditLimit        Decimal   @db.Decimal(10, 2) @default(0.00)
+  billingCycle       String    @default("MONTHLY") // "WEEKLY", "BI-WEEKLY", "MONTHLY"
+  paymentTermsDays   Int       @default(14)
+  autoBillingEnabled Boolean   @default(false)
+
   @@index([tenantId])
 }
 
@@ -213,5 +238,21 @@ model Invoice {
   bookings      Booking[]
 
   @@unique([tenantId, number])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?  // Nullable if system-level event
+  userName  String?  // Cached name at creation time
+  action    String   // e.g. "RULE_CREATE", "BOOKING_CANCEL", "PLAN_UPGRADE"
+  entity    String   // e.g. "Booking", "ScheduleRule", "Partner", "Tenant"
+  entityId  String?
+  payload   Json?    // Stores request body or parameters
+  ipAddress String?
+  createdAt DateTime @default(now())
+
   @@index([tenantId])
 }

@@ -116,6 +116,17 @@ export async function POST(request: NextRequest) {
         let partner = null;
         let finalPartnerId = partnerId;
 
+        // Enforce subscription plan checks: block booking if canceled or past_due
+        const dbTenant = await tx.tenant.findUnique({
+          where: { id: tenantId }
+        });
+        if (!dbTenant) {
+          throw new Error("TENANT_NOT_FOUND");
+        }
+        if (dbTenant.subscriptionStatus === "CANCELED" || dbTenant.subscriptionStatus === "PAST_DUE") {
+          throw new Error(`SUBSCRIPTION_INACTIVE:${dbTenant.subscriptionStatus}`);
+        }
+
         // If no explicit partnerId is provided, check if the booking user is linked to a partner
         if (!finalPartnerId && userEmail) {
           const dbUser = await tx.user.findFirst({
@@ -502,6 +513,24 @@ export async function POST(request: NextRequest) {
           // Round to 2 decimal places
           const finalPrice = Math.round((totalBasePrice + Number.EPSILON) * 100) / 100;
 
+          // --- B2B Partner Credit & Limit Check ---
+          if (partner) {
+            const currentBalance = Number(partner.creditBalance) || 0;
+            const creditOverdraftLimit = Number(partner.creditLimit) || 0;
+            const totalAvailable = currentBalance + creditOverdraftLimit;
+            
+            if (finalPrice > totalAvailable) {
+              throw new Error(`CREDIT_LIMIT_EXCEEDED:${partner.name}:${currentBalance}:${finalPrice}`);
+            }
+
+            // Deduct from partner's credit balance inside the transaction
+            const newBalance = currentBalance - finalPrice;
+            await tx.partner.update({
+              where: { id: partner.id },
+              data: { creditBalance: newBalance }
+            });
+          }
+
           // Determine status
           let bookingStatus = "CONFIRMED";
           if (isUserAdmin) {
@@ -597,10 +626,10 @@ export async function POST(request: NextRequest) {
 
         const firstBooking = await tx.booking.findUnique({
           where: { id: createdBookingId },
-          select: { status: true }
+          select: { status: true, price: true }
         });
 
-        return { id: createdBookingId, status: firstBooking?.status };
+        return { id: createdBookingId, status: firstBooking?.status, price: firstBooking?.price };
       }, {
         isolationLevel: "Serializable"
       });
@@ -608,6 +637,23 @@ export async function POST(request: NextRequest) {
       // Trigger real-time updates
       await triggerBookingUpdate(tenantId);
       sendSSEUpdate(tenantId);
+
+      // Record audit log for booking creation
+      try {
+        await prisma.auditLog.create({
+          data: {
+            tenantId,
+            userId: session?.user?.id || null,
+            userName: userName || "Guest",
+            action: "BOOKING_CREATE",
+            entity: "Booking",
+            entityId: result.id,
+            payload: { resourceId, startTime, endTime, price: result.price }
+          }
+        });
+      } catch (auditErr) {
+        console.error("Audit log booking creation failed", auditErr);
+      }
 
       return NextResponse.json({
         status: "success",
@@ -619,6 +665,22 @@ export async function POST(request: NextRequest) {
       });
     } catch (error: any) {
       const msg = error.message || "";
+      if (msg.startsWith("SUBSCRIPTION_INACTIVE:")) {
+        return makeErrorResponse(
+          "SUBSCRIPTION_INACTIVE",
+          "Rezervaci momentálně nelze vytvořit z provozních důvodů. Prosím, kontaktujte správce areálu."
+        );
+      }
+      if (msg.startsWith("CREDIT_LIMIT_EXCEEDED:")) {
+        const parts = msg.split(":");
+        const pName = parts[1] || "B2B partner";
+        const pBalance = parseFloat(parts[2] || "0").toLocaleString("cs-CZ", { minimumFractionDigits: 2 });
+        const pPrice = parseFloat(parts[3] || "0").toLocaleString("cs-CZ", { minimumFractionDigits: 2 });
+        return makeErrorResponse(
+          "CREDIT_LIMIT_EXCEEDED",
+          `Kredit partnera "${pName}" je nedostatečný. Aktuální zůstatek činí ${pBalance} Kč a cena rezervace je ${pPrice} Kč.`
+        );
+      }
       if (msg.startsWith("EQUIPMENT_CAPACITY_EXCEEDED:")) {
         const parts = msg.split(":");
         const eqName = parts[1] || "vybavení";
@@ -740,13 +802,69 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (cancelSeries && booking.recurrenceGroup) {
+      // Find all bookings in the series to calculate total refund
+      const seriesBookings = await prisma.booking.findMany({
+        where: { recurrenceGroup: booking.recurrenceGroup }
+      });
+
+      if (booking.partnerId) {
+        const totalRefund = seriesBookings.reduce((sum, b) => sum + Number(b.price || 0), 0);
+        if (totalRefund > 0) {
+          await prisma.partner.update({
+            where: { id: booking.partnerId },
+            data: { creditBalance: { increment: totalRefund } }
+          });
+        }
+      }
+
       await prisma.booking.deleteMany({
         where: { recurrenceGroup: booking.recurrenceGroup },
       });
+
+      // Record audit log
+      try {
+        await prisma.auditLog.create({
+          data: {
+            tenantId: booking.tenantId,
+            userId: session?.user?.id || null,
+            userName: session?.user?.name || "System",
+            action: "BOOKING_CANCEL_SERIES",
+            entity: "Booking",
+            entityId: bookingId,
+            payload: { recurrenceGroup: booking.recurrenceGroup, bookingsCount: seriesBookings.length }
+          }
+        });
+      } catch (auditErr) {
+        console.error("Audit log cancel series booking failed", auditErr);
+      }
     } else {
+      if (booking.partnerId && Number(booking.price) > 0) {
+        await prisma.partner.update({
+          where: { id: booking.partnerId },
+          data: { creditBalance: { increment: Number(booking.price) } }
+        });
+      }
+
       await prisma.booking.delete({
         where: { id: bookingId },
       });
+
+      // Record audit log
+      try {
+        await prisma.auditLog.create({
+          data: {
+            tenantId: booking.tenantId,
+            userId: session?.user?.id || null,
+            userName: session?.user?.name || "System",
+            action: "BOOKING_CANCEL",
+            entity: "Booking",
+            entityId: bookingId,
+            payload: { userName: booking.userName, userEmail: booking.userEmail, price: Number(booking.price) }
+          }
+        });
+      } catch (auditErr) {
+        console.error("Audit log cancel booking failed", auditErr);
+      }
     }
 
     // Trigger real-time updates

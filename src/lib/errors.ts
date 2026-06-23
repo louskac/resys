@@ -17,7 +17,10 @@ export type ErrorCode =
   | "PAST_BOOKING_NOT_ALLOWED"
   | "EQUIPMENT_CAPACITY_EXCEEDED"
   | "INVALID_EQUIPMENT"
-  | "SCHEDULE_RULE_NOT_FOUND";
+  | "SCHEDULE_RULE_NOT_FOUND"
+  | "SUBSCRIPTION_INACTIVE"
+  | "CREDIT_LIMIT_EXCEEDED";
+
 
 export interface ApiErrorResponse {
   status: "error";

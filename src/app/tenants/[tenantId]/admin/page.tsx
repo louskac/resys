@@ -163,6 +163,11 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     name: tenant.name,
     vertical: tenant.vertical,
     attributes: attributes,
+    subscriptionPlan: tenant.subscriptionPlan,
+    subscriptionStatus: tenant.subscriptionStatus,
+    maxResourcesLimit: tenant.maxResourcesLimit,
+    maxDevicesLimit: tenant.maxDevicesLimit,
+    trialEndsAt: tenant.trialEndsAt ? tenant.trialEndsAt.toISOString() : null,
   };
 
   const serializedResources = tenant.resources.map(res => ({

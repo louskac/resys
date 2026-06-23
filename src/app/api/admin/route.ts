@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/auth";
 import { hashPassword } from "@/lib/crypto";
 import { ensureDefaultData } from "@/lib/dbInit";
+import { sendSSEUpdate } from "@/lib/sse";
 
 const execPromise = util.promisify(exec);
 
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- SUPERADMIN / HOST PORTAL ACTIONS ---
-    const superadminActions = ["seed_reset", "tenant_upsert", "tenant_delete", "user_list", "user_upsert", "user_delete"];
+    const superadminActions = ["seed_reset", "tenant_upsert", "tenant_delete", "user_list", "user_upsert", "user_delete", "simulate_stripe_webhook"];
     if (superadminActions.includes(action)) {
       if (!await checkSuperadmin(session)) {
         return NextResponse.json({ error: "Forbidden: Superadmin access required" }, { status: 403 });
@@ -117,13 +118,25 @@ export async function POST(request: NextRequest) {
       "rule_delete",
       "device_upsert",
       "device_delete",
-      "generate_onboarding_suggestions"
+      "generate_onboarding_suggestions",
+      "device_generate_pairing_code",
+      "audit_logs_list",
+      "tenant_subscription_update"
     ];
     let targetTenantId: string | undefined = undefined;
     if (tenantAdminActions.includes(action)) {
       targetTenantId = data?.tenantId;
       if (!targetTenantId && action === "tenant_settings_update" && data?.id) {
         targetTenantId = data.id;
+      }
+      if (!targetTenantId && action === "device_generate_pairing_code" && data?.tenantId) {
+        targetTenantId = data.tenantId;
+      }
+      if (!targetTenantId && action === "audit_logs_list" && data?.tenantId) {
+        targetTenantId = data.tenantId;
+      }
+      if (!targetTenantId && action === "tenant_subscription_update" && data?.tenantId) {
+        targetTenantId = data.tenantId;
       }
 
       if (!targetTenantId) {
@@ -182,8 +195,8 @@ export async function POST(request: NextRequest) {
         
         const tenant = await prisma.tenant.upsert({
           where: { id },
-          update: { name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: Number(paymentCut || 0) },
-          create: { id, name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: Number(paymentCut || 0) },
+          update: { name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: paymentCut !== undefined && paymentCut !== null ? Number(paymentCut) : 3 },
+          create: { id, name, domain, vertical, ssoClientId, ssoClientSec, paymentCut: paymentCut !== undefined && paymentCut !== null ? Number(paymentCut) : 3 },
         });
 
         let adminCreated = false;
@@ -216,6 +229,59 @@ export async function POST(request: NextRequest) {
           adminEmail,
           adminPassword
         });
+      }
+
+      case "simulate_stripe_webhook": {
+        const { id, plan, status } = data;
+        if (!id || !plan || !status) {
+          return NextResponse.json({ error: "id, plan and status are required" }, { status: 400 });
+        }
+        
+        let maxResourcesLimit = 2; // FREE
+        let maxDevicesLimit = 1;
+        
+        if (plan === "STARTER") {
+          maxResourcesLimit = 5;
+          maxDevicesLimit = 3;
+        } else if (plan === "PRO") {
+          maxResourcesLimit = 15;
+          maxDevicesLimit = 10;
+        } else if (plan === "ENTERPRISE") {
+          maxResourcesLimit = 99;
+          maxDevicesLimit = 99;
+        }
+
+        const tenant = await prisma.tenant.update({
+          where: { id },
+          data: {
+            subscriptionPlan: plan,
+            subscriptionStatus: status,
+            maxResourcesLimit,
+            maxDevicesLimit
+          }
+        });
+
+        // Record audit log
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId: id,
+              userId: session?.user?.id || null,
+              userName: session?.user?.name || "Superadmin",
+              action: "PLAN_UPGRADE",
+              entity: "Tenant",
+              entityId: id,
+              payload: { plan, status, maxResourcesLimit, maxDevicesLimit }
+            }
+          });
+        } catch (auditErr) {
+          console.error("Audit log subscription simulation failed", auditErr);
+        }
+
+        // Broadcast real-time update to the tenant admin dashboard clients
+        sendSSEUpdate(id);
+
+        return NextResponse.json({ status: "success", tenant });
       }
 
       case "generate_onboarding_suggestions": {
@@ -451,6 +517,74 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
           where: { id },
           data: { attributes: adjustedAttributes },
         });
+
+        // Record audit log
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId: id,
+              userId: session?.user?.id || null,
+              userName: session?.user?.name || "System",
+              action: "TENANT_SETTINGS_UPDATE",
+              entity: "Tenant",
+              entityId: id,
+              payload: { attributes: adjustedAttributes }
+            }
+          });
+        } catch (auditErr) {
+          console.error("Audit log tenant settings update failed", auditErr);
+        }
+
+        return NextResponse.json({ status: "success", tenant });
+      }
+
+      case "tenant_subscription_update": {
+        const { tenantId, plan, status } = data;
+        if (!tenantId || !plan || !status) {
+          return NextResponse.json({ error: "tenantId, plan and status are required" }, { status: 400 });
+        }
+        
+        let maxResourcesLimit = 2; // FREE
+        let maxDevicesLimit = 1;
+        
+        if (plan === "STARTER") {
+          maxResourcesLimit = 5;
+          maxDevicesLimit = 3;
+        } else if (plan === "PRO") {
+          maxResourcesLimit = 15;
+          maxDevicesLimit = 10;
+        } else if (plan === "ENTERPRISE") {
+          maxResourcesLimit = 99;
+          maxDevicesLimit = 99;
+        }
+
+        const tenant = await prisma.tenant.update({
+          where: { id: tenantId },
+          data: {
+            subscriptionPlan: plan,
+            subscriptionStatus: status,
+            maxResourcesLimit,
+            maxDevicesLimit
+          }
+        });
+
+        // Record audit log
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId,
+              userId: session?.user?.id || null,
+              userName: session?.user?.name || "System",
+              action: "PLAN_UPGRADE",
+              entity: "Tenant",
+              entityId: tenantId,
+              payload: { plan, status, maxResourcesLimit, maxDevicesLimit }
+            }
+          });
+        } catch (auditErr) {
+          console.error("Audit log subscription update failed", auditErr);
+        }
+
         return NextResponse.json({ status: "success", tenant });
       }
 
@@ -562,13 +696,57 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
             where: { id },
             data: { name, type, maxCapacity, attributes: adjustedAttributes },
           });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "RESOURCE_UPDATE",
+                entity: "Resource",
+                entityId: resource.id,
+                payload: { name, type, maxCapacity }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log resource update failed", auditErr);
+          }
         } else {
           if (tenantId !== targetTenantId) {
             return NextResponse.json({ error: "Forbidden: Cannot create resource for another tenant" }, { status: 403 });
           }
+
+          // Enforce plan limits
+          const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+          const currentCount = await prisma.resource.count({ where: { tenantId } });
+          if (tenant && currentCount >= tenant.maxResourcesLimit) {
+            return NextResponse.json({ 
+              error: `Plan limit exceeded: Your ${tenant.subscriptionPlan} plan allows a maximum of ${tenant.maxResourcesLimit} resources. Upgrade your plan to add more.` 
+            }, { status: 400 });
+          }
+
           resource = await prisma.resource.create({
             data: { tenantId, name, type, maxCapacity, attributes: adjustedAttributes },
           });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "RESOURCE_CREATE",
+                entity: "Resource",
+                entityId: resource.id,
+                payload: { name, type, maxCapacity }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log resource creation failed", auditErr);
+          }
         }
         return NextResponse.json({ status: "success", resource });
       }
@@ -659,6 +837,24 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
               maxCapacity: parseInt(maxCapacity, 10) 
             },
           });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "RULE_UPDATE",
+                entity: "ScheduleRule",
+                entityId: rule.id,
+                payload: { name, startTime, endTime, price }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log rule update failed", auditErr);
+          }
+
           return NextResponse.json({ status: "success", rule });
         } else {
           if (resourceId) {
@@ -686,6 +882,23 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
               });
               createdRules.push(rule);
             }
+
+            // Record audit log
+            try {
+              await prisma.auditLog.create({
+                data: {
+                  tenantId: targetTenantId!,
+                  userId: session?.user?.id || null,
+                  userName: session?.user?.name || "System",
+                  action: "RULE_CREATE_BATCH",
+                  entity: "ScheduleRule",
+                  payload: { name, startTime, endTime, price, daysCount: daysOfWeek.length }
+                }
+              });
+            } catch (auditErr) {
+              console.error("Audit log rule batch creation failed", auditErr);
+            }
+
             return NextResponse.json({ status: "success", rules: createdRules });
           } else {
             const rule = await prisma.scheduleRule.create({
@@ -699,6 +912,24 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
                 maxCapacity: parseInt(maxCapacity, 10) 
               },
             });
+
+            // Record audit log
+            try {
+              await prisma.auditLog.create({
+                data: {
+                  tenantId: targetTenantId!,
+                  userId: session?.user?.id || null,
+                  userName: session?.user?.name || "System",
+                  action: "RULE_CREATE",
+                  entity: "ScheduleRule",
+                  entityId: rule.id,
+                  payload: { name, startTime, endTime, price }
+                }
+              });
+            } catch (auditErr) {
+              console.error("Audit log rule creation failed", auditErr);
+            }
+
             return NextResponse.json({ status: "success", rule });
           }
         }
@@ -721,7 +952,7 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
       }
 
       case "device_upsert": {
-        const { id, tenantId, name, token, active } = data;
+        const { id, tenantId, name, token, active, isNew } = data;
         
         let tokenHashUpdate = {};
         if (token && token.trim() !== "") {
@@ -730,7 +961,7 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         }
 
         let device;
-        if (id) {
+        if (id && !isNew) {
           const existing = await prisma.checkinDevice.findUnique({ where: { id } });
           if (!existing) {
             return NextResponse.json({ error: "Device not found" }, { status: 404 });
@@ -742,10 +973,44 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
             where: { id },
             data: { name, active, ...tokenHashUpdate },
           });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "DEVICE_UPDATE",
+                entity: "CheckinDevice",
+                entityId: device.id,
+                payload: { name, active }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log device update failed", auditErr);
+          }
         } else {
           if (tenantId !== targetTenantId) {
             return NextResponse.json({ error: "Forbidden: Cannot create device for another tenant" }, { status: 403 });
           }
+
+          if (id) {
+            const existing = await prisma.checkinDevice.findUnique({ where: { id } });
+            if (existing) {
+              return NextResponse.json({ error: "Zařízení s tímto ID již existuje." }, { status: 400 });
+            }
+          }
+
+          // Enforce plan limits
+          const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+          const currentCount = await prisma.checkinDevice.count({ where: { tenantId } });
+          if (tenant && currentCount >= tenant.maxDevicesLimit) {
+            return NextResponse.json({ 
+              error: `Plan limit exceeded: Your ${tenant.subscriptionPlan} plan allows a maximum of ${tenant.maxDevicesLimit} devices. Upgrade your plan to add more.` 
+            }, { status: 400 });
+          }
+
           device = await prisma.checkinDevice.create({
             data: { 
               id: id || undefined, 
@@ -755,6 +1020,23 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
               active
             },
           });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "DEVICE_CREATE",
+                entity: "CheckinDevice",
+                entityId: device.id,
+                payload: { name, active }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log device creation failed", auditErr);
+          }
         }
         return NextResponse.json({ status: "success", device });
       }
@@ -770,6 +1052,63 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         }
         await prisma.checkinDevice.delete({ where: { id } });
         return NextResponse.json({ status: "success", message: "Device deleted." });
+      }
+
+      case "device_generate_pairing_code": {
+        const { tenantId, name } = data;
+        if (!tenantId || !name) {
+          return NextResponse.json({ error: "tenantId and name are required" }, { status: 400 });
+        }
+
+        // Generate 6-digit code like "123-456"
+        const pCode = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
+        const pairingExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+        const device = await prisma.checkinDevice.create({
+          data: {
+            tenantId,
+            name,
+            tokenHash: crypto.createHash("sha256").update("temp_" + pCode + Math.random()).digest("hex"),
+            pairingCode: pCode,
+            pairingExpiresAt,
+            status: "OFFLINE",
+            active: false
+          }
+        });
+
+        // Record audit log
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId,
+              userId: session?.user?.id || null,
+              userName: session?.user?.name || "System",
+              action: "DEVICE_PAIRING_CODE_GEN",
+              entity: "CheckinDevice",
+              entityId: device.id,
+              payload: { pairingCode: pCode, name }
+            }
+          });
+        } catch (auditErr) {
+          console.error("Audit log pairing generation failed", auditErr);
+        }
+
+        return NextResponse.json({ status: "success", deviceId: device.id, pairingCode: pCode });
+      }
+
+      case "audit_logs_list": {
+        const { tenantId } = data;
+        if (!tenantId) {
+          return NextResponse.json({ error: "tenantId is required" }, { status: 400 });
+        }
+
+        const logs = await prisma.auditLog.findMany({
+          where: { tenantId },
+          orderBy: { createdAt: "desc" },
+          take: 100
+        });
+
+        return NextResponse.json({ status: "success", logs });
       }
 
       default:

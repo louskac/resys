@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const txId = "tx_mock_" + crypto.randomBytes(8).toString("hex");
 
     // Calculate cut amount
-    const tenantCutPercent = booking.tenant.paymentCut || 0;
+    const tenantCutPercent = booking.tenant.paymentCut !== null && booking.tenant.paymentCut !== undefined ? booking.tenant.paymentCut : 3;
     const bookingPrice = Number(booking.price || 0);
     const cutAmount = (bookingPrice * tenantCutPercent) / 100;
 

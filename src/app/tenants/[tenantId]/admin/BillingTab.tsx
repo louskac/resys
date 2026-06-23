@@ -9,6 +9,7 @@ import {
   Loader2, CheckCircle2, XCircle
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Partner {
   id: string;
@@ -23,6 +24,11 @@ interface Partner {
   addressCountry: string | null;
   discount: number;
   active: boolean;
+  creditBalance?: string | number;
+  creditLimit?: string | number;
+  billingCycle?: string;
+  paymentTermsDays?: number;
+  autoBillingEnabled?: boolean;
 }
 
 interface Invoice {
@@ -97,6 +103,8 @@ export default function BillingTab({
   theme, 
   onModalToggle 
 }: BillingTabProps) {
+  const { data: session } = useSession();
+  const isReceptionist = (session?.user as any)?.role === "RECEPTIONIST";
   const [subTab, setSubTab] = useState<"users" | "partners" | "transactions" | "invoices">("users");
 
   // Search & Filter States
@@ -706,26 +714,28 @@ export default function BillingTab({
                           </span>
                         )}
 
-                        <div className="flex gap-1.5">
-                          {isUserPartner ? (
-                            <button
-                              onClick={() => handleDemoteUser(user.id)}
-                              className="p-1.5 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer"
-                              title="Zrušit partnerství"
-                            >
-                              <Ban size={12} />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => triggerPromotionModal(user)}
-                              className="p-1 px-2 bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white border border-tenant-primary/20 rounded-lg font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1"
-                              title="Promovat na partnera"
-                            >
-                              <UserPlus size={10} />
-                              Promovat
-                            </button>
-                          )}
-                        </div>
+                        {!isReceptionist && (
+                          <div className="flex gap-1.5">
+                            {isUserPartner ? (
+                              <button
+                                onClick={() => handleDemoteUser(user.id)}
+                                className="p-1.5 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                                title="Zrušit partnerství"
+                              >
+                                <Ban size={12} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => triggerPromotionModal(user)}
+                                className="p-1 px-2 bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white border border-tenant-primary/20 rounded-lg font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1"
+                                title="Promovat na partnera"
+                              >
+                                <UserPlus size={10} />
+                                Promovat
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -738,28 +748,40 @@ export default function BillingTab({
           <div className="lg:col-span-4 space-y-4">
             <h3 className="font-extrabold text-sm text-foreground">Promování partnerů</h3>
             
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`p-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-center gap-4 min-h-60 transition-all duration-300 ${
-                isDragOver 
-                  ? "border-tenant-primary bg-tenant-primary/10 scale-[1.02] shadow-lg shadow-tenant-primary/5 text-tenant-primary" 
-                  : "border-slate-350 dark:border-white/10 bg-white/20 dark:bg-black/10 text-slate-400"
-              }`}
-            >
-              <div className={`p-4 rounded-full transition-colors ${isDragOver ? "bg-tenant-primary/10 text-tenant-primary" : "bg-slate-100 dark:bg-white/5"}`}>
-                <UserPlus size={32} className={isDragOver ? "animate-bounce" : ""} />
-              </div>
-              <div>
-                <h4 className={`font-extrabold text-xs transition-colors ${isDragOver ? "text-tenant-primary" : "text-foreground"}`}>
-                  {isDragOver ? "Pusťte pro promování!" : "Přetáhněte sem uživatele"}
-                </h4>
-                <p className="text-[10px] text-slate-500 dark:text-slate-450 mt-1 max-w-[200px] leading-relaxed">
-                  Pusťte kartu běžného uživatele do této zóny a otevře se dialog k rychlému nastavení slevy a zařazení mezi partnery.
+            {isReceptionist ? (
+              <div className="p-6 border-2 border-dashed border-rose-500/20 bg-rose-500/[0.02] rounded-3xl flex flex-col items-center justify-center text-center gap-3 min-h-60">
+                <div className="p-4 rounded-full bg-rose-500/10 text-rose-500">
+                  <ShieldAlert size={32} />
+                </div>
+                <h4 className="font-bold text-xs text-rose-500">Přístup odepřen</h4>
+                <p className="text-[10px] text-slate-500 dark:text-slate-450 leading-relaxed max-w-[200px]">
+                  Nemáte dostatečná oprávnění k přiřazování smluvních slev nebo promování uživatelů na partnery.
                 </p>
               </div>
-            </div>
+            ) : (
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`p-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-center gap-4 min-h-60 transition-all duration-300 ${
+                  isDragOver 
+                    ? "border-tenant-primary bg-tenant-primary/10 scale-[1.02] shadow-lg shadow-tenant-primary/5 text-tenant-primary" 
+                    : "border-slate-350 dark:border-white/10 bg-white/20 dark:bg-black/10 text-slate-400"
+                }`}
+              >
+                <div className={`p-4 rounded-full transition-colors ${isDragOver ? "bg-tenant-primary/10 text-tenant-primary" : "bg-slate-100 dark:bg-white/5"}`}>
+                  <UserPlus size={32} className={isDragOver ? "animate-bounce" : ""} />
+                </div>
+                <div>
+                  <h4 className={`font-extrabold text-xs transition-colors ${isDragOver ? "text-tenant-primary" : "text-foreground"}`}>
+                    {isDragOver ? "Pusťte pro promování!" : "Přetáhněte sem uživatele"}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-450 mt-1 max-w-[200px] leading-relaxed">
+                    Pusťte kartu běžného uživatele do této zóny a otevře se dialog k rychlému nastavení slevy a zařazení mezi partnery.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Partner Program FAQ Card */}
             <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl space-y-3.5">
@@ -791,17 +813,19 @@ export default function BillingTab({
               <h3 className="font-bold text-sm text-foreground">Seznam korporátních partnerů ({activePartners.length})</h3>
               <p className="text-[11px] text-slate-400">Přehled firemních partnerů a nastavených slev.</p>
             </div>
-            <button
-              onClick={() => setPartnerModal({
-                open: true,
-                mode: "add",
-                data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
-              })}
-              className="flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-4 rounded-xl font-bold shadow-md shadow-tenant-primary/10 items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Plus size={14} />
-              Zaregistrovat partnera
-            </button>
+            {!isReceptionist && (
+              <button
+                onClick={() => setPartnerModal({
+                  open: true,
+                  mode: "add",
+                  data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
+                })}
+                className="flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-4 rounded-xl font-bold shadow-md shadow-tenant-primary/10 items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Plus size={14} />
+                Zaregistrovat partnera
+              </button>
+            )}
           </div>
 
           {activePartners.length === 0 ? (
@@ -855,6 +879,26 @@ export default function BillingTab({
                         )}
                       </div>
 
+                      {/* Financial Credit Metrics */}
+                      <div className="bg-slate-200/15 dark:bg-[#131322]/20 p-3.5 rounded-2xl border border-slate-200/35 dark:border-[#1F1F35]/30 space-y-1.5 mt-1 font-sans">
+                        <div className="flex justify-between items-center text-[10.5px]">
+                          <span className="text-slate-500 dark:text-zinc-450">Prepaid Kredit:</span>
+                          <strong className={`font-bold ${parseFloat(String(partner.creditBalance || 0)) <= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                            {parseFloat(String(partner.creditBalance || 0)).toLocaleString("cs-CZ", { minimumFractionDigits: 2 })} Kč
+                          </strong>
+                        </div>
+                        <div className="flex justify-between items-center text-[10.5px]">
+                          <span className="text-slate-500 dark:text-zinc-450">Kontokorent (Overdraft):</span>
+                          <strong className="text-foreground">
+                            {parseFloat(String(partner.creditLimit || 0)).toLocaleString("cs-CZ", { minimumFractionDigits: 2 })} Kč
+                          </strong>
+                        </div>
+                        <div className="flex justify-between items-center text-[10.5px] border-t border-slate-200/40 dark:border-white/5 pt-1 mt-1 text-[9.5px]">
+                          <span className="text-slate-400 dark:text-zinc-500 uppercase font-semibold">Cyklus vyúčtování:</span>
+                          <span className="text-foreground font-mono font-bold">{partner.billingCycle || "MONTHLY"}</span>
+                        </div>
+                      </div>
+
                       <div className="bg-slate-200/10 dark:bg-black/10 p-3 rounded-xl grid grid-cols-2 gap-4 border border-slate-200/30 dark:border-[#1F1F35]/20 mt-2">
                         <div>
                           <span className="text-[9px] text-slate-500 uppercase font-bold block">Celkem rezervací</span>
@@ -867,44 +911,46 @@ export default function BillingTab({
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t border-slate-200/30 dark:border-[#1F1F35]/30 pt-4 mt-4 select-none">
-                      <button
-                        onClick={() => setInvoiceWizard({
-                          open: true,
-                          partnerId: partner.id,
-                          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-                          endDate: new Date().toISOString().split("T")[0],
-                          previewBookings: [],
-                          calculatedTotal: 0,
-                          error: null,
-                          loading: false,
-                        })}
-                        className="bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white transition-all text-xs font-bold py-2 px-3 rounded-xl border border-tenant-primary/20 flex items-center gap-1 cursor-pointer"
-                        disabled={uninvoiced.length === 0}
-                        title={uninvoiced.length === 0 ? "Žádné nevyfakturované lekce" : "Fakturovat lekce"}
-                      >
-                        <FileText className="h-3.5 w-3.5" />
-                        Vyfakturovat
-                      </button>
-                      <button
-                        onClick={() => setPartnerModal({
-                          open: true,
-                          mode: "edit",
-                          data: partner
-                        })}
-                        className="p-2 bg-slate-200/35 hover:bg-slate-200/50 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/65 text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                        title="Upravit profil partnera"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handlePartnerDeactivate(partner.id)}
-                        className="p-2 bg-slate-200/35 hover:bg-red-500/10 dark:bg-[#131322]/40 dark:hover:bg-red-500/15 text-rose-500 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                        title="Deaktivovat partnera"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    {!isReceptionist && (
+                      <div className="flex justify-end gap-2 border-t border-slate-200/30 dark:border-[#1F1F35]/30 pt-4 mt-4 select-none">
+                        <button
+                          onClick={() => setInvoiceWizard({
+                            open: true,
+                            partnerId: partner.id,
+                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                            endDate: new Date().toISOString().split("T")[0],
+                            previewBookings: [],
+                            calculatedTotal: 0,
+                            error: null,
+                            loading: false,
+                          })}
+                          className="bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white transition-all text-xs font-bold py-2 px-3 rounded-xl border border-tenant-primary/20 flex items-center gap-1 cursor-pointer"
+                          disabled={uninvoiced.length === 0}
+                          title={uninvoiced.length === 0 ? "Žádné nevyfakturované lekce" : "Fakturovat lekce"}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Vyfakturovat
+                        </button>
+                        <button
+                          onClick={() => setPartnerModal({
+                            open: true,
+                            mode: "edit",
+                            data: partner
+                          })}
+                          className="p-2 bg-slate-200/35 hover:bg-slate-200/50 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/65 text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          title="Upravit profil partnera"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handlePartnerDeactivate(partner.id)}
+                          className="p-2 bg-slate-200/35 hover:bg-red-500/10 dark:bg-[#131322]/40 dark:hover:bg-red-500/15 text-rose-500 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          title="Deaktivovat partnera"
+                        >
+                          <Trash className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1092,40 +1138,44 @@ export default function BillingTab({
                           >
                             <Eye size={12} />
                           </Link>
-                          {inv.status === "DRAFT" ? (
-                            <button
-                              onClick={() => handleSendInvoiceByEmail(inv)}
-                              className="p-1 px-2 bg-sky-500/10 hover:bg-sky-500 text-sky-500 hover:text-white border border-sky-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
-                              title="Odeslat fakturu partnerovi na e-mail"
-                            >
-                              <Mail size={10} />
-                              Poslat na e-mail
-                            </button>
-                          ) : inv.status === "SENT" ? (
-                            <button
-                              onClick={() => handleSendInvoiceByEmail(inv)}
-                              className="p-1 px-2 bg-slate-500/10 hover:bg-slate-600 text-slate-550 hover:text-white border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
-                              title="Znovu poslat fakturu partnerovi na e-mail"
-                            >
-                              <Mail size={10} />
-                              Poslat znovu
-                            </button>
-                          ) : null}
-                          {(inv.status === "SENT" || inv.status === "DRAFT") && (
-                            <button
-                              onClick={() => handleUpdateInvoiceStatus(inv.id, "PAID")}
-                              className="p-1 px-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
-                            >
-                              Uhradit
-                            </button>
-                          )}
-                          {inv.status !== "CANCELLED" && (
-                            <button
-                              onClick={() => handleUpdateInvoiceStatus(inv.id, "CANCELLED")}
-                              className="p-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
-                            >
-                              Stornovat
-                            </button>
+                          {!isReceptionist && (
+                            <>
+                              {inv.status === "DRAFT" ? (
+                                <button
+                                  onClick={() => handleSendInvoiceByEmail(inv)}
+                                  className="p-1 px-2 bg-sky-500/10 hover:bg-sky-500 text-sky-500 hover:text-white border border-sky-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                  title="Odeslat fakturu partnerovi na e-mail"
+                                >
+                                  <Mail size={10} />
+                                  Poslat na e-mail
+                                </button>
+                              ) : inv.status === "SENT" ? (
+                                <button
+                                  onClick={() => handleSendInvoiceByEmail(inv)}
+                                  className="p-1 px-2 bg-slate-500/10 hover:bg-slate-600 text-slate-550 hover:text-white border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                  title="Znovu poslat fakturu partnerovi na e-mail"
+                                >
+                                  <Mail size={10} />
+                                  Poslat znovu
+                                </button>
+                              ) : null}
+                              {(inv.status === "SENT" || inv.status === "DRAFT") && (
+                                <button
+                                  onClick={() => handleUpdateInvoiceStatus(inv.id, "PAID")}
+                                  className="p-1 px-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                                >
+                                  Uhradit
+                                </button>
+                              )}
+                              {inv.status !== "CANCELLED" && (
+                                <button
+                                  onClick={() => handleUpdateInvoiceStatus(inv.id, "CANCELLED")}
+                                  className="p-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                                >
+                                  Stornovat
+                                </button>
+                              )}
+                            </>
                           )}
                         </td>
                       </tr>
@@ -1491,6 +1541,75 @@ export default function BillingTab({
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, discount: parseInt(e.target.value, 10) || 0 } })}
                     className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                    Prepaid Kredit (Kč)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={partnerModal.data.creditBalance !== undefined ? partnerModal.data.creditBalance : 0}
+                    onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, creditBalance: parseFloat(e.target.value) || 0 } })}
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                    Kontokorentní limit / Overdraft (Kč)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={partnerModal.data.creditLimit !== undefined ? partnerModal.data.creditLimit : 0}
+                    onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, creditLimit: parseFloat(e.target.value) || 0 } })}
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                    Fakturační cyklus
+                  </label>
+                  <select
+                    value={partnerModal.data.billingCycle || "MONTHLY"}
+                    onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, billingCycle: e.target.value } })}
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all cursor-pointer"
+                  >
+                    <option value="WEEKLY">Týdenní (WEEKLY)</option>
+                    <option value="BI-WEEKLY">Dvoutýdenní (BI-WEEKLY)</option>
+                    <option value="MONTHLY">Měsíční (MONTHLY)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                    Splatnost faktur (dní)
+                  </label>
+                  <input
+                    type="number"
+                    value={partnerModal.data.paymentTermsDays !== undefined ? partnerModal.data.paymentTermsDays : 14}
+                    onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, paymentTermsDays: parseInt(e.target.value, 10) || 14 } })}
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1 flex items-center pt-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!partnerModal.data.autoBillingEnabled}
+                      onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, autoBillingEnabled: e.target.checked } })}
+                      className="rounded border-slate-200/60 text-tenant-primary focus:ring-tenant-primary h-4 w-4"
+                    />
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Automatická fakturace</span>
+                  </label>
                 </div>
               </div>
 

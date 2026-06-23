@@ -79,7 +79,12 @@ export async function POST(request: NextRequest) {
       addressZip, 
       addressCountry,
       discount,
-      active
+      active,
+      creditBalance,
+      creditLimit,
+      billingCycle,
+      paymentTermsDays,
+      autoBillingEnabled
     } = body;
 
     if (!tenantId || !name || !email) {
@@ -104,8 +109,30 @@ export async function POST(request: NextRequest) {
         addressCountry: addressCountry || "CZ",
         discount: discount !== undefined ? parseInt(discount, 10) : 0,
         active: active !== undefined ? Boolean(active) : true,
+        creditBalance: creditBalance !== undefined ? parseFloat(creditBalance) : 0.00,
+        creditLimit: creditLimit !== undefined ? parseFloat(creditLimit) : 0.00,
+        billingCycle: billingCycle || "MONTHLY",
+        paymentTermsDays: paymentTermsDays !== undefined ? parseInt(paymentTermsDays, 10) : 14,
+        autoBillingEnabled: autoBillingEnabled !== undefined ? Boolean(autoBillingEnabled) : false,
       },
     });
+
+    // Record audit log for partner creation
+    try {
+      await prisma.auditLog.create({
+        data: {
+          tenantId,
+          userId: session?.user?.id || null,
+          userName: session?.user?.name || "System",
+          action: "PARTNER_CREATE",
+          entity: "Partner",
+          entityId: partner.id,
+          payload: { name, email, discount }
+        }
+      });
+    } catch (auditErr) {
+      console.error("Audit log partner creation failed", auditErr);
+    }
 
     return NextResponse.json({ status: "success", partner });
   } catch (error: any) {
@@ -131,7 +158,12 @@ export async function PATCH(request: NextRequest) {
       addressZip, 
       addressCountry,
       discount,
-      active
+      active,
+      creditBalance,
+      creditLimit,
+      billingCycle,
+      paymentTermsDays,
+      autoBillingEnabled
     } = body;
 
     if (!id || !tenantId) {
@@ -164,8 +196,30 @@ export async function PATCH(request: NextRequest) {
         addressCountry: addressCountry !== undefined ? (addressCountry || "CZ") : existingPartner.addressCountry,
         discount: discount !== undefined ? parseInt(discount, 10) : existingPartner.discount,
         active: active !== undefined ? Boolean(active) : existingPartner.active,
+        creditBalance: creditBalance !== undefined ? parseFloat(creditBalance) : existingPartner.creditBalance,
+        creditLimit: creditLimit !== undefined ? parseFloat(creditLimit) : existingPartner.creditLimit,
+        billingCycle: billingCycle !== undefined ? billingCycle : existingPartner.billingCycle,
+        paymentTermsDays: paymentTermsDays !== undefined ? parseInt(paymentTermsDays, 10) : existingPartner.paymentTermsDays,
+        autoBillingEnabled: autoBillingEnabled !== undefined ? Boolean(autoBillingEnabled) : existingPartner.autoBillingEnabled,
       },
     });
+
+    // Record audit log for partner modification
+    try {
+      await prisma.auditLog.create({
+        data: {
+          tenantId,
+          userId: session?.user?.id || null,
+          userName: session?.user?.name || "System",
+          action: "PARTNER_UPDATE",
+          entity: "Partner",
+          entityId: partner.id,
+          payload: { name, email, discount, creditBalance, creditLimit }
+        }
+      });
+    } catch (auditErr) {
+      console.error("Audit log partner update failed", auditErr);
+    }
 
     return NextResponse.json({ status: "success", partner });
   } catch (error: any) {
