@@ -20,6 +20,10 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: add Czech translation for v0.2.0 release message":
+      "Optimalizace aktualizací: Přidán český popis pro hlavní verzi v0.2.0 rezervačního portálu.",
+    "feat: B2B subscription billing, real-time sync, system updates timeline and local HTTPS proxy":
+      "Rozsáhlý upgrade platformy: Nasazení kompletního systému předplatného a limitů pro organizace, okamžitá real-time synchronizace změn a spuštění přehledné historie systémových aktualizací.",
     "feat: add horizontal resource scheduler and superadmin payment cuts": 
       "Představujeme přehledný horizontální kalendář pro správu rozvrhů a nové možnosti konfigurace platebních provizí.",
     "feat: replace automatic scanner rescan with manual trigger button": 
