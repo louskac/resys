@@ -167,7 +167,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
 
   if (success) {
     return (
-      <div className="w-full max-w-md p-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-xl dark:shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in transition-colors duration-250">
+      <div className="w-full max-w-md p-8 rounded-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-xl dark:shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in transition-colors duration-250">
         <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400">
           <CheckCircle2 size={36} className="animate-scale-in" />
         </div>
@@ -208,7 +208,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
         </div>
 
         {/* Summary Card */}
-        <div className="p-6 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-md dark:shadow-none space-y-5 transition-colors duration-250">
+        <div className="p-6 rounded-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-md dark:shadow-none space-y-5 transition-colors duration-250">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-550 dark:text-slate-400">Detaily rezervace</h2>
           
           <div className="space-y-4">
@@ -273,7 +273,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
       </div>
 
       {/* RIGHT COLUMN: Payment Form */}
-      <div className="md:col-span-7 p-6 md:p-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-lg dark:shadow-xl space-y-6 transition-colors duration-250">
+      <div className="md:col-span-7 p-6 md:p-8 rounded-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-lg dark:shadow-xl space-y-6 transition-colors duration-250">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Platební brána</h2>
           <p className="text-xs text-slate-550 dark:text-slate-400 mt-1">Bezpečná simulovaná platba platební kartou.</p>
@@ -288,14 +288,14 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
             setExpiry("12/29");
             setCvv("123");
           }}
-          className="w-full py-2.5 bg-[#7000FF]/5 hover:bg-[#7000FF]/15 dark:bg-white/5 dark:hover:bg-white/10 text-[#7000FF] dark:text-purple-300 hover:text-[#5B00D6] dark:hover:text-white border border-[#7000FF]/25 dark:border-[#7000FF]/30 hover:border-[#7000FF]/50 dark:hover:border-[#7000FF]/60 rounded-2xl text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 select-none"
+          className="w-full py-2.5 bg-[#7000FF]/5 hover:bg-[#7000FF]/15 dark:bg-white/5 dark:hover:bg-white/10 text-[#7000FF] dark:text-purple-300 hover:text-[#5B00D6] dark:hover:text-white border border-[#7000FF]/25 dark:border-[#7000FF]/30 hover:border-[#7000FF]/50 dark:hover:border-[#7000FF]/60 rounded-none text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 select-none"
         >
           <Sparkles size={14} className="animate-pulse" />
           Automaticky vyplnit testovací kartu
         </button>
 
         {error && (
-          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-450 dark:text-rose-400 text-xs font-medium animate-in fade-in duration-200">
+          <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-450 dark:text-rose-400 text-xs font-medium animate-in fade-in duration-200">
             {error}
           </div>
         )}
@@ -313,7 +313,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
                 placeholder="Jan Novák"
-                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-none py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650"
               />
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
                 value={cardNumber}
                 onChange={handleCardNumberChange}
                 placeholder="4242 4242 4242 4242"
-                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono tracking-widest"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-none py-3 pl-11 pr-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono tracking-widest"
               />
             </div>
           </div>
@@ -345,7 +345,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
                 value={expiry}
                 onChange={handleExpiryChange}
                 placeholder="MM/YY"
-                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-none py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center"
               />
             </div>
 
@@ -358,7 +358,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
                 value={cvv}
                 onChange={handleCvvChange}
                 placeholder="•••"
-                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center tracking-widest"
+                className="w-full bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-none py-3 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-650 font-mono text-center tracking-widest"
               />
             </div>
           </div>
@@ -373,7 +373,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 bg-tenant-gradient hover:opacity-95 text-white text-xs font-extrabold uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-tenant-primary/10 hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-tenant-gradient hover:opacity-95 text-white text-xs font-extrabold uppercase tracking-widest rounded-none transition-all shadow-md shadow-tenant-primary/10 hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

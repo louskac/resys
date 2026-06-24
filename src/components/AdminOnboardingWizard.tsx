@@ -255,7 +255,7 @@ export default function AdminOnboardingWizard({
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-1.5 text-[9.5px]">
-            <span className="bg-white/5 border border-white/[0.04] px-1.5 py-0.5 rounded text-zinc-400 font-medium">
+            <span className="bg-white/5 border border-white/[0.04] px-1.5 py-0.5 rounded-none text-zinc-400 font-medium">
               {fac.capacity} os.
             </span>
             <span className="text-purple-400 font-bold">
@@ -770,10 +770,10 @@ export default function AdminOnboardingWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#05050A]/75 backdrop-blur-md p-4 animate-fadeIn font-sans">
-      <div className="relative w-full max-w-[850px] animated-glowing-border p-6 pt-14 pb-6 flex flex-col gap-6 text-foreground transition-all duration-350 font-sans z-10 bg-[#0A0A15]/90 rounded-[28px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+      <div className="relative w-full max-w-[850px] animated-glowing-border p-6 pt-14 pb-6 flex flex-col gap-6 text-foreground transition-all duration-350 font-sans z-10 bg-[#0A0A15]/90 rounded-none border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
         
         {/* Subtle breathing liquid background mesh matching the design language */}
-        <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 rounded-none overflow-hidden pointer-events-none z-0">
           {/* Ambient Purple Blur */}
           <div className="absolute top-[-80px] left-[-60px] w-[260px] h-[260px] rounded-full bg-[#7000FF] opacity-[0.05] dark:opacity-[0.08] blur-[70px] animate-blob-orbit-1" />
           {/* Ambient Cyan Blur */}
@@ -858,7 +858,7 @@ export default function AdminOnboardingWizard({
 
         {/* Validation Errors */}
         {errorMsg && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3.5 rounded-2xl flex items-start gap-2 animate-fadeIn shrink-0 z-10">
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3.5 rounded-none flex items-start gap-2 animate-fadeIn shrink-0 z-10">
             <ShieldAlert size={16} className="shrink-0 mt-0.5 text-rose-500" />
             <span className="leading-normal font-medium">{errorMsg}</span>
           </div>
@@ -867,7 +867,7 @@ export default function AdminOnboardingWizard({
         {/* Dynamic Onboarding layout */}
         <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-[480px] max-h-[580px] overflow-hidden z-10">
           {/* Left Column: Chat Area */}
-          <div className="flex-1 flex flex-col bg-slate-950/20 backdrop-blur-md border border-white/[0.04] rounded-2xl p-4 overflow-hidden relative shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
+          <div className="flex-1 flex flex-col bg-slate-950/20 backdrop-blur-md border border-white/[0.04] rounded-none p-4 overflow-hidden relative shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
             
             {/* Scrollable message container */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-4 scrollbar-thin scrollbar-thumb-purple-900/30 scrollbar-track-transparent">
@@ -879,17 +879,17 @@ export default function AdminOnboardingWizard({
                   } animate-fadeIn`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="h-8 w-8 rounded-lg bg-purple-600/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
+                    <div className="h-8 w-8 rounded-none bg-purple-600/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
                       <Sparkles size={14} className="animate-pulse" />
                     </div>
                   ) : (
-                    <div className="h-8 w-8 rounded-lg bg-emerald-600/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
+                    <div className="h-8 w-8 rounded-none bg-emerald-600/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
                       <User size={14} />
                     </div>
                   )}
                   
                   <div
-                    className={`max-w-[75%] rounded-2xl p-3 text-[11.5px] leading-relaxed font-medium ${
+                    className={`max-w-[75%] rounded-none p-3 text-[11.5px] leading-relaxed font-medium ${
                       msg.role === "user"
                         ? "bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 text-emerald-200"
                         : "bg-slate-950/50 border border-white/[0.06] text-zinc-200"
@@ -902,10 +902,10 @@ export default function AdminOnboardingWizard({
 
               {isChatLoading && (
                 <div className="flex gap-3 items-start animate-pulse">
-                  <div className="h-8 w-8 rounded-lg bg-purple-600/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0">
+                  <div className="h-8 w-8 rounded-none bg-purple-600/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0">
                     <Loader2 size={14} className="animate-spin text-purple-400" />
                   </div>
-                  <div className="max-w-[75%] rounded-2xl p-3 bg-slate-950/40 border border-white/[0.04] text-zinc-500 text-xs">
+                  <div className="max-w-[75%] rounded-none p-3 bg-slate-950/40 border border-white/[0.04] text-zinc-500 text-xs">
                     ReKeeper přemýšlí...
                   </div>
                 </div>
@@ -927,12 +927,12 @@ export default function AdminOnboardingWizard({
                 }}
                 placeholder={isChatLoading ? "Čekám na odpověď..." : "Napište zprávu ReKeeperovi..."}
                 disabled={isChatLoading}
-                className="flex-1 bg-slate-950/60 focus:bg-slate-950/80 border border-white/10 focus:border-purple-500/40 rounded-xl px-4 py-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none transition-all disabled:opacity-50"
+                className="flex-1 bg-slate-950/60 focus:bg-slate-950/80 border border-white/10 focus:border-purple-500/40 rounded-none px-4 py-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none transition-all disabled:opacity-50"
               />
               <button
                 onClick={() => sendChatMessage(inputText)}
                 disabled={isChatLoading || !inputText.trim()}
-                className="p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all shadow-[0_0_10px_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-none transition-all shadow-[0_0_10px_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ArrowRight size={14} />
               </button>
@@ -940,7 +940,7 @@ export default function AdminOnboardingWizard({
           </div>
 
           {/* Right Column: Live Configuration Dashboard */}
-          <div className="w-full md:w-[300px] flex flex-col bg-slate-950/30 backdrop-blur-md border border-white/[0.06] rounded-2xl p-4 overflow-y-auto scrollbar-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] shrink-0">
+          <div className="w-full md:w-[300px] flex flex-col bg-slate-950/30 backdrop-blur-md border border-white/[0.06] rounded-none p-4 overflow-y-auto scrollbar-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] shrink-0">
             <h3 className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400 mb-3 select-none flex items-center gap-1.5 border-b border-white/5 pb-2">
               <Building size={12} /> Průběžná Konfigurace
             </h3>
@@ -949,7 +949,7 @@ export default function AdminOnboardingWizard({
               {/* Tagline config */}
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-500">Podtitul (Tagline)</span>
-                <div className="p-2.5 bg-slate-950/40 rounded-xl border border-white/[0.04] text-[11px]">
+                <div className="p-2.5 bg-slate-950/40 rounded-none border border-white/[0.04] text-[11px]">
                   {chatState.tagline ? (
                     <span className="text-zinc-200 font-semibold italic">"{chatState.tagline}"</span>
                   ) : (
@@ -961,7 +961,7 @@ export default function AdminOnboardingWizard({
               {/* Operating Hours config */}
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-500">Provozní Doba</span>
-                <div className="p-2.5 bg-slate-950/40 rounded-xl border border-white/[0.04]">
+                <div className="p-2.5 bg-slate-950/40 rounded-none border border-white/[0.04]">
                   {formatOpeningHoursDisplay()}
                 </div>
               </div>
@@ -969,7 +969,7 @@ export default function AdminOnboardingWizard({
               {/* Resources list config */}
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-500">Zdroje & Kapacity</span>
-                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-purple-900/30 scrollbar-track-transparent border border-white/[0.04] bg-slate-950/20 rounded-xl p-2.5">
+                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-purple-900/30 scrollbar-track-transparent border border-white/[0.04] bg-slate-950/20 rounded-none p-2.5">
                   {chatState.facilities.length > 0 ? (
                     buildFacilitiesTree(chatState.facilities).map(node => renderTreeNode(node, 0))
                   ) : (
@@ -983,7 +983,7 @@ export default function AdminOnboardingWizard({
               {/* IoT scanner config */}
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-500">IoT QR Čtečka</span>
-                <div className="p-2.5 bg-slate-950/40 rounded-xl border border-white/[0.04] text-[11px]">
+                <div className="p-2.5 bg-slate-950/40 rounded-none border border-white/[0.04] text-[11px]">
                   {chatState.device?.name ? (
                     <span className="text-zinc-200 font-semibold">{chatState.device.name}</span>
                   ) : (
@@ -995,7 +995,7 @@ export default function AdminOnboardingWizard({
               {/* Admin Profile Details */}
               <div className="space-y-1 pt-2 border-t border-white/5">
                 <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-500">Administrátorský Účet</span>
-                <div className="p-2.5 bg-slate-950/40 rounded-xl border border-white/[0.04] text-[10px] space-y-1">
+                <div className="p-2.5 bg-slate-950/40 rounded-none border border-white/[0.04] text-[10px] space-y-1">
                   <div className="flex justify-between">
                     <span className="text-zinc-500">E-mail:</span>
                     <span className="text-zinc-300 font-mono select-all">admin@{tenantId}.cz</span>
@@ -1015,7 +1015,7 @@ export default function AdminOnboardingWizard({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-5 py-3 border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-extrabold rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+            className="px-5 py-3 border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-extrabold rounded-none transition-all cursor-pointer disabled:opacity-50"
           >
             Storno
           </button>
@@ -1023,7 +1023,7 @@ export default function AdminOnboardingWizard({
           <button
             onClick={handleSubmit}
             disabled={isLoading || !allInformationCollected}
-            className={`px-6 py-3 text-black text-xs font-extrabold rounded-2xl transition-all flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`px-6 py-3 text-black text-xs font-extrabold rounded-none transition-all flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
               allInformationCollected
                 ? "bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-pulse"
                 : "bg-zinc-700 text-zinc-400"

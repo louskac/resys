@@ -54,7 +54,7 @@ interface DBUser {
 }
 
 const getVerticalBadgeStyles = (vertical: string) => {
-  return "bg-slate-100 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-700/50 text-slate-650 dark:text-zinc-400";
+  return "border-slate-300 dark:border-zinc-750 text-slate-500 dark:text-zinc-400";
 };
 
 const getVerticalSolidColor = (vertical: string) => {
@@ -504,15 +504,15 @@ export default function HostConsole() {
           <ThemeToggle />
         </div>
 
-        <div className="max-w-md w-full bg-white/70 dark:bg-[#0E0E1B]/75 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 rounded-3xl p-8 shadow-xl shadow-slate-100/10 dark:shadow-black/20 hover:shadow-neon-glow hover:border-[#7000FF]/30 transition-all duration-300 relative overflow-hidden">
+        <div className="max-w-md w-full bg-white/70 dark:bg-[#0E0E1B]/75 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 rounded-none p-8 shadow-xl shadow-slate-100/10 dark:shadow-black/20 hover:shadow-neon-glow hover:border-[#7000FF]/30 transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 right-0 h-40 w-40 bg-[#7000FF]/10 blur-3xl rounded-full" />
           
           <div className="flex flex-col items-center text-center">
-            <div className="h-14 w-14 rounded-2xl bg-[#7000FF]/10 border border-[#7000FF]/20 flex items-center justify-center text-[#7000FF] dark:text-[#A78BFA] mb-6 shadow-lg shadow-[#7000FF]/5">
+            <div className="h-14 w-14 rounded-none bg-[#7000FF]/10 border border-[#7000FF]/20 flex items-center justify-center text-[#7000FF] dark:text-[#A78BFA] mb-6 shadow-lg shadow-[#7000FF]/5">
               <Shield size={28} />
             </div>
 
-            <span className="text-[10px] px-2.5 py-0.5 rounded bg-[#7000FF]/10 border border-[#7000FF]/20 text-[#7000FF] dark:text-[#A78BFA] font-bold uppercase tracking-wider mb-2">
+            <span className="text-[10px] px-2.5 py-0.5 rounded-none bg-[#7000FF]/10 border border-[#7000FF]/20 text-[#7000FF] dark:text-[#A78BFA] font-bold uppercase tracking-wider mb-2">
               Superadmin Vstup
             </span>
 
@@ -524,7 +524,7 @@ export default function HostConsole() {
             </p>
 
             {loginError && (
-              <div className="w-full bg-rose-500/10 border border-rose-500/25 text-rose-500 text-xs p-3 rounded-2xl mb-4 flex items-start gap-2 text-left animate-pulse">
+              <div className="w-full bg-rose-500/10 border border-rose-500/25 text-rose-500 text-xs p-3 rounded-none mb-4 flex items-start gap-2 text-left animate-pulse">
                 <ShieldAlert size={16} className="shrink-0 mt-0.5" />
                 <span>{loginError}</span>
               </div>
@@ -566,7 +566,7 @@ export default function HostConsole() {
               <button
                 type="submit"
                 disabled={loginLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.015] hover:shadow-neon-glow active:scale-[0.98] text-white text-xs font-bold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                className="w-full py-3 bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.015] hover:shadow-neon-glow active:scale-[0.98] text-white text-xs font-bold rounded-none transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
               >
                 {loginLoading ? <Loader2 size={14} className="animate-spin" /> : "Vstoupit do administrace"}
               </button>
@@ -597,7 +597,7 @@ export default function HostConsole() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="p-2 rounded-xl bg-white/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md text-slate-500 dark:text-zinc-400 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED]/60 dark:border-[#1F1F2E] transition-all flex items-center justify-center cursor-pointer hover:scale-105 shadow-sm"
+              className="p-2 rounded-none bg-white/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md text-slate-500 dark:text-zinc-400 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED]/60 dark:border-[#1F1F2E] transition-all flex items-center justify-center cursor-pointer hover:scale-105 shadow-sm"
               title="Zpět na portál"
             >
               <ArrowLeft size={14} />
@@ -663,13 +663,13 @@ export default function HostConsole() {
             <button
               onClick={handleResetDb}
               disabled={isResetting}
-              className="border border-rose-500/20 dark:border-rose-500/20 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 dark:hover:bg-rose-500/20 flex items-center gap-1.5 disabled:opacity-50 text-[11px] font-medium py-1.5 px-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm cursor-pointer"
+              className="border border-rose-500/20 dark:border-rose-500/20 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 dark:hover:bg-rose-500/20 flex items-center gap-1.5 disabled:opacity-50 text-[11px] font-medium py-1.5 px-3 rounded-none transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm cursor-pointer"
             >
               <RotateCcw size={12} className={isResetting ? "animate-spin" : ""} />
               {isResetting ? "Resetting..." : "Reset & Seed DB"}
             </button>
             
-            <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
+            <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
               <ThemeToggle />
               
               <span className="h-6 w-px bg-slate-200/50 dark:bg-[#1F1F35] mx-1 shrink-0" />
@@ -678,7 +678,7 @@ export default function HostConsole() {
                 <div className="flex items-center gap-3 pl-2 pr-1 py-0.5">
                   <div className="hidden sm:flex flex-col text-right">
                     <div className="flex items-center gap-1.5 justify-end">
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide leading-none">
+                      <span className="px-1.5 py-0.5 rounded-none text-[8px] font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide leading-none">
                         Superadmin
                       </span>
                       <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">{session.user?.name}</span>
@@ -687,12 +687,12 @@ export default function HostConsole() {
                   </div>
                   
                   {/* Avatar with gradient matching brand colors */}
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-[#7000FF]/20 to-[#7000FF]/5 dark:from-[#7000FF]/30 dark:to-[#7000FF]/10 border border-[#7000FF]/20 dark:border-[#7000FF]/30 text-[#7000FF] dark:text-[#A78BFA] flex items-center justify-center font-semibold text-xs select-none shadow-sm shadow-[#7000FF]/5 overflow-hidden">
+                  <div className="h-8 w-8 rounded-none bg-gradient-to-tr from-[#7000FF]/20 to-[#7000FF]/5 dark:from-[#7000FF]/30 dark:to-[#7000FF]/10 border border-[#7000FF]/20 dark:border-[#7000FF]/30 text-[#7000FF] dark:text-[#A78BFA] flex items-center justify-center font-semibold text-xs select-none shadow-sm shadow-[#7000FF]/5 overflow-hidden">
                     {session.user?.avatarUrl ? (
                       <img
                         src={session.user.avatarUrl}
                         alt={session.user.name || "Avatar"}
-                        className="h-full w-full object-cover rounded-xl"
+                        className="h-full w-full object-cover rounded-none"
                       />
                     ) : (
                       session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "SA"
@@ -701,7 +701,7 @@ export default function HostConsole() {
                   
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="p-2 text-muted-foreground hover:text-rose-500 rounded-xl hover:bg-rose-500/10 transition-all cursor-pointer flex items-center justify-center"
+                    className="p-2 text-muted-foreground hover:text-rose-500 rounded-none hover:bg-rose-500/10 transition-all cursor-pointer flex items-center justify-center"
                     title="Odhlásit se"
                   >
                     <LogOut size={15} />
@@ -721,10 +721,10 @@ export default function HostConsole() {
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 flex flex-col md:flex-row gap-8 relative z-10">
         
         {/* Left Navigation Sidebar */}
-        <aside className="md:w-64 w-full space-y-2 h-fit bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] shrink-0 transition-all duration-300 hover:border-primary/15">
+        <aside className="md:w-64 w-full space-y-2 h-fit bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-4 rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] shrink-0 transition-all duration-300 hover:border-primary/15">
           <button
             onClick={() => setActiveTab("tenants")}
-            className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+            className={`w-full px-4 py-2.5 rounded-none flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
               activeTab === "tenants" 
                 ? "bg-gradient-to-r from-[#7000FF] to-[#3B82F6] text-white border-transparent shadow-md shadow-[#7000FF]/20 scale-[1.02]" 
                 : "text-slate-500 dark:text-zinc-400 border-transparent hover:text-[#7000FF] dark:hover:text-[#A78BFA] hover:bg-slate-100/50 dark:hover:bg-white/[0.02] hover:scale-[1.01]"
@@ -735,7 +735,7 @@ export default function HostConsole() {
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+            className={`w-full px-4 py-2.5 rounded-none flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
               activeTab === "users" 
                 ? "bg-gradient-to-r from-[#7000FF] to-[#3B82F6] text-white border-transparent shadow-md shadow-[#7000FF]/20 scale-[1.02]" 
                 : "text-slate-500 dark:text-zinc-400 border-transparent hover:text-[#7000FF] dark:hover:text-[#A78BFA] hover:bg-slate-100/50 dark:hover:bg-white/[0.02] hover:scale-[1.01]"
@@ -746,7 +746,7 @@ export default function HostConsole() {
           </button>
           <button
             onClick={() => setActiveTab("updates")}
-            className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+            className={`w-full px-4 py-2.5 rounded-none flex items-center gap-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
               activeTab === "updates" 
                 ? "bg-gradient-to-r from-[#7000FF] to-[#3B82F6] text-white border-transparent shadow-md shadow-[#7000FF]/20 scale-[1.02]" 
                 : "text-slate-500 dark:text-zinc-400 border-transparent hover:text-[#7000FF] dark:hover:text-[#A78BFA] hover:bg-slate-100/50 dark:hover:bg-white/[0.02] hover:scale-[1.01]"
@@ -758,7 +758,7 @@ export default function HostConsole() {
         </aside>
 
         {activeTab === "updates" ? (
-          <div className="flex-1 min-w-0 bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:border-[#7000FF]/15 transition-all duration-300">
+          <div className="flex-1 min-w-0 bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-6 rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:border-[#7000FF]/15 transition-all duration-300">
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-400 mb-6 flex items-center gap-2 border-b border-slate-200/40 dark:border-[#2A2A40]/45 pb-3 select-none">
               <Terminal size={14} className="text-primary animate-pulse" />
               System Release History
@@ -777,7 +777,7 @@ export default function HostConsole() {
                     <Server size={13} className="text-[#7000FF] animate-pulse" />
                     Active SaaS Tenants ({tenants.length})
                   </h2>
-                  <span className="text-[9px] font-semibold uppercase tracking-widest bg-slate-100 dark:bg-black/35 text-slate-500 dark:text-zinc-400 px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-[#2A2A40]/40 select-none">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest bg-slate-100 dark:bg-black/35 text-slate-500 dark:text-zinc-400 px-2.5 py-1 rounded-none border border-slate-200/50 dark:border-[#2A2A40]/40 select-none">
                     Multi-Tenant Active Engine
                   </span>
                 </div>
@@ -785,11 +785,11 @@ export default function HostConsole() {
                 {loading ? (
                   <div className="space-y-4">
                     {Array.from({ length: 2 }).map((_, i) => (
-                      <div key={i} className="h-32 rounded-2xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200/50 dark:border-[#2A2A40]/40 animate-pulse" />
+                      <div key={i} className="h-32 rounded-none bg-slate-100 dark:bg-white/[0.02] border border-slate-200/50 dark:border-[#2A2A40]/40 animate-pulse" />
                     ))}
                   </div>
                 ) : tenants.length === 0 ? (
-                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 border border-slate-200/50 dark:border-[#2A2A40]/45 p-12 text-center rounded-3xl text-muted-foreground text-sm font-medium shadow-inner">
+                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 border border-slate-200/50 dark:border-[#2A2A40]/45 p-12 text-center rounded-none text-muted-foreground text-sm font-medium shadow-inner">
                     No tenants found. Use the panel on the right to create one.
                   </div>
                 ) : (
@@ -797,7 +797,7 @@ export default function HostConsole() {
                     {tenants.map((tenant) => (
                       <div
                         key={tenant.id}
-                        className={`relative overflow-hidden p-6 bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] hover:shadow-neon-glow hover:border-[#7000FF]/30 group flex flex-col gap-4 ${
+                        className={`relative overflow-hidden p-6 bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] hover:shadow-neon-glow hover:border-[#7000FF]/30 group flex flex-col gap-4 ${
                           editingTenant?.id === tenant.id
                             ? "border-violet-500/80 dark:border-violet-400/80 shadow-neon-glow bg-violet-50/10 dark:bg-[#7000FF]/5"
                             : "border-slate-200/50 dark:border-[#2A2A40]/45"
@@ -818,10 +818,10 @@ export default function HostConsole() {
                                 Editing
                               </span>
                             )}
-                            <span className={`text-[9.5px] px-2 py-0.5 rounded-full border font-medium tracking-wide shrink-0 shadow-sm ${getVerticalBadgeStyles(tenant.vertical)}`}>
+                            <span className={`text-[9.5px] border-l-2 font-medium tracking-wide shrink-0 pl-1.5 select-none ${getVerticalBadgeStyles(tenant.vertical)}`}>
                               {tenant.vertical.replace("_", " ")}
                             </span>
-                            <span className={`text-[9.5px] px-2 py-0.5 rounded-full border font-medium tracking-wide shrink-0 flex items-center gap-1.5 shadow-sm ${getSubscriptionBadgeStyles(tenant.subscriptionStatus || "TRIALING")}`}>
+                            <span className={`text-[9.5px] border-l-2 font-medium tracking-wide shrink-0 flex items-center gap-1.5 pl-1.5 select-none ${getSubscriptionBadgeStyles(tenant.subscriptionStatus || "TRIALING")}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${
                                 tenant.subscriptionStatus === "ACTIVE" || tenant.subscriptionStatus === "TRIALING" ? "bg-emerald-500" : "bg-rose-500"
                               }`} />
@@ -835,21 +835,21 @@ export default function HostConsole() {
                               href={getTenantUrl(tenant.id)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="bg-white/40 dark:bg-[#131322]/30 hover:bg-[#7000FF] hover:text-white dark:hover:bg-[#7000FF] text-[#7000FF] dark:text-[#A78BFA] dark:hover:text-white border border-slate-200 dark:border-[#2A2A40] text-[11px] font-medium py-1.5 px-3 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                              className="bg-white/40 dark:bg-[#131322]/30 hover:bg-[#7000FF] hover:text-white dark:hover:bg-[#7000FF] text-[#7000FF] dark:text-[#A78BFA] dark:hover:text-white border border-slate-200 dark:border-[#2A2A40] text-[11px] font-medium py-1.5 px-3 rounded-none hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                             >
                               <ExternalLink size={12} />
                               Open Portal
                             </a>
                             <button
                               onClick={() => handleEdit(tenant)}
-                              className="p-1.5 rounded-xl bg-white/40 dark:bg-[#131322]/30 hover:bg-indigo-500/15 dark:hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+                              className="p-1.5 rounded-none bg-white/40 dark:bg-[#131322]/30 hover:bg-indigo-500/15 dark:hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
                               title="Edit Tenant"
                             >
                               <Edit size={12} />
                             </button>
                             <button
                               onClick={() => handleDelete(tenant.id)}
-                              className="p-1.5 rounded-xl bg-white/40 dark:bg-[#131322]/30 hover:bg-rose-500/15 dark:hover:bg-rose-500/25 text-rose-500 dark:text-rose-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+                              className="p-1.5 rounded-none bg-white/40 dark:bg-[#131322]/30 hover:bg-rose-500/15 dark:hover:bg-rose-500/25 text-rose-500 dark:text-rose-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
                               title="Delete Tenant"
                             >
                               <Trash size={12} />
@@ -878,7 +878,7 @@ export default function HostConsole() {
                           </div>
 
                           {/* Resource & Device Limits Meters */}
-                          <div className="col-span-1 xl:col-span-5 grid grid-cols-1 gap-2.5 bg-slate-50/40 dark:bg-black/15 border border-slate-200/40 dark:border-[#2A2A40]/30 rounded-2xl p-3">
+                          <div className="col-span-1 xl:col-span-5 grid grid-cols-1 gap-2.5 bg-slate-50/40 dark:bg-black/15 border border-slate-200/40 dark:border-[#2A2A40]/30 rounded-none p-3">
                             {(() => {
                               const resCount = tenant.resources?.length || 0;
                               const resMax = tenant.maxResourcesLimit || 2;
@@ -983,7 +983,7 @@ export default function HostConsole() {
                                     showModalAlert("Simulation Error", "Error simulating webhook request.", "error");
                                   }
                                 }}
-                                className="appearance-none bg-white dark:bg-black/30 text-slate-700 dark:text-zinc-300 text-[10px] font-semibold pl-2.5 pr-7 py-1 border border-slate-200 dark:border-[#2A2A40]/55 rounded-lg outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF]/20 transition-all cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-black/50"
+                                className="appearance-none bg-white dark:bg-black/30 text-slate-700 dark:text-zinc-300 text-[10px] font-semibold pl-2.5 pr-7 py-1 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF]/20 transition-all cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-black/50"
                               >
                                 <option value="FREE_TRIAL">Free Trial (2 Res, 1 Dev)</option>
                                 <option value="STARTER">Starter (5 Res, 3 Dev)</option>
@@ -1022,7 +1022,7 @@ export default function HostConsole() {
                                     showModalAlert("Simulation Error", "Error simulating webhook request.", "error");
                                   }
                                 }}
-                                className="appearance-none bg-white dark:bg-black/30 text-slate-700 dark:text-zinc-300 text-[10px] font-semibold pl-2.5 pr-7 py-1 border border-slate-200 dark:border-[#2A2A40]/55 rounded-lg outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF]/20 transition-all cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-black/50"
+                                className="appearance-none bg-white dark:bg-black/30 text-slate-700 dark:text-zinc-300 text-[10px] font-semibold pl-2.5 pr-7 py-1 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF]/20 transition-all cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-black/50"
                               >
                                 <option value="TRIALING">TRIALING</option>
                                 <option value="ACTIVE">ACTIVE</option>
@@ -1045,7 +1045,7 @@ export default function HostConsole() {
                     <Users size={13} className="text-[#7000FF] animate-pulse" />
                     System Accounts ({users.length})
                   </h2>
-                  <span className="text-[9px] font-semibold uppercase tracking-widest bg-slate-100 dark:bg-black/35 text-slate-500 dark:text-zinc-400 px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-[#2A2A40]/40 select-none">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest bg-slate-100 dark:bg-black/35 text-slate-500 dark:text-zinc-400 px-2.5 py-1 rounded-none border border-slate-200/50 dark:border-[#2A2A40]/40 select-none">
                     Granular Access Control
                   </span>
                 </div>
@@ -1053,15 +1053,15 @@ export default function HostConsole() {
                 {usersLoading ? (
                   <div className="space-y-4">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-16 rounded-2xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200/50 dark:border-[#2A2A40]/40 animate-pulse" />
+                      <div key={i} className="h-16 rounded-none bg-slate-100 dark:bg-white/[0.02] border border-slate-200/50 dark:border-[#2A2A40]/40 animate-pulse" />
                     ))}
                   </div>
                 ) : users.length === 0 ? (
-                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 border border-slate-200/50 dark:border-[#2A2A40]/45 p-12 text-center rounded-3xl text-muted-foreground text-sm font-medium shadow-inner">
+                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 border border-slate-200/50 dark:border-[#2A2A40]/45 p-12 text-center rounded-none text-muted-foreground text-sm font-medium shadow-inner">
                     No accounts found. Create one using the manager panel on the right.
                   </div>
                 ) : (
-                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:border-[#7000FF]/15 transition-all">
+                  <div className="bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 rounded-none overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:border-[#7000FF]/15 transition-all">
                     <div className="overflow-x-auto scrollbar-none">
                       <table className="w-full text-left text-xs border-collapse min-w-[500px]">
                         <thead>
@@ -1083,14 +1083,14 @@ export default function HostConsole() {
                                 </div>
                               </td>
                               <td className="p-4">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider border shadow-sm ${
+                                <span className={`pl-1.5 border-l-2 text-[9px] font-bold uppercase tracking-wider select-none ${
                                   u.role === "SUPERADMIN" 
-                                    ? "bg-rose-500/10 border-rose-500/20 text-rose-500" 
+                                    ? "border-rose-500 text-rose-500" 
                                     : u.role === "ADMIN" 
-                                      ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-500" 
+                                      ? "border-indigo-500 text-indigo-500" 
                                       : u.role === "RECEPTIONIST"
-                                        ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
-                                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                        ? "border-amber-500 text-amber-600 dark:text-amber-400"
+                                        : "border-emerald-500 text-emerald-500"
                                 }`}>
                                   {u.role}
                                 </span>
@@ -1100,7 +1100,7 @@ export default function HostConsole() {
                                   <span className="text-slate-800 dark:text-slate-200 font-semibold flex items-center gap-1.5">
                                     <Building size={11} className="text-slate-400 dark:text-zinc-400" />
                                     {u.tenant.name} 
-                                    <code className="font-mono font-normal text-[9px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-black/35 px-1.5 py-0.5 rounded-lg border border-slate-200/50 dark:border-[#2A2A40]/30">({u.tenantId})</code>
+                                    <code className="font-mono font-normal text-[9px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-black/35 px-1.5 py-0.5 rounded-none border border-slate-200/50 dark:border-[#2A2A40]/30">({u.tenantId})</code>
                                   </span>
                                 ) : (
                                   <span className="italic text-slate-400 dark:text-zinc-400 flex items-center gap-1.5 font-medium text-[11px] uppercase tracking-wider">
@@ -1113,14 +1113,14 @@ export default function HostConsole() {
                                 <div className="flex items-center justify-end gap-1.5 select-none">
                                   <button
                                     onClick={() => handleEditUser(u)}
-                                    className="p-2 rounded-xl bg-slate-50 dark:bg-[#131322]/30 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.03] active:scale-[0.97] transition-all shadow-sm cursor-pointer"
+                                    className="p-2 rounded-none bg-slate-50 dark:bg-[#131322]/30 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.03] active:scale-[0.97] transition-all shadow-sm cursor-pointer"
                                     title="Edit User"
                                   >
                                     <Edit size={12} />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteUser(u.id, u.name)}
-                                    className="p-2 rounded-xl bg-slate-50 dark:bg-[#131322]/30 text-rose-500 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.03] active:scale-[0.97] transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed"
+                                    className="p-2 rounded-none bg-slate-50 dark:bg-[#131322]/30 text-rose-500 border border-slate-200 dark:border-[#2A2A40] hover:scale-[1.03] active:scale-[0.97] transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed"
                                     disabled={u.id === session?.user?.id}
                                     title="Delete User"
                                   >
@@ -1141,7 +1141,7 @@ export default function HostConsole() {
 
           {/* Right Col: Configure Form */}
           <aside className="xl:col-span-1 xl:sticky xl:top-24 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-none pb-4 min-w-0">
-            <div className="bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:shadow-neon-glow hover:border-[#7000FF]/25 transition-all duration-300">
+            <div className="bg-white/60 dark:bg-[#0E0E1B]/55 backdrop-blur-xl border border-slate-200/50 dark:border-[#2A2A40]/45 p-6 rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.01)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:shadow-neon-glow hover:border-[#7000FF]/25 transition-all duration-300">
             {activeTab === "tenants" ? (
               <>
                 <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6 flex items-center gap-2 border-b border-slate-200/40 dark:border-[#2A2A40]/45 pb-3 select-none">
@@ -1177,7 +1177,7 @@ export default function HostConsole() {
                           });
                         }}
                         placeholder="e.g. motogp, sfera"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 disabled:opacity-40"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 disabled:opacity-40"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1193,7 +1193,7 @@ export default function HostConsole() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="e.g. Sféra Pardubice"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1209,7 +1209,7 @@ export default function HostConsole() {
                         value={formData.domain}
                         onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
                         placeholder="e.g. sfera.localhost:3000"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1222,7 +1222,7 @@ export default function HostConsole() {
                       <select
                         value={formData.vertical}
                         onChange={(e) => setFormData({ ...formData, vertical: e.target.value })}
-                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
+                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
                         style={{ paddingLeft: "2.35rem" }}
                       >
                         <option value="SPORTS_GROUND">Sports Ground (Emerald)</option>
@@ -1241,7 +1241,7 @@ export default function HostConsole() {
                       <select
                         value={formData.paymentCut}
                         onChange={(e) => setFormData({ ...formData, paymentCut: Number(e.target.value) })}
-                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
+                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
                         style={{ paddingLeft: "2.35rem" }}
                       >
                         <option value={0}>0% - Bez poplatku (Platform Free)</option>
@@ -1262,7 +1262,7 @@ export default function HostConsole() {
                         required
                         value={formData.ssoClientId}
                         onChange={(e) => setFormData({ ...formData, ssoClientId: e.target.value })}
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1277,14 +1277,14 @@ export default function HostConsole() {
                         required
                         value={formData.ssoClientSec}
                         onChange={(e) => setFormData({ ...formData, ssoClientSec: e.target.value })}
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
                   </div>
 
                   {editingTenant && (
-                    <div className="bg-slate-50/50 dark:bg-black/15 border border-slate-200/40 dark:border-[#2A2A40]/30 rounded-xl p-3 space-y-2 select-none">
+                    <div className="bg-slate-50/50 dark:bg-black/15 border border-slate-200/40 dark:border-[#2A2A40]/30 rounded-none p-3 space-y-2 select-none">
                       <span className="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><CreditCard size={11} className="text-[#7000FF]" /> Billing & Subscription Details</span>
                       <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10.5px]">
                         <div>
@@ -1293,7 +1293,7 @@ export default function HostConsole() {
                         </div>
                         <div>
                           <span className="text-slate-400 dark:text-zinc-555 block text-[9px] mb-0.5">Payment Status:</span>
-                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[8.5px] ${
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-none font-bold text-[8.5px] ${
                             liveEditingTenant?.subscriptionStatus === "ACTIVE" 
                               ? "bg-emerald-500/10 text-emerald-500" 
                               : liveEditingTenant?.subscriptionStatus === "TRIALING"
@@ -1321,13 +1321,13 @@ export default function HostConsole() {
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-xl hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
-                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-xl bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-none bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Save
                         </button>
@@ -1335,7 +1335,7 @@ export default function HostConsole() {
                     ) : (
                       <button
                         type="submit"
-                        className="btn-primary w-full py-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all rounded-xl bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98] font-semibold text-xs shadow-md shadow-[#7000FF]/15"
+                        className="btn-primary w-full py-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all rounded-none bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98] font-semibold text-xs shadow-md shadow-[#7000FF]/15"
                       >
                         <Plus size={14} />
                         Add Tenant
@@ -1362,7 +1362,7 @@ export default function HostConsole() {
                         value={userFormData.name}
                         onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
                         placeholder="e.g. Marie Kovářová"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1378,7 +1378,7 @@ export default function HostConsole() {
                         value={userFormData.email}
                         onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
                         placeholder="e.g. marie@gmail.com"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1396,7 +1396,7 @@ export default function HostConsole() {
                         value={userFormData.password}
                         onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
                         placeholder="••••••••"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1411,7 +1411,7 @@ export default function HostConsole() {
                         value={userFormData.phone}
                         onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
                         placeholder="e.g. +420777123456"
-                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
+                        className="w-full bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-4 text-xs font-mono font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10"
                         style={{ paddingLeft: "2.35rem" }}
                       />
                     </div>
@@ -1424,7 +1424,7 @@ export default function HostConsole() {
                       <select
                         value={userFormData.role}
                         onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value, tenantId: e.target.value === "SUPERADMIN" ? "" : userFormData.tenantId })}
-                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
+                        className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
                         style={{ paddingLeft: "2.35rem" }}
                       >
                          <option value="SUPERADMIN">Platform Superadmin</option>
@@ -1445,7 +1445,7 @@ export default function HostConsole() {
                           value={userFormData.tenantId}
                           onChange={(e) => setUserFormData({ ...userFormData, tenantId: e.target.value })}
                           required={userFormData.role === "ADMIN"}
-                          className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-xl py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
+                          className="w-full appearance-none bg-slate-100/40 dark:bg-black/25 text-slate-800 dark:text-zinc-200 border border-slate-200/70 dark:border-[#2A2A40]/60 rounded-none py-2 pl-10 pr-10 text-xs font-medium outline-none transition-all focus:border-[#7000FF] focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-[#7000FF]/10 cursor-pointer"
                           style={{ paddingLeft: "2.35rem" }}
                         >
                           <option value="">-- No Tenant Associated --</option>
@@ -1464,13 +1464,13 @@ export default function HostConsole() {
                         <button
                           type="button"
                           onClick={handleCancelUserEdit}
-                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-xl hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
-                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-xl bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-none bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Save
                         </button>
@@ -1478,7 +1478,7 @@ export default function HostConsole() {
                     ) : (
                       <button
                         type="submit"
-                        className="btn-primary w-full py-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all rounded-xl bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98] font-semibold text-xs shadow-md shadow-[#7000FF]/15"
+                        className="btn-primary w-full py-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all rounded-none bg-gradient-to-r from-[#7000FF] to-[#3B82F6] hover:scale-[1.02] active:scale-[0.98] font-semibold text-xs shadow-md shadow-[#7000FF]/15"
                       >
                         <Plus size={14} />
                         Create Account

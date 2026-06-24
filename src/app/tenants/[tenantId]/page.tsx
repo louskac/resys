@@ -438,7 +438,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           </div>
 
           {/* Integrated Glass Control Dock */}
-          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
+          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
             <ThemeToggle />
             
             <span className="h-6 w-px bg-slate-200/50 dark:bg-[#1F1F35] mx-1 shrink-0" />
@@ -447,7 +447,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               <div className="flex items-center gap-3 pl-2 pr-1 py-0.5">
                 {/* Active reservations counter */}
                 {userBookingsCount > 0 && (
-                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-tenant-primary/10 dark:bg-tenant-primary/15 border border-tenant-primary/20 text-tenant-primary dark:text-purple-400 rounded-xl text-[9px] font-extrabold uppercase tracking-wider select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-tenant-primary/10 dark:bg-tenant-primary/15 border border-tenant-primary/20 text-tenant-primary dark:text-purple-400 rounded-none text-[9px] font-extrabold uppercase tracking-wider select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
                     <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse shrink-0" />
                     <span>{userBookingsCount} {userBookingsCount === 1 ? "rezervace" : userBookingsCount < 5 ? "rezervace" : "rezervací"}</span>
                   </div>
@@ -456,12 +456,12 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-1.5 justify-end">
                     {((session.user as any).role === "ADMIN" && (session.user as any).tenantId === tenantId || adminEmails.includes(session.user?.email || "")) && (
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
+                      <span className="px-1.5 py-0.5 rounded-none text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
                         Správce
                       </span>
                     )}
                     {(session.user as any).role === "SUPERADMIN" && (
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide leading-none">
+                      <span className="px-1.5 py-0.5 rounded-none text-[8px] font-extrabold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide leading-none">
                         Superadmin
                       </span>
                     )}
@@ -476,14 +476,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
                 
                 <Link
                   href={`/tenants/${tenantId}/dashboard`}
-                  className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden"
+                  className="h-8 w-8 rounded-none bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden"
                   title="Můj profil a rezervace"
                 >
                   {session.user?.avatarUrl ? (
                     <img
                       src={session.user.avatarUrl}
                       alt={session.user.name || "Avatar"}
-                      className="h-full w-full object-cover rounded-xl"
+                      className="h-full w-full object-cover rounded-none"
                     />
                   ) : (
                     session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"
@@ -496,7 +496,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               <div className="pl-1 pr-0.5 py-0.5 flex items-center">
                 <Link
                   href="?login=true"
-                  className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 flex items-center gap-2 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
+                  className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 flex items-center gap-2 rounded-none font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
                 >
                   Přihlásit se přes OneiD
                 </Link>
@@ -545,7 +545,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* Hero Banner Card */}
-        <div className="col-span-1 md:col-span-2 order-1 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 relative p-0 overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-md hover:border-tenant-primary/35 transition-all duration-300 shadow-slate-100/5 dark:shadow-black/10 group">
+        <div className="col-span-1 md:col-span-2 order-1 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 relative p-0 overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-md hover:border-tenant-primary/35 transition-all duration-300 shadow-slate-100/5 dark:shadow-black/10 group">
           {/* Top border glowing highlight */}
           <div className="absolute top-0 inset-x-0 h-1 bg-tenant-gradient opacity-90 z-20" />
           
@@ -619,14 +619,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
             className="col-span-1 order-4 lg:order-none lg:float-left lg:w-[340px] lg:mr-6 lg:mb-6 lg:h-[400px]"
             footer={
               session ? (
-                <div className="flex items-center justify-center gap-2 py-2 text-xs font-bold text-tenant-primary bg-tenant-primary/5 dark:bg-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 rounded-xl select-none">
+                <div className="flex items-center justify-center gap-2 py-2 text-xs font-bold text-tenant-primary bg-tenant-primary/5 dark:bg-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 rounded-none select-none">
                   <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse shrink-0" />
                   <span>Pro rezervaci klikněte do kalendáře</span>
                 </div>
               ) : (
                 <Link
                   href="?login=true"
-                  className="w-full py-2 text-center text-xs block rounded-xl font-bold bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-300/60 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer shadow-sm"
+                  className="w-full py-2 text-center text-xs block rounded-none font-bold bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-300/60 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer shadow-sm"
                 >
                   Přihlásit se pro rezervaci
                 </Link>

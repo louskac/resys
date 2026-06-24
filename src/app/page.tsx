@@ -1,19 +1,22 @@
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import { headers } from "next/headers";
-import IoTSimulator from "@/components/IoTSimulator";
 import ScrollReveal from "@/components/ScrollReveal";
 import { 
-  ArrowRight, Sparkles, ShieldCheck, Cpu, Database, 
-  Code, ChevronRight, Calendar, Users, CheckCircle2, 
-  Layers, Activity, Building, Smartphone, Globe, 
-  Lock, Terminal, ArrowUpRight, Check, Server
+  ArrowRight, Cpu, Database, 
+  Users, Layers, Lock, Server, Terminal
 } from "lucide-react";
 
 import prisma from "@/lib/prisma";
 import { ensureDefaultData } from "@/lib/dbInit";
 import PricingCalculator from "@/components/PricingCalculator";
 import AIShowcase from "@/components/AIShowcase";
+
+// Import new redesigned interactive sections
+import HeroSection from "@/components/HeroSection";
+import VerticalsShowcase from "@/components/VerticalsShowcase";
+import BookingJourneyVisualizer from "@/components/BookingJourneyVisualizer";
+import DeveloperConsole from "@/components/DeveloperConsole";
 
 export default async function Home() {
   await ensureDefaultData();
@@ -42,7 +45,7 @@ export default async function Home() {
       </div>
 
       {/* HEADER */}
-      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-50 transition-all shadow-md shadow-slate-100/5 dark:shadow-black/5 select-none">
+      <header className="border-b border-zinc-800/40 bg-zinc-950/90 backdrop-blur-xl sticky top-0 z-50 transition-all shadow-md shadow-black/10 select-none text-white">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           
           {/* Logo Brand */}
@@ -80,13 +83,13 @@ export default async function Home() {
                   <rect x="312" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
                   <rect x="334" y="325" width="10" height="10" rx="2.5" fill="url(#slotGradientInline)" />
                   <rect x="356" y="325" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
-
+ 
                   {/* Row 2 */}
                   <rect x="301" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientInline)" />
                   <rect x="323" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
                   <rect x="345" y="345" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
                   <rect x="367" y="345" width="10" height="10" rx="2.5" fill="url(#slotGradientInline)" />
-
+ 
                   {/* Row 3 */}
                   <rect x="312" y="365" width="10" height="10" rx="2.5" fill="#FFFFFF" opacity={0.2} />
                   <rect x="334" y="365" width="10" height="10" rx="2.5" fill="url(#slotGradientInline)" />
@@ -95,154 +98,125 @@ export default async function Home() {
                 </g>
               </g>
             </svg>
-            <span className="font-extrabold text-lg tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-[#7000FF] to-[#3B82F6]">
+            <span className="font-extrabold text-lg tracking-tight text-white select-none">
               ReSys
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary font-bold uppercase tracking-widest">SaaS</span>
+            <span className="text-[9px] px-2 py-0.5 border border-white/20 bg-white/5 text-white/90 font-extrabold uppercase tracking-widest select-none rounded-none">SAAS</span>
           </div>
-
+ 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-zinc-400">
-            <a href="#verticals" className="hover:text-tenant-primary hover:bg-slate-100/50 dark:hover:bg-[#131322]/40 py-1.5 px-3 rounded-xl transition-all">Segmenty</a>
-            <a href="#sandbox" className="hover:text-tenant-primary hover:bg-slate-100/50 dark:hover:bg-[#131322]/40 py-1.5 px-3 rounded-xl transition-all">Ukázky portálů</a>
-            <a href="#pricing" className="hover:text-tenant-primary hover:bg-slate-100/50 dark:hover:bg-[#131322]/40 py-1.5 px-3 rounded-xl transition-all">Ceník</a>
-            <a href="#iot" className="hover:text-tenant-primary hover:bg-slate-100/50 dark:hover:bg-[#131322]/40 py-1.5 px-3 rounded-xl transition-all">IoT & Přístup</a>
-            <a href="#features" className="hover:text-tenant-primary hover:bg-slate-100/50 dark:hover:bg-[#131322]/40 py-1.5 px-3 rounded-xl transition-all">Integrace</a>
+          <nav className="hidden md:flex items-center gap-2 text-xs font-bold text-zinc-400">
+            <a href="#verticals" className="hover:text-white hover:bg-white/5 py-1.5 px-3 rounded-none transition-all uppercase tracking-wider">Segmenty</a>
+            <a href="#journey" className="hover:text-white hover:bg-white/5 py-1.5 px-3 rounded-none transition-all uppercase tracking-wider">Jak to funguje</a>
+            <a href="#sandbox" className="hover:text-white hover:bg-white/5 py-1.5 px-3 rounded-none transition-all uppercase tracking-wider">Dema portálů</a>
+            <a href="#pricing" className="hover:text-white hover:bg-white/5 py-1.5 px-3 rounded-none transition-all uppercase tracking-wider">Ceník</a>
+            <a href="#developer" className="hover:text-white hover:bg-white/5 py-1.5 px-3 rounded-none transition-all uppercase tracking-wider">API & Vývojáři</a>
           </nav>
-
+ 
           {/* Actions & Theme */}
           <div className="flex items-center gap-3">
-            <ThemeToggle />
+            <ThemeToggle className="p-2.5 rounded-none bg-zinc-900/30 text-zinc-400 hover:bg-zinc-800/40 hover:text-white border border-zinc-800/80 hover:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center" />
             <Link 
               href={hostConsoleUrl}
-              className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-[11px] font-bold py-2 px-4 rounded-xl shadow-md shadow-tenant-primary/15 flex items-center gap-1.5 cursor-pointer"
+              className="border border-purple-500/50 bg-purple-950/30 hover:bg-purple-900/40 text-white text-[11px] font-bold py-2 px-4 rounded-none flex items-center gap-1.5 transition-all cursor-pointer uppercase tracking-wider"
             >
-              <Server size={13} />
-              Host Console
+              <Terminal size={13} />
+              HOST CONSOLE
             </Link>
           </div>
         </div>
       </header>
 
-      {/* HERO SECTION */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 select-none">
         
-        <section className="relative py-20 lg:py-28 max-w-7xl mx-auto px-6 border-b border-slate-200/30 dark:border-[#1F1F35]/30">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+        {/* HERO SECTION */}
+        <HeroSection hostConsoleUrl={hostConsoleUrl} />
+
+        {/* COMPREHENSIVE PERFORMANCE METRICS ROW */}
+        <section className="py-16 lg:py-20 bg-white dark:bg-[#07070C]/5 border-b border-slate-200/30 dark:border-[#1F1F35]/30">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 select-none">
             
-            {/* Left Column: Value Pitch */}
-            <ScrollReveal animation="fade-up" duration={1000} delay={100} className="lg:col-span-5 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-xs font-bold shadow-sm select-none">
-                <Sparkles size={12} className="animate-spin" style={{ animationDuration: '3s' }} />
-                Universal Booking Core
-              </div>
-              
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-                Jediný engine pro <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-tenant-primary to-cyan-500">
-                  libovolné rezervace.
-                </span>
-              </h1>
-              
-              <p className="text-base text-slate-500 dark:text-zinc-400 leading-relaxed max-w-lg">
-                ReSys je moderní multi-tenant rezervační systém navržený pro sportoviště, vzdělávací areály a kapacitní provozy. Automatizuje plánování kapacit, online platby a fyzický přístup přes chytré IoT turnikety s ověřením OneiD SSO.
-              </p>
-              
-              <div className="flex flex-wrap gap-3 pt-2">
-                <a 
-                  href="#sandbox"
-                  className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-3 px-6 rounded-xl font-bold shadow-md shadow-tenant-primary/15 flex items-center gap-2 cursor-pointer"
-                >
-                  Prohlédnout dema portálů
-                  <ArrowRight size={14} />
-                </a>
-                <a 
-                  href="#iot"
-                  className="px-5 py-3 text-xs font-bold rounded-xl bg-white/60 hover:bg-slate-100/80 dark:bg-[#131322]/40 dark:hover:bg-[#1C1C30]/50 border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-102 active:scale-98 transition-all cursor-pointer shadow-sm"
-                >
-                  IoT specifikace
-                </a>
-              </div>
-
-              {/* Badges footer */}
-              <div className="pt-8 border-t border-slate-200/40 dark:border-[#1F1F35]/40 flex items-center gap-4 text-xs text-slate-400 dark:text-zinc-550 select-none">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck size={16} className="text-tenant-primary/80" />
-                  OneiD SSO zabezpečení
+            {/* Metric 1: OneID */}
+            <ScrollReveal animation="fade-up" delay={100} duration={600}>
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Jediný účet</span>
                 </div>
-                <div className="h-4 w-px bg-slate-200 dark:bg-[#1F1F35]" />
-                <div className="flex items-center gap-1.5">
-                  <Cpu size={16} className="text-tenant-primary/80" />
-                  IoT API integrace
+                <div className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter leading-none">
+                  OneID
                 </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Right Column: Hero Dashboard Image Mockup */}
-            <div className="lg:col-span-7 relative">
-              <ScrollReveal animation="fade-up" duration={1000} delay={300} className="relative">
-                {/* Colored light glow background */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/15 to-cyan-500/15 blur-3xl opacity-50 -z-10 rounded-full scale-95" />
-                
-                <div className="p-2.5 bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/20 dark:border-zinc-800/60 rounded-[32px] shadow-2xl shadow-tenant-primary/5 relative group hover:border-tenant-primary/25 transition-colors duration-300">
-                  {/* Mock Window Controls Header */}
-                  <div className="flex items-center gap-1.5 px-4 py-2 border-b border-white/10 dark:border-zinc-800/40 bg-white/10 dark:bg-black/10 rounded-t-[22px] select-none">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] opacity-80" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] opacity-80" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] opacity-80" />
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono font-semibold ml-2 select-none tracking-wider uppercase">resys-admin-console.png</span>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-zinc-350 uppercase tracking-wider">
+                    Jednotné přihlášení
                   </div>
-                  
-                  {/* Actual image */}
-                  <div className="rounded-b-[22px] overflow-hidden bg-black/40">
-                    <img 
-                      src="/resys-hero-dashboard.png" 
-                      alt="ReSys SaaS Dashboard Admin Console" 
-                      className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
-                    />
-                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-550 leading-normal">
+                    Hráči se přihlásí jedním účtem v libovolném sportovním areálu v síti, bez složitých registrací a hesel.
+                  </p>
                 </div>
-              </ScrollReveal>
-            </div>
+              </div>
+            </ScrollReveal>
 
-          </div>
-        </section>
+            {/* Metric 2: Zámky & světla */}
+            <ScrollReveal animation="fade-up" delay={200} duration={600}>
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Přímé spínání</span>
+                </div>
+                <div className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter leading-none">
+                  Zámky & světla
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-zinc-350 uppercase tracking-wider">
+                    Bezobslužný vstup
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-555 leading-normal">
+                    Automatické odemčení dveří a rozsvícení kurtu v čas rezervace. Po skončení hry se světla sama zhasnou.
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
 
-        {/* SAAS METRIC BAR */}
-        <section className="py-10 bg-slate-50/20 dark:bg-[#07070C]/10 border-b border-slate-200/30 dark:border-[#1F1F35]/30">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 select-none">
-            <ScrollReveal animation="fade-up" delay={100} duration={600} className="h-full">
-              <div className="p-5 bg-white/40 dark:bg-[#07070C]/25 backdrop-blur-md border border-slate-200/40 dark:border-[#1F1F35]/20 rounded-2xl shadow-xs text-center md:text-left space-y-1 hover:border-tenant-primary/20 transition-all h-full relative group overflow-hidden">
-                <div className="absolute top-0 right-0 h-10 w-10 bg-tenant-primary/5 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-tenant-primary to-indigo-500 block">99.99%</span>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">Garantovaný Uptime</span>
-                <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 block leading-tight">Smluvní garance SLA stability portálu.</span>
+            {/* Metric 3: B2B Kredit */}
+            <ScrollReveal animation="fade-up" delay={300} duration={600}>
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Pro firmy a kluby</span>
+                </div>
+                <div className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter leading-none">
+                  Faktury & Kredity
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-zinc-350 uppercase tracking-wider">
+                    Smluvní pronájmy
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-555 leading-normal">
+                    Rezervace pro školy, kluby a firmy (IČO/DIČ) s platbou na měsíční fakturu a hlídáním kreditních limitů.
+                  </p>
+                </div>
               </div>
             </ScrollReveal>
-            <ScrollReveal animation="fade-up" delay={200} duration={600} className="h-full">
-              <div className="p-5 bg-white/40 dark:bg-[#07070C]/25 backdrop-blur-md border border-slate-200/40 dark:border-[#1F1F35]/20 rounded-2xl shadow-xs text-center md:text-left space-y-1 hover:border-tenant-primary/20 transition-all h-full relative group overflow-hidden">
-                <div className="absolute top-0 right-0 h-10 w-10 bg-tenant-primary/5 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-tenant-primary to-indigo-500 block">&lt;12ms</span>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">Odezva API</span>
-                <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 block leading-tight">Ultrarychlé vyhodnocení turniketových relay.</span>
+
+            {/* Metric 4: Provize */}
+            <ScrollReveal animation="fade-up" delay={400} duration={600}>
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Platíte jen z rezervací</span>
+                </div>
+                <div className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter leading-none">
+                  Provize z plateb
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-zinc-350 uppercase tracking-wider">
+                    Žádný drahý paušál
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-555 leading-normal">
+                    Žádné drahé fixní poplatky. Systém si bere malou provizi (0–3 %) pouze z uskutečněných online plateb.
+                  </p>
+                </div>
               </div>
             </ScrollReveal>
-            <ScrollReveal animation="fade-up" delay={300} duration={600} className="h-full">
-              <div className="p-5 bg-white/40 dark:bg-[#07070C]/25 backdrop-blur-md border border-slate-200/40 dark:border-[#1F1F35]/20 rounded-2xl shadow-xs text-center md:text-left space-y-1 hover:border-tenant-primary/20 transition-all h-full relative group overflow-hidden">
-                <div className="absolute top-0 right-0 h-10 w-10 bg-tenant-primary/5 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-tenant-primary to-indigo-500 block">150k+</span>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">Rezervací/měsíc</span>
-                <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 block leading-tight">Navrženo pro masivní, špičkovou zátěž.</span>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal animation="fade-up" delay={400} duration={600} className="h-full">
-              <div className="p-5 bg-white/40 dark:bg-[#07070C]/25 backdrop-blur-md border border-slate-200/40 dark:border-[#1F1F35]/20 rounded-2xl shadow-xs text-center md:text-left space-y-1 hover:border-tenant-primary/20 transition-all h-full relative group overflow-hidden">
-                <div className="absolute top-0 right-0 h-10 w-10 bg-tenant-primary/5 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-tenant-primary to-indigo-500 block">100%</span>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">Turniketové IoT</span>
-                <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 block leading-tight">Ověřená kompatibilita s RFID/QR čtečkami.</span>
-              </div>
-            </ScrollReveal>
+
           </div>
         </section>
 
@@ -250,79 +224,35 @@ export default async function Home() {
         <section id="verticals" className="py-20 lg:py-28 border-b border-slate-200/30 dark:border-[#1F1F35]/30 relative">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16 space-y-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
+              <div className="pl-2.5 border-l-2 border-tenant-primary text-tenant-primary text-[10px] font-black uppercase tracking-widest select-none">
                 Podporované segmenty
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Pokrýváme všechny typy rezervací z jednoho místa</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Jedno unifikované jádro pro libovolné odvětví</h2>
               <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
-                Zapomeňte na provozování několika jednoúčelových kalendářů. ReSys je modulární jádro navržený tak, aby se přizpůsobilo libovolnému odvětví.
+                Zapomeňte na instalaci několika jednoúčelových kalendářů. ReSys je modulární platforma, kterou lze flexibilně nakonfigurovat pro jakékoliv časové či kapacitní plány.
               </p>
             </div>
  
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Card 1: Sports */}
-              <ScrollReveal animation="fade-up" delay={100} duration={800} className="h-full">
-                <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl hover:border-tenant-primary/30 hover:shadow-md transition-all duration-300 space-y-4 group h-full relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-tenant-gradient opacity-10 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-10 w-10 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Activity size={18} />
-                  </div>
-                  <h3 className="font-extrabold text-base text-foreground">Sportoviště & Haly</h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Časové sítě pro kurty a hřiště, dělení ploch na sektory, dynamické ceníky za osvětlení a přímé napojení na turnikety pro vstup bez obsluhy.
-                  </p>
-                </div>
-              </ScrollReveal>
- 
-              {/* Card 2: Education */}
-              <ScrollReveal animation="fade-up" delay={200} duration={800} className="h-full">
-                <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl hover:border-tenant-primary/30 hover:shadow-md transition-all duration-300 space-y-4 group h-full relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-tenant-gradient opacity-10 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-10 w-10 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Building size={18} />
-                  </div>
-                  <h3 className="font-extrabold text-base text-foreground">Vzdělávání & Laboratoře</h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Rezervace drahých přístrojů a chemických laboratoří, kapacitní limity pro kurzy, schvalovací procesy správcem a přihlášení studentů přes SSO.
-                  </p>
-                </div>
-              </ScrollReveal>
- 
-              {/* Card 3: Wellness */}
-              <ScrollReveal animation="fade-up" delay={300} duration={800} className="h-full">
-                <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl hover:border-tenant-primary/30 hover:shadow-md transition-all duration-300 space-y-4 group h-full relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-tenant-gradient opacity-10 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-10 w-10 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Smartphone size={18} />
-                  </div>
-                  <h3 className="font-extrabold text-base text-foreground">Wellness & Fitness</h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Správa kapacit saunových zón a masáží. Integrace s platebními bránami, permanentky pro stálé zákazníky a automatické hlídání skříněk.
-                  </p>
-                </div>
-              </ScrollReveal>
- 
-              {/* Card 4: Event Ticketing */}
-              <ScrollReveal animation="fade-up" delay={400} duration={800} className="h-full">
-                <div className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl hover:border-tenant-primary/30 hover:shadow-md transition-all duration-300 space-y-4 group h-full relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-tenant-gradient opacity-10 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-10 w-10 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Globe size={18} />
-                  </div>
-                  <h3 className="font-extrabold text-base text-foreground">Ticketing & Eventy</h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Jednorázové akce s prodejem vstupenek. Rychlé generování PDF lístků s unikátním QR kódem pro snadné odbavení u vstupní brány.
-                  </p>
-                </div>
-              </ScrollReveal>
-            </div>
+            <VerticalsShowcase tenants={tenants} isLocal={isLocal} />
           </div>
         </section>
 
-        {/* PRICING CALCULATOR SECTION */}
-        <div id="pricing">
-          <PricingCalculator />
-        </div>
+        {/* INTERACTIVE BOOKING LIFE-CYCLE JOURNEY */}
+        <section id="journey" className="py-20 lg:py-28 border-b border-slate-200/30 dark:border-[#1F1F35]/30 bg-slate-50/5 dark:bg-[#07070C]/5 relative">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16 space-y-4">
+              <div className="pl-2.5 border-l-2 border-tenant-primary text-tenant-primary text-[10px] font-black uppercase tracking-widest select-none">
+                Samoobslužný Průchod
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Jak probíhá rezervace a fyzické odbavení</h2>
+              <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
+                Vyzkoušejte si interaktivní proces od online zarezervování slotu přes ověření identity, online platbu, až po přiložení vygenerované vstupenky u simulovaného turniketu.
+              </p>
+            </div>
+
+            <BookingJourneyVisualizer />
+          </div>
+        </section>
 
         {/* AI ASSISTANT SHOWCASE */}
         <AIShowcase />
@@ -331,160 +261,102 @@ export default async function Home() {
         <section id="sandbox" className="py-20 lg:py-28 border-b border-slate-200/30 dark:border-[#1F1F35]/30 relative">
           <div className="max-w-7xl mx-auto px-6">
             
-            <div className="grid lg:grid-cols-12 gap-12 items-center">
-              
-              {/* Left Column: Vertical cards and portal switches */}
-              <ScrollReveal animation="fade-right" duration={1000} className="lg:col-span-7 space-y-8">
-                <div className="space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
-                    Unifikovaný plánovací engine
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mt-2">Více portálů, jedno univerzální jádro</h2>
-                  <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 leading-relaxed">
-                    ReSys funguje jako robustní multi-tenant platforma. Libovolné množství klientských portálů je napájeno naprosto shodnými datovými strukturami a přihlašovacím systémem OneiD, ale liší se vzhledem, ceníky a kapacitním typem.
-                  </p>
-                </div>
- 
-                <div className="grid sm:grid-cols-2 gap-6">
-                  {tenants.map((t) => {
-                    const portalUrl = isLocal ? `http://${t.id}.localhost:3000` : `/tenants/${t.id}`;
-                    const attrs = (t.attributes as any) || {};
-                    const tagline = attrs.tagline || (t.vertical === "SPORTS_GROUND" 
-                      ? "Pronájem časových slotů na hřišti, dělení plochy na sektory a vazba na hardware turniketů."
-                      : "Skupinové lekce, kapacitní kurzy a rezervace výukových laboratoří.");
-                    
-                    const verticalLabel = 
-                      t.vertical === "SPORTS_GROUND" ? "Sportoviště / Časový grid" :
-                      t.vertical === "EDUCATIONAL_COURSE" ? "Kapacitní model / Výuka" :
-                      t.vertical === "CAPACITY_CLASS" ? "Kapacitní model / Lekce" : "Eventy / Ticketing";
- 
-                    return (
-                      <div key={t.id} className="p-6 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl shadow-xs hover:border-tenant-primary/30 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-tenant-primary/10 group-hover:bg-tenant-primary transition-colors" />
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-start">
-                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20 uppercase tracking-wide">{verticalLabel}</span>
-                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase font-mono">ID: {t.id}</span>
-                          </div>
-                          <h3 className="font-extrabold text-lg text-foreground group-hover:text-tenant-primary transition-colors">{t.name}</h3>
-                          <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                            {tagline}
-                          </p>
-                        </div>
-                        <div className="pt-6 mt-6 border-t border-slate-100/50 dark:border-[#1F1F35]/20">
-                          <Link 
-                            href={portalUrl}
-                            className="w-full text-center py-2 px-4 rounded-xl text-xs font-bold bg-tenant-primary/10 hover:bg-tenant-gradient hover:text-white text-tenant-primary transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                          >
-                            Otevřít portál {t.name}
-                            <ArrowUpRight size={13} />
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollReveal>
-
-              {/* Right Column: User Booking App Mockup */}
-              <div className="lg:col-span-5 relative flex justify-center">
-                <ScrollReveal animation="fade-left" duration={1000} delay={200} className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/10 to-indigo-500/15 blur-3xl opacity-50 -z-10 rounded-full scale-95" />
-                  
-                  <div className="p-2.5 bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/20 dark:border-zinc-800/60 rounded-[44px] shadow-2xl shadow-tenant-primary/5 max-w-[280px] sm:max-w-[320px] relative group hover:border-tenant-primary/25 transition-colors duration-300">
-                    <div className="rounded-[36px] overflow-hidden bg-black/40 border border-black/80">
-                      <img 
-                        src="/resys-booking-interface.png" 
-                        alt="ReSys SaaS Mobile Booking Timeline Schedule" 
-                        className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
-                      />
-                    </div>
-                  </div>
-                </ScrollReveal>
+            {/* Header description */}
+            <div className="text-center mb-16 space-y-4">
+              <div className="pl-2.5 border-l-2 border-tenant-primary text-tenant-primary text-[10px] font-black uppercase tracking-widest select-none">
+                Multi-tenant Core Engine
               </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mt-2">Více portálů, jedno univerzální jádro</h2>
+              <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                ReSys funguje jako robustní platforma s izolovanými databázovými strukturami. Libovolné množství klientských portálů je napájeno identickým jádrem a jednotnou SSO identitou, ale liší se designem, cenami a pravidly slotů.
+              </p>
+            </div>
 
+            {/* Glowing background behind cards */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/5 to-indigo-500/5 blur-3xl opacity-50 -z-10 rounded-full scale-95" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {tenants.map((t) => {
+                  const portalUrl = isLocal ? `http://${t.id}.localhost:3000` : `/tenants/${t.id}`;
+                  const attrs = (t.attributes as Record<string, string | undefined>) || {};
+                  const tagline = attrs.tagline || (t.vertical === "SPORTS_GROUND" 
+                    ? "Pronájem časových slotů na hřišti, dělení plochy na sektory a vazba na hardware turniketů."
+                    : "Skupinové lekce, kapacitní kurzy a rezervace výukových laboratoří.");
+                  
+                  const verticalLabel = 
+                    t.vertical === "SPORTS_GROUND" ? "Sportoviště / Časový grid" :
+                    t.vertical === "EDUCATIONAL_COURSE" ? "Kapacitní model / Výuka" :
+                    t.vertical === "CAPACITY_CLASS" ? "Kapacitní model / Lekce" : "Eventy / Ticketing";
+
+                  return (
+                    <div 
+                      key={t.id} 
+                      className="p-6 bg-white/45 dark:bg-[#07070C]/35 border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-[32px] hover:border-tenant-primary/30 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex flex-col justify-between group relative overflow-hidden backdrop-blur-xl"
+                    >
+                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-tenant-gradient opacity-10 group-hover:opacity-100 transition-opacity" />
+                      <div className="space-y-4 text-left">
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/15 uppercase tracking-wide">{verticalLabel}</span>
+                          <span className="text-[9px] text-slate-400 dark:text-zinc-550 font-bold uppercase font-mono tracking-wider">Demo ID: {t.id}</span>
+                        </div>
+                        <h3 className="font-extrabold text-lg text-foreground group-hover:text-tenant-primary transition-colors">{t.name}</h3>
+                        <p className="text-xs text-slate-500 dark:text-zinc-450 leading-relaxed">
+                          {tagline}
+                        </p>
+                      </div>
+                      <div className="pt-6 mt-6 border-t border-slate-100/50 dark:border-[#1F1F35]/25 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-semibold">Stav: Aktivní</span>
+                        <Link 
+                          href={portalUrl}
+                          className="inline-flex items-center gap-1.5 text-tenant-primary group-hover:text-tenant-primary-hover text-xs font-extrabold hover:translate-x-0.5 transition-all cursor-pointer"
+                        >
+                          Otevřít demo
+                          <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
           </div>
         </section>
 
-        {/* IoT ACCESS CONTROL & TURNSTILE APIs */}
-        <section id="iot" className="py-20 lg:py-28 bg-slate-50/20 dark:bg-[#08080F]/30 border-b border-slate-200/30 dark:border-[#1F1F35]/30">
+        {/* DEVELOPER API PLAYGROUND */}
+        <section id="developer" className="py-20 lg:py-28 border-b border-slate-200/30 dark:border-[#1F1F35]/30 bg-slate-50/10 dark:bg-[#07070C]/5 relative">
           <div className="max-w-7xl mx-auto px-6">
-            
-            <div className="grid lg:grid-cols-12 gap-12 items-center">
-              
-              {/* Left Column: Reception scan image mockup */}
-              <ScrollReveal animation="fade-right" duration={1000} className="lg:col-span-6 relative">
-                <div className="absolute inset-0 bg-gradient-to-bl from-tenant-primary/15 to-purple-500/15 blur-3xl opacity-50 -z-10 rounded-full scale-95" />
-                
-                <div className="p-2.5 bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/20 dark:border-zinc-800/60 rounded-[32px] shadow-2xl shadow-tenant-primary/5 relative group hover:border-tenant-primary/25 transition-colors duration-300">
-                  {/* Mock Window Controls Header */}
-                  <div className="flex items-center gap-1.5 px-4 py-2 border-b border-white/10 dark:border-zinc-800/40 bg-white/10 dark:bg-black/10 rounded-t-[22px] select-none">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono font-semibold ml-2 select-none tracking-wider uppercase">resys-iot-scanner-gate.png</span>
-                  </div>
-                  
-                  <div className="rounded-b-[22px] overflow-hidden bg-black/40">
-                    <img 
-                      src="/resys-iot-checkin.png" 
-                      alt="ReSys SaaS turnstile scanner checkin gateway" 
-                      className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
-                    />
-                  </div>
-                </div>
-              </ScrollReveal>
-
-              {/* Right Column: Code block & spec sheet */}
-              <ScrollReveal animation="fade-left" duration={1000} delay={200} className="lg:col-span-6 space-y-6 text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
-                  Hardware Integration
-                </div>
-                <h2 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">Zabezpečený přístup. Bez lidské obsluhy.</h2>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  Systém ReSys obsahuje vestavěné rozhraní pro fyzické čtečky a brány. Turnikety u vchodů nebo recepční tablety ověřují platnost kódů ze smartphonu v reálném čase.
-                </p>
-
-                <IoTSimulator />
-
-                <div className="grid sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-600 dark:text-zinc-350 select-none pt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-md bg-tenant-primary/15 flex items-center justify-center text-tenant-primary">
-                      <Check size={12} />
-                    </div>
-                    Ověření časového okna rezervace
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-md bg-tenant-primary/15 flex items-center justify-center text-tenant-primary">
-                      <Check size={12} />
-                    </div>
-                    Ochrana proti duplicitním vstupům
-                  </div>
-                </div>
-              </ScrollReveal>
-
+            <div className="text-center mb-16 space-y-4">
+              <div className="pl-2.5 border-l-2 border-tenant-primary text-tenant-primary text-[10px] font-black uppercase tracking-widest select-none">
+                Developer Playground
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Jednoduchá a spolehlivá API integrace</h2>
+              <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
+                ReSys poskytuje integrátorům a programátorům plný přístup ke všem rezervačním a hardware kontrolním endpointům přes plně transakční REST API.
+              </p>
             </div>
 
+            <DeveloperConsole />
           </div>
         </section>
 
         {/* SECURITY & ARCHITECTURE */}
         <section id="features" className="py-20 lg:py-28 max-w-7xl mx-auto px-6 relative">
           <div className="text-center mb-16 space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
+            <div className="pl-2.5 border-l-2 border-tenant-primary text-tenant-primary text-[10px] font-black uppercase tracking-widest select-none">
               Infrastruktura & Zabezpečení
             </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Architektura postavená na důvěře a stabilitě</h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Architektura postavená na důvěře a transakční bezpečnosti</h2>
             <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
-              ReSys spojuje špičkovou bezpečnost OneiD identity s robustním relačním plánováním na úrovni databáze.
+              ReSys spojuje federovanou identitu OneiD s pokročilým relačním modelováním na úrovni databáze k eliminaci race conditions a konfliktů.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-12 items-center">
-            {/* Left Column: SVG Interactive-Looking Flow Diagram */}
-            <ScrollReveal animation="fade-right" duration={1000} className="lg:col-span-6 relative p-6 bg-white/40 dark:bg-[#07070C]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl overflow-hidden shadow-xl">
+            
+            {/* Left Column: Interactive-Looking Flow Diagram */}
+            <ScrollReveal animation="fade-right" duration={1000} className="lg:col-span-6 relative p-6 bg-white/40 dark:bg-[#07070C]/35 border border-slate-200/50 dark:border-[#1F1F35]/30 rounded-3xl overflow-hidden shadow-xl">
               <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/5 to-transparent blur-3xl opacity-30 -z-10" />
               <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono font-bold uppercase border-b border-slate-200/40 dark:border-white/5 pb-3 mb-6 select-none flex items-center justify-between">
                 <span>Systémové toky & Integrace</span>
@@ -554,38 +426,43 @@ export default async function Home() {
                 <div className="space-y-1 text-left relative z-10">
                   <h3 className="font-extrabold text-sm text-slate-800 dark:text-white">01 • OneiD SSO Federovaná identita</h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Zjednodušte ověřování partnerů. Žádné lokální ukládání hesel, standardní JWT tokeny a plná integrace se státní či partnerskou identitou.
+                    Zjednodušte ověřování identity. Žádné lokální ukládání hesel, standardní JWT tokeny a bezproblémová integrace s federovaným SSO rozhraním.
                   </p>
                 </div>
               </div>
- 
+
               {/* Pillar 2 */}
               <div className="flex gap-4 p-5 rounded-2xl border border-slate-200/40 dark:border-[#1F1F35]/20 hover:border-tenant-primary/20 dark:hover:border-tenant-primary/25 bg-white/40 dark:bg-[#07070C]/35 backdrop-blur-md shadow-xs transition-all relative overflow-hidden group">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-tenant-primary/10 group-hover:bg-tenant-primary transition-colors" />
                 <div className="h-10 w-10 shrink-0 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center relative z-10"><Layers size={18} /></div>
                 <div className="space-y-1 text-left relative z-10">
                   <h3 className="font-extrabold text-sm text-slate-800 dark:text-white">02 • Multi-Resource Konfliktní Zámky</h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Systém automaticky blokuje překrývající se rezervace. Pronájem celé haly automaticky zneaktivní sloty pro dílčí badmintonové kurty.
+                  <p className="text-xs text-slate-500 dark:text-zinc-450 leading-relaxed">
+                    Rezervační jádro automaticky blokuje překrývající se rezervace. Pronájem celé haly automaticky zneaktivní časové sloty pro dílčí badmintonové kurty.
                   </p>
                 </div>
               </div>
- 
+
               {/* Pillar 3 */}
               <div className="flex gap-4 p-5 rounded-2xl border border-slate-200/40 dark:border-[#1F1F35]/20 hover:border-tenant-primary/20 dark:hover:border-tenant-primary/25 bg-white/40 dark:bg-[#07070C]/35 backdrop-blur-md shadow-xs transition-all relative overflow-hidden group">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-tenant-primary/10 group-hover:bg-tenant-primary transition-colors" />
                 <div className="h-10 w-10 shrink-0 rounded-xl bg-tenant-primary/10 text-tenant-primary flex items-center justify-center relative z-10"><Database size={18} /></div>
                 <div className="space-y-1 text-left relative z-10">
-                  <h3 className="font-extrabold text-sm text-slate-800 dark:text-white">03 • PostgreSQL Transakce</h3>
+                  <h3 className="font-extrabold text-sm text-slate-800 dark:text-white">03 • PostgreSQL Relační Transakce</h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Eliminuje riziko dvojí rezervace (race conditions). Všechny rezervace a zápisy do tabulky logů jsou spouštěny v izolované databázové transakci.
+                    Eliminuje riziko dvojích rezervací (race conditions). Všechny rezervace a kontrolní logy zápisů do databáze probíhají v přísně izolované transakci.
                   </p>
                 </div>
               </div>
- 
+
             </ScrollReveal>
           </div>
         </section>
+
+        {/* PRICING CALCULATOR SECTION */}
+        <div id="pricing">
+          <PricingCalculator />
+        </div>
 
       </main>
 
@@ -597,7 +474,7 @@ export default async function Home() {
               <span className="font-extrabold text-sm tracking-tight text-slate-800 dark:text-slate-200">
                 Re<span className="text-tenant-primary">Sys</span>
               </span>
-              <span className="text-[9px] bg-tenant-primary/10 border border-tenant-primary/25 text-tenant-primary px-2 py-0.5 rounded font-bold uppercase select-none">SaaS</span>
+              <span className="text-[9px] border-l-2 border-tenant-primary text-tenant-primary pl-1.5 font-extrabold uppercase tracking-widest select-none">SaaS</span>
             </div>
             <p className="text-[11px] text-slate-400 dark:text-zinc-500 leading-relaxed">
               Unifikovaný rezervační engine a IoT přístupový hub. Vyvinuto pro sportovní, vzdělávací a společenské areály.
@@ -626,8 +503,8 @@ export default async function Home() {
           <div>
             <span className="font-bold text-slate-700 dark:text-zinc-300 block mb-3 uppercase tracking-wider text-[10px]">Vývojáři</span>
             <ul className="space-y-2 text-[11px]">
-              <li><a href="#iot" className="hover:text-tenant-primary transition-colors">Specifikace IoT Čteček</a></li>
-              <li><a href="#iot" className="hover:text-tenant-primary transition-colors">REST API Dokumentace</a></li>
+              <li><a href="#developer" className="hover:text-tenant-primary transition-colors">REST API Specifikace</a></li>
+              <li><a href="#developer" className="hover:text-tenant-primary transition-colors">API Sandbox konzole</a></li>
               <li><Link href={hostConsoleUrl} className="hover:text-tenant-primary transition-colors">SaaS Host Konzole</Link></li>
             </ul>
           </div>

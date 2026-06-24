@@ -41,7 +41,7 @@ export default function TenantBanner({
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem]" />
           
           <div className="relative z-10 flex flex-col items-center gap-2">
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg animate-pulse">
+            <div className="p-2.5 rounded-none bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg animate-pulse">
               <ImageIcon size={24} />
             </div>
             <span className="text-[10px] uppercase font-bold tracking-widest text-white/80 mt-1">

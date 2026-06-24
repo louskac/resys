@@ -42,7 +42,7 @@ function UpdateCard({
       </span>
 
       {/* Main Release Card */}
-      <div className={`p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl shadow-sm space-y-4 ${cardBorderHover} hover:scale-[1.01] hover:shadow-md transition-all duration-300`}>
+      <div className={`p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm space-y-4 ${cardBorderHover} hover:scale-[1.01] hover:shadow-md transition-all duration-300`}>
         
         {/* Card Header (Version Tag + Date) */}
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -72,7 +72,7 @@ function UpdateCard({
           <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-[#1F1F35]/40">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10.5px] font-bold cursor-pointer transition-all ${filesBtnStyles}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-[10.5px] font-bold cursor-pointer transition-all ${filesBtnStyles}`}
             >
               <FileCode size={12} />
               <span>
@@ -82,7 +82,7 @@ function UpdateCard({
             </button>
 
             {isExpanded && (
-              <div className="bg-slate-50/50 dark:bg-black/25 border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-xl p-3.5 max-h-48 overflow-y-auto scrollbar-none animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="bg-slate-50/50 dark:bg-black/25 border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none p-3.5 max-h-48 overflow-y-auto scrollbar-none animate-in fade-in slide-in-from-top-1 duration-200">
                 <ul className="space-y-1.5">
                   {upg.files.map((file, idx) => (
                     <li key={idx} className="flex items-center gap-2 text-[10.5px] text-slate-500 dark:text-zinc-400 font-mono select-all">
@@ -136,7 +136,7 @@ export default function SystemUpdatesList({ variant = "tenant" }: SystemUpdatesL
 
   if (error) {
     return (
-      <div className="py-8 text-center text-xs text-rose-500 font-mono bg-rose-500/5 border border-rose-500/20 rounded-2xl">
+      <div className="py-8 text-center text-xs text-rose-500 font-mono bg-rose-500/5 border border-rose-500/20 rounded-none">
         {error}
       </div>
     );
@@ -144,7 +144,7 @@ export default function SystemUpdatesList({ variant = "tenant" }: SystemUpdatesL
 
   if (updates.length === 0) {
     return (
-      <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl select-none">
+      <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none select-none">
         Žádné zaznamenané systémové aktualizace.
       </div>
     );

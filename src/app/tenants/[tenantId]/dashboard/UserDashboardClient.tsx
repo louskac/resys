@@ -331,7 +331,7 @@ export default function UserDashboardClient({
             </span>
           </div>
 
-          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-sm">
+          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-1 shadow-sm">
             <ThemeToggle />
           </div>
         </div>
@@ -341,13 +341,13 @@ export default function UserDashboardClient({
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
         
         {/* User profile banner header card */}
-        <div className="relative overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+        <div className="relative overflow-hidden bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
           {/* Glowing back-glow */}
           <div className="absolute top-0 right-0 h-40 w-40 bg-tenant-gradient opacity-10 blur-3xl rounded-full" />
           
           <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left z-10">
             {/* Avatar */}
-            <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-2xl text-tenant-primary">
+            <div className="relative h-20 w-20 rounded-none overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-2xl text-tenant-primary">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
               ) : (
@@ -378,15 +378,15 @@ export default function UserDashboardClient({
 
           {/* Quick Stats Strip */}
           <div className="flex gap-4 w-full md:w-auto border-t md:border-t-0 border-border pt-4 md:pt-0 justify-center z-10 text-center">
-            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+            <div className="px-4 py-2 bg-secondary/20 rounded-none border border-border min-w-[90px]">
               <span className="block text-xl font-extrabold text-tenant-primary">{upcomingBookings.length}</span>
               <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Aktivní</span>
             </div>
-            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+            <div className="px-4 py-2 bg-secondary/20 rounded-none border border-border min-w-[90px]">
               <span className="block text-xl font-extrabold text-foreground">{checkinLogs.length}</span>
               <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Vstupy</span>
             </div>
-            <div className="px-4 py-2 bg-secondary/20 rounded-2xl border border-border min-w-[90px]">
+            <div className="px-4 py-2 bg-secondary/20 rounded-none border border-border min-w-[90px]">
               <span className="block text-xl font-extrabold text-foreground">{bookings.length}</span>
               <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Celkem</span>
             </div>
@@ -446,7 +446,7 @@ export default function UserDashboardClient({
                 </h2>
                 
                 {upcomingBookings.length === 0 ? (
-                  <div className="bg-secondary/10 border border-border p-8 text-center rounded-2xl text-muted-foreground text-xs font-medium leading-relaxed">
+                  <div className="bg-secondary/10 border border-border p-8 text-center rounded-none text-muted-foreground text-xs font-medium leading-relaxed">
                     Nemáte žádné nadcházející rezervace. Klikněte na tlačítko výše pro vytvoření nové rezervace.
                   </div>
                 ) : (
@@ -458,26 +458,26 @@ export default function UserDashboardClient({
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 font-extrabold uppercase tracking-wide">
+                            <span className="text-[9px] border-l-2 border-tenant-primary text-tenant-primary pl-1.5 font-extrabold uppercase tracking-wider select-none">
                               {b.tenantName}
                             </span>
                             {b.status === "PENDING_PAYMENT" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
                                 <AlertTriangle size={10} className="stroke-[3]" />
                                 Čeká na platbu
                               </span>
                             ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
                                 <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping" />
                                 Právě probíhá
                               </span>
                             ) : b.status === "ATTENDED" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
                                 <CheckCircle size={10} className="stroke-[3]" />
                                 Odbaveno
                               </span>
                             ) : (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
                                 <Check size={10} className="stroke-[3]" />
                                 Potvrzeno
                               </span>
@@ -562,7 +562,7 @@ export default function UserDashboardClient({
                     Proběhlé rezervace
                   </h2>
 
-                  <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-card border border-border rounded-none overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
@@ -584,17 +584,17 @@ export default function UserDashboardClient({
                               </td>
                               <td className="p-4 text-right">
                                 {b.status === "ATTENDED" ? (
-                                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35] font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded-none bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35] font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
                                     <CheckCircle size={9} className="stroke-[2.5]" />
                                     Odbaveno
                                   </span>
                                 ) : b.status === "PENDING_PAYMENT" ? (
-                                  <span className="px-2 py-0.5 rounded bg-rose-500/5 dark:bg-rose-500/10 text-rose-550 dark:text-rose-450 border border-rose-500/15 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded-none bg-rose-500/5 dark:bg-rose-500/10 text-rose-550 dark:text-rose-450 border border-rose-500/15 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
                                     <AlertTriangle size={9} className="stroke-[2.5]" />
                                     Propadlo (Neuhrazeno)
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-zinc-550 border border-slate-100 dark:border-zinc-800/40 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded-none bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-zinc-550 border border-slate-100 dark:border-zinc-800/40 font-extrabold uppercase tracking-wider text-[9px] inline-flex items-center gap-1">
                                     <Clock size={9} className="stroke-[2.5]" />
                                     Proběhlo
                                   </span>
@@ -620,11 +620,11 @@ export default function UserDashboardClient({
               </h2>
 
               {checkinLogs.length === 0 ? (
-                <div className="bg-secondary/10 border border-border p-8 text-center rounded-2xl text-muted-foreground text-xs font-medium leading-relaxed">
+                <div className="bg-secondary/10 border border-border p-8 text-center rounded-none text-muted-foreground text-xs font-medium leading-relaxed">
                   Zatím jste neprovedli žádné fyzické check-iny u terminálů. Vaše QR kódy budou naskenovány na check-in zařízení při vstupu.
                 </div>
               ) : (
-                <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-card border border-border rounded-none overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
@@ -646,7 +646,7 @@ export default function UserDashboardClient({
                             <td className="p-4 font-bold">{log.resourceName}</td>
                             <td className="p-4 text-muted-foreground font-medium">{log.tenantName}</td>
                             <td className="p-4 text-right">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border ${
+                              <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold uppercase tracking-wider border ${
                                 log.result === "SUCCESS"
                                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                                   : "bg-rose-500/10 border-rose-500/20 text-rose-500"
@@ -675,7 +675,7 @@ export default function UserDashboardClient({
                 </h3>
                 
                 {/* Visual Avatar */}
-                <div className="h-24 w-24 rounded-3xl overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-3xl text-tenant-primary shadow-inner">
+                <div className="h-24 w-24 rounded-none overflow-hidden bg-tenant-primary/10 border-2 border-tenant-primary/30 flex items-center justify-center font-extrabold text-3xl text-tenant-primary shadow-inner">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Zvolený avatar" className="h-full w-full object-cover" />
                   ) : (
@@ -693,7 +693,7 @@ export default function UserDashboardClient({
                         key={i}
                         type="button"
                         onClick={() => setAvatarUrl(url)}
-                        className={`h-8 w-8 rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 active:scale-95 ${
+                        className={`h-8 w-8 rounded-none overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 active:scale-95 ${
                           avatarUrl === url ? "border-tenant-primary scale-105 shadow-md" : "border-transparent"
                         }`}
                       >
@@ -931,7 +931,7 @@ export default function UserDashboardClient({
           {/* Boarding Pass Ticket representation */}
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
+            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-none-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
           >
             {/* Ticket Top Part */}
             <div className="p-6 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative">
@@ -940,7 +940,7 @@ export default function UserDashboardClient({
               
               <div className="flex items-center justify-between">
                 <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary">{activeTicket.tenantName}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
                   Aktivní vstup
                 </span>
               </div>
@@ -977,8 +977,8 @@ export default function UserDashboardClient({
               </div>
               
               {/* Premium looking QR Code visual representation */}
-              <div className="relative p-4 bg-white rounded-3xl border border-slate-200 flex items-center justify-center shadow-md select-none overflow-hidden group">
-                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-2xl relative overflow-hidden text-slate-800">
+              <div className="relative p-4 bg-white rounded-none border border-slate-200 flex items-center justify-center shadow-md select-none overflow-hidden group">
+                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
                   {dynamicQrPayload ? (
                     <img 
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dynamicQrPayload)}`}
@@ -1016,7 +1016,7 @@ export default function UserDashboardClient({
 
               <button
                 onClick={() => setActiveTicket(null)}
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-foreground text-xs font-semibold rounded-2xl transition-all cursor-pointer mt-2"
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-foreground text-xs font-semibold rounded-none transition-all cursor-pointer mt-2"
               >
                 Zavřít lístek
               </button>

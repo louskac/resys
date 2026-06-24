@@ -941,7 +941,7 @@ export default function AIAssistant({
         <div className={`fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 w-[92%] max-w-[460px] animated-glowing-border p-5 pt-14 pb-5 flex flex-col gap-4 z-50 transition-[opacity,background-color,border-color,box-shadow,backdrop-filter] duration-350 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
           
           {/* Subtle breathing liquid background mesh matching the design language */}
-          <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
+          <div className="absolute inset-0 rounded-none overflow-hidden pointer-events-none z-0">
             {/* Ambient Purple Blur */}
             <div className="absolute top-[-80px] left-[-60px] w-[260px] h-[260px] rounded-full bg-[#7000FF] opacity-[0.05] dark:opacity-[0.08] blur-[70px] animate-blob-orbit-1" />
             {/* Ambient Cyan Blur */}
@@ -1016,7 +1016,7 @@ export default function AIAssistant({
                     window.speechSynthesis.cancel();
                   }
                 }}
-                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-none border transition-colors cursor-pointer ${
                   isVoiceOutputEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-500 hover:text-white"
                 }`}
                 title={isVoiceOutputEnabled ? "Mluvení zapnuto" : "Mluvení vypnuto"}
@@ -1025,14 +1025,14 @@ export default function AIAssistant({
               </button>
               <button
                 onClick={handleReset}
-                className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-450 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
+                className="p-1.5 rounded-none border border-white/5 text-zinc-500 hover:text-rose-450 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
                 title="Restartovat ReKeepera"
               >
                 <RotateCcw size={13} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-none border border-white/5 text-zinc-500 hover:text-white transition-colors cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -1041,7 +1041,7 @@ export default function AIAssistant({
 
           {/* Overlap conflict warning alert box */}
           {consoleState.hasConflict && (
-            <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/15 space-y-2.5 animate-fadeIn z-10">
+            <div className="p-3 bg-rose-500/10 rounded-none border border-rose-500/15 space-y-2.5 animate-fadeIn z-10">
               <div className="flex gap-2">
                 <AlertTriangle size={13} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-[10.5px] text-zinc-300 leading-normal">
@@ -1050,13 +1050,13 @@ export default function AIAssistant({
               </div>
               
               {consoleState.suggestedAlternativeTime !== null && (
-                <div className="p-2.5 bg-black/35 border border-white/5 rounded-xl flex items-center justify-between text-xs">
+                <div className="p-2.5 bg-black/35 border border-white/5 rounded-none flex items-center justify-between text-xs">
                   <span className="text-[10px] font-semibold text-emerald-400">
                     Doporučeno: {getDayNameCzech(consoleState.dayIndex)} od {formatDecimalToTimeString(consoleState.suggestedAlternativeTime)}
                   </span>
                   <button
                     onClick={handleApplyAlternative}
-                    className="text-[9px] font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-0.5"
+                    className="text-[9px] font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black px-2.5 py-1.5 rounded-none transition-colors cursor-pointer flex items-center gap-0.5"
                   >
                     Zvolit návrh <ChevronRight size={10} />
                   </button>
@@ -1069,7 +1069,7 @@ export default function AIAssistant({
           {isListening ? (
             <AIWaveform />
           ) : (
-            <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/40 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10">
+            <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/40 backdrop-blur-md px-3.5 py-2.5 rounded-none border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10">
               {messages[messages.length - 1]?.content || "Jak vám mohu pomoci?"}
             </div>
           )}

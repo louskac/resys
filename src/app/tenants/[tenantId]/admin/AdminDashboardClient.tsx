@@ -247,7 +247,7 @@ function TimePickerDropdown({
           left: `${picker.rect.left + window.scrollX}px`,
           width: `${picker.rect.width}px`,
         }}
-        className="z-55 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 font-mono text-xs"
+        className="z-55 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-none shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 font-mono text-xs"
       >
         {getTimeOptions(picker.value)
           .filter((t) => {
@@ -955,6 +955,8 @@ export default function AdminDashboardClient({
       price: string;
       technicalBreak: boolean;
       technicalBreakMinutes: number;
+      autoLightingPricingEnabled?: boolean;
+      autoLightingFlatRate?: string | number;
     }
   }>({
     open: false,
@@ -972,7 +974,9 @@ export default function AdminDashboardClient({
       equipmentList: [],
       price: "",
       technicalBreak: false,
-      technicalBreakMinutes: 15
+      technicalBreakMinutes: 15,
+      autoLightingPricingEnabled: false,
+      autoLightingFlatRate: ""
     }
   });
 
@@ -1738,7 +1742,7 @@ export default function AdminDashboardClient({
         )}
 
         <div className="flex gap-4">
-          <div className="flex-1 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary rounded-2xl p-3.5 sm:p-5 shadow-sm">
+          <div className="flex-1 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary rounded-none p-3.5 sm:p-5 shadow-sm">
             <div className="flex justify-between items-start flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1765,7 +1769,7 @@ export default function AdminDashboardClient({
               <div className="flex items-center gap-3">
                 <div className="text-right mr-1 select-none hidden sm:block">
                   <span className="block text-[9px] uppercase font-extrabold text-slate-400 dark:text-zinc-500 tracking-wider">Cena pronájmu</span>
-                  <span className="text-xs font-extrabold text-tenant-primary bg-tenant-primary/5 border border-tenant-primary/15 px-2.5 py-1 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+                  <span className="text-xs font-extrabold text-tenant-primary bg-tenant-primary/5 border border-tenant-primary/15 px-2.5 py-1 rounded-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
                     {resAttrs.price ? `${resAttrs.price} Kč/hod` : "Dle dohody"}
                   </span>
                 </div>
@@ -1793,14 +1797,14 @@ export default function AdminDashboardClient({
                             technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15
                           }
                         })}
-                        className="p-3 sm:p-1.5 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                        className="p-3 sm:p-1.5 rounded-none bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                         title="Upravit zdroj"
                       >
                         <Edit className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                       </button>
                       <button
                         onClick={() => handleResourceDelete(res.id)}
-                        className="p-3 sm:p-1.5 rounded-xl bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                        className="p-3 sm:p-1.5 rounded-none bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                         title="Smazat zdroj"
                       >
                         <Trash className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
@@ -1863,7 +1867,7 @@ export default function AdminDashboardClient({
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/"
-              className="p-2 rounded-xl bg-white/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] transition-all flex items-center justify-center cursor-pointer hover:scale-105 shadow-sm"
+              className="p-2 rounded-none bg-white/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] transition-all flex items-center justify-center cursor-pointer hover:scale-105 shadow-sm"
               title="Zpět na portál"
             >
               <ArrowLeft size={14} />
@@ -1919,7 +1923,7 @@ export default function AdminDashboardClient({
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-bold text-slate-805 dark:text-slate-100 text-xs sm:text-sm leading-tight">{theme.name}</span>
-                <span className="px-1 py-0.5 rounded text-[7px] sm:text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none select-none">
+                <span className="px-1 py-0.5 rounded-none text-[7px] sm:text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none select-none">
                   Administrace
                 </span>
               </div>
@@ -1944,7 +1948,7 @@ export default function AdminDashboardClient({
           </div>
 
           {/* Integrated Glass Control Dock */}
-          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
+          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-1 shadow-md shadow-slate-100/5 dark:shadow-black/5 transition-all">
             <ThemeToggle />
             
             <span className="h-6 w-px bg-slate-200/50 dark:bg-[#1F1F35] mx-1 shrink-0" />
@@ -1953,7 +1957,7 @@ export default function AdminDashboardClient({
               <div className="flex items-center gap-3 pl-2 pr-1 py-0.5">
                 <div className="hidden sm:flex flex-col text-right">
                   <div className="flex items-center gap-1.5 justify-end">
-                    <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
+                    <span className="px-1.5 py-0.5 rounded-none text-[8px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide leading-none">
                       Správce
                     </span>
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{session.user?.name}</span>
@@ -1962,12 +1966,12 @@ export default function AdminDashboardClient({
                 </div>
                 
                 {/* Avatar with gradient matching brand colors */}
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 overflow-hidden">
+                <div className="h-8 w-8 rounded-none bg-gradient-to-tr from-tenant-primary/25 to-tenant-primary/5 dark:from-tenant-primary/30 dark:to-tenant-primary/10 border border-tenant-primary/20 dark:border-tenant-primary/30 text-tenant-primary dark:text-purple-400 flex items-center justify-center font-extrabold text-xs select-none shadow-sm shadow-tenant-primary/5 overflow-hidden">
                   {session.user?.avatarUrl ? (
                     <img
                       src={session.user.avatarUrl}
                       alt={session.user.name || "Avatar"}
-                      className="h-full w-full object-cover rounded-xl"
+                      className="h-full w-full object-cover rounded-none"
                     />
                   ) : (
                     session.user?.name ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "A"
@@ -1989,10 +1993,10 @@ export default function AdminDashboardClient({
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 py-6 md:py-8 flex flex-col md:flex-row gap-6 md:gap-8">
         
         {/* Navigation Sidebar */}
-        <aside className="hidden md:flex w-full md:w-64 flex-col gap-1.5 p-3 bg-white/45 dark:bg-[#0A0A10]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl shadow-sm shadow-slate-100/5 dark:shadow-black/5 shrink-0 select-none">
+        <aside className="hidden md:flex w-full md:w-64 flex-col gap-1.5 p-3 bg-white/45 dark:bg-[#0A0A10]/35 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 shrink-0 select-none">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "overview" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2004,7 +2008,7 @@ export default function AdminDashboardClient({
           
           <button
             onClick={() => setActiveTab("resources")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "resources" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2016,7 +2020,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("operating")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "operating" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2028,7 +2032,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("bookings")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "bookings" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2040,7 +2044,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("devices")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "devices" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2052,7 +2056,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("billing")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "billing" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2064,7 +2068,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("subscription")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "subscription" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2076,7 +2080,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("updates")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "updates" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2088,7 +2092,7 @@ export default function AdminDashboardClient({
 
           <button
             onClick={() => setActiveTab("settings")}
-            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-xl items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
+            className={`w-auto md:w-full inline-flex md:flex px-4 py-2.5 md:py-3 rounded-none items-center gap-2 sm:gap-3 text-xs font-semibold transition-all cursor-pointer border border-transparent shrink-0 ${
               activeTab === "settings" 
                 ? "bg-tenant-gradient text-white shadow-md shadow-tenant-primary/20 scale-[1.02] font-bold" 
                 : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-white/50 dark:hover:bg-[#131322]/40 hover:border-slate-200/30 dark:hover:border-[#1F1F35]/20 hover:scale-[1.01]"
@@ -2112,7 +2116,7 @@ export default function AdminDashboardClient({
           `}</style>
 
           <div className="w-full relative z-30 mb-4 select-none">
-            <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-[#080810]/50 backdrop-blur-xl border border-slate-200/40 dark:border-white/5 rounded-2xl p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+            <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-[#080810]/50 backdrop-blur-xl border border-slate-200/40 dark:border-white/5 rounded-none p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
               <div className="flex-1 overflow-x-auto scrollbar-none flex items-center gap-1.5 py-0.5 px-1 scroll-smooth">
                 {navItems.map((item) => {
                   const isActive = activeTab === item.value;
@@ -2121,7 +2125,7 @@ export default function AdminDashboardClient({
                     <button
                       key={item.value}
                       onClick={() => setActiveTab(item.value)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-none text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                         isActive
                           ? "bg-tenant-gradient text-white shadow-sm font-extrabold"
                           : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
@@ -2136,14 +2140,14 @@ export default function AdminDashboardClient({
               <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 shrink-0" />
               <button
                 onClick={() => setIsMobileScannerOpen(true)}
-                className="p-2.5 rounded-xl bg-tenant-gradient text-white shrink-0 active:scale-90 transition-all flex items-center justify-center shadow-md shadow-tenant-primary/15 md:hidden"
+                className="p-2.5 rounded-none bg-tenant-gradient text-white shrink-0 active:scale-90 transition-all flex items-center justify-center shadow-md shadow-tenant-primary/15 md:hidden"
                 title="Bleskové odbavení lístků"
               >
                 <Camera size={14} />
               </button>
               <button
                 onClick={() => setIsMobileNavOpen(true)}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white shrink-0 active:scale-90 transition-all flex items-center justify-center bg-slate-50 dark:bg-white/[0.02] border border-slate-200/40 dark:border-white/5"
+                className="p-2 rounded-none text-slate-500 hover:text-slate-800 dark:hover:text-white shrink-0 active:scale-90 transition-all flex items-center justify-center bg-slate-50 dark:bg-white/[0.02] border border-slate-200/40 dark:border-white/5"
                 title="Zobrazit navigaci"
               >
                 <Menu size={14} />
@@ -2159,7 +2163,7 @@ export default function AdminDashboardClient({
                 className="fixed inset-0 z-40 bg-black/60 dark:bg-black/85 backdrop-blur-[3px] transition-opacity duration-300 md:hidden"
               />
               {/* Bottom Sheet Drawer */}
-              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#07070F]/95 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-t-[2rem] p-6 pb-8 space-y-5 animate-slide-up md:hidden select-none max-h-[85vh] overflow-y-auto scrollbar-none shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#07070F]/95 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-none-t-[2rem] p-6 pb-8 space-y-5 animate-slide-up md:hidden select-none max-h-[85vh] overflow-y-auto scrollbar-none shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 {/* Visual Handle */}
                 <div className="w-12 h-1 bg-slate-300 dark:bg-white/20 rounded-full mx-auto mb-2" />
                 
@@ -2170,7 +2174,7 @@ export default function AdminDashboardClient({
                   </div>
                   <button
                     onClick={() => setIsMobileNavOpen(false)}
-                    className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/55 dark:bg-white/[0.02] text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    className="p-1.5 rounded-none border border-slate-200 dark:border-white/10 bg-slate-50/55 dark:bg-white/[0.02] text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
                   >
                     <X size={15} />
                   </button>
@@ -2183,7 +2187,7 @@ export default function AdminDashboardClient({
                     setIsMobileScannerOpen(true);
                     setIsMobileNavOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2.5 py-4 px-4 bg-tenant-gradient text-white rounded-2xl font-bold shadow-lg shadow-tenant-primary/20 active:scale-98 transition-all cursor-pointer select-none mb-3"
+                  className="w-full flex items-center justify-center gap-2.5 py-4 px-4 bg-tenant-gradient text-white rounded-none font-bold shadow-lg shadow-tenant-primary/20 active:scale-98 transition-all cursor-pointer select-none mb-3"
                 >
                   <Camera size={16} className="animate-pulse" />
                   <span className="text-[10px] uppercase tracking-widest font-black">Bleskové Odbavení Lístků</span>
@@ -2200,7 +2204,7 @@ export default function AdminDashboardClient({
                           setActiveTab(item.value);
                           setIsMobileNavOpen(false);
                         }}
-                        className={`w-full relative flex items-center gap-3.5 py-3.5 px-4 rounded-xl transition-all duration-200 cursor-pointer ${
+                        className={`w-full relative flex items-center gap-3.5 py-3.5 px-4 rounded-none transition-all duration-200 cursor-pointer ${
                           isActive
                             ? "bg-slate-100/70 dark:bg-white/[0.04] text-slate-900 dark:text-white font-bold"
                             : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
@@ -2209,7 +2213,7 @@ export default function AdminDashboardClient({
                         {/* Glowing Active Indicator - Vertical Neon Bar on the left */}
                         {isActive && (
                           <div 
-                            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-md bg-tenant-gradient" 
+                            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-none-r-md bg-tenant-gradient" 
                             style={{
                               boxShadow: "0 0 10px var(--tenant-primary), 0 0 5px var(--tenant-primary)"
                             }}
@@ -2247,7 +2251,7 @@ export default function AdminDashboardClient({
           
           {/* Subscription Warning Banner */}
           {(localTenant.subscriptionStatus === "PAST_DUE" || localTenant.subscriptionStatus === "CANCELED") && (
-            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-3xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm select-none">
+            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-none p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm select-none">
               <div className="flex gap-3">
                 <ShieldAlert size={20} className="text-rose-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
@@ -2261,7 +2265,7 @@ export default function AdminDashboardClient({
               <button
                 type="button"
                 onClick={() => setActiveTab("subscription")}
-                className="w-full sm:w-auto px-4 py-2 bg-rose-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-rose-600 active:scale-95 transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/15"
+                className="w-full sm:w-auto px-4 py-2 bg-rose-500 text-white rounded-none text-[10px] font-bold uppercase tracking-wider hover:bg-rose-600 active:scale-95 transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/15"
               >
                 <CreditCard size={12} />
                 Vyřešit platbu
@@ -2273,7 +2277,7 @@ export default function AdminDashboardClient({
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Mobile Ticket Scanner Quick Launch Banner */}
-              <div className="p-5 bg-gradient-to-r from-tenant-primary/10 via-tenant-accent/5 to-transparent border border-tenant-primary/20 rounded-3xl relative overflow-hidden group">
+              <div className="p-5 bg-gradient-to-r from-tenant-primary/10 via-tenant-accent/5 to-transparent border border-tenant-primary/20 rounded-none relative overflow-hidden group">
                 <div className="flex flex-row justify-between items-center gap-4 relative z-10">
                   <div className="space-y-1 flex-1">
                     <h3 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-2 select-none uppercase tracking-wider">
@@ -2287,7 +2291,7 @@ export default function AdminDashboardClient({
                   <button
                     type="button"
                     onClick={() => setIsMobileScannerOpen(true)}
-                    className="h-16 w-16 shrink-0 bg-tenant-gradient hover:opacity-95 text-white rounded-2xl shadow-lg shadow-tenant-primary/25 transition-all cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-1 border border-white/10"
+                    className="h-16 w-16 shrink-0 bg-tenant-gradient hover:opacity-95 text-white rounded-none shadow-lg shadow-tenant-primary/25 transition-all cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-1 border border-white/10"
                   >
                     <Camera size={20} className="animate-pulse" />
                     <span className="text-[8px] font-black uppercase tracking-widest">Spustit</span>
@@ -2300,56 +2304,56 @@ export default function AdminDashboardClient({
               {/* Analytics Header Metrics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {/* Resources Metric */}
-                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
+                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-tenant-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-extrabold uppercase tracking-wider block group-hover:text-tenant-primary transition-colors duration-300">Zdroje</span>
                     <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight block">{resources.length}</span>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
+                  <div className="p-3.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
                     <Building size={20} />
                   </div>
                 </div>
 
                 {/* Total Bookings Metric */}
-                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
+                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-tenant-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-extrabold uppercase tracking-wider block group-hover:text-tenant-primary transition-colors duration-300">Rezervace celkem</span>
                     <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight block">{bookings.length}</span>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
+                  <div className="p-3.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
                     <Calendar size={20} />
                   </div>
                 </div>
 
                 {/* IoT Gates Metric */}
-                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
+                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-tenant-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-extrabold uppercase tracking-wider block group-hover:text-tenant-primary transition-colors duration-300">Vstupní brány</span>
                     <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight block">{devices.length}</span>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
+                  <div className="p-3.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
                     <Smartphone size={20} />
                   </div>
                 </div>
 
                 {/* Turnstile Logs Metric */}
-                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
+                <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:shadow-tenant-primary/5 flex items-center justify-between group relative overflow-hidden cursor-default">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-tenant-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-extrabold uppercase tracking-wider block group-hover:text-tenant-primary transition-colors duration-300">Průchody turniketem</span>
                     <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight block">{checkinLogs.length}</span>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
+                  <div className="p-3.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center shrink-0">
                     <Activity size={20} />
                   </div>
                 </div>
               </div>
 
               {/* Turnstile Access Logs Stream */}
-              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
+              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
                 <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
                   <Activity size={16} className="text-tenant-accent" />
                   Živé logy průchodů turniketem (Historie skenování)
@@ -2399,7 +2403,7 @@ export default function AdminDashboardClient({
                     {/* Mobile View List */}
                     <div className="block md:hidden space-y-3">
                       {checkinLogs.map((log) => (
-                        <div key={log.id} className="p-4 bg-slate-50/50 dark:bg-[#131322]/20 border border-slate-200/50 dark:border-white/5 rounded-2xl space-y-2">
+                        <div key={log.id} className="p-4 bg-slate-50/50 dark:bg-[#131322]/20 border border-slate-200/50 dark:border-white/5 rounded-none space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">{formatUTCTime(log.scannedAt)}</span>
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getResultBadgeColor(log.result)}`}>
@@ -2430,7 +2434,7 @@ export default function AdminDashboardClient({
               </div>
 
               {/* Záznamy auditů (Audit Logs Trail) */}
-              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
+              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
                 <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
                   <ClipboardList size={16} className="text-tenant-primary" />
                   Záznamy auditů (Audit logs)
@@ -2477,7 +2481,7 @@ export default function AdminDashboardClient({
                               </span>
                             </td>
                             <td className="py-3 text-slate-700 dark:text-slate-350">
-                              {log.entity} <code className="font-mono text-[9px] bg-secondary px-1 rounded">{log.entityId?.slice(0, 8)}</code>
+                              {log.entity} <code className="font-mono text-[9px] bg-secondary px-1 rounded-none">{log.entityId?.slice(0, 8)}</code>
                             </td>
                             <td className="py-3 text-muted-foreground font-mono text-[10px] max-w-xs truncate" title={JSON.stringify(log.payload)}>
                               {JSON.stringify(log.payload)}
@@ -2506,9 +2510,9 @@ export default function AdminDashboardClient({
                      <button
                        onClick={() => setResourceModal({
                          open: true, mode: "add",
-                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15 }
+                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
                        })}
-                       className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center gap-1.5 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
+                       className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center gap-1.5 rounded-none font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
                      >
                        <Plus size={14} />
                        Přidat zdroj
@@ -2516,9 +2520,9 @@ export default function AdminDashboardClient({
                      <button
                        onClick={() => setResourceModal({
                          open: true, mode: "add",
-                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15 }
+                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
                        })}
-                       className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-xl active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
+                       className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-none active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
                        title="Přidat zdroj"
                      >
                        <Plus size={16} />
@@ -2588,10 +2592,10 @@ export default function AdminDashboardClient({
                 </div>
                 
                 {/* Sub-tab Toggle */}
-                <div className="flex bg-white/40 dark:bg-[#0F0F1A]/60 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] p-1 rounded-xl text-xs select-none shadow-sm">
+                <div className="flex bg-white/40 dark:bg-[#0F0F1A]/60 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] p-1 rounded-none text-xs select-none shadow-sm">
                   <button
                     onClick={() => setBookingsSubTab("calendar")}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-none font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       bookingsSubTab === "calendar"
                         ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-105"
                         : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
@@ -2602,7 +2606,7 @@ export default function AdminDashboardClient({
                   </button>
                   <button
                     onClick={() => setBookingsSubTab("list")}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-none font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       bookingsSubTab === "list"
                         ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-105"
                         : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
@@ -2637,7 +2641,7 @@ export default function AdminDashboardClient({
                 />
               ) : (
                 /* List/Table View */
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/10 transition-all duration-300">
+                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300">
                   {bookings.length === 0 ? (
                     <div className="py-8 text-center text-xs text-muted-foreground font-mono">
                       Zatím nebyly provedeny žádné rezervace.
@@ -2711,7 +2715,7 @@ export default function AdminDashboardClient({
                                         }
                                       });
                                     }}
-                                    className="px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/15 text-red-500 border border-red-500/20 hover:scale-105 active:scale-95 transition-all text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                                    className="px-2.5 py-1.5 rounded-none bg-red-500/10 hover:bg-red-500/15 text-red-500 border border-red-500/20 hover:scale-105 active:scale-95 transition-all text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
                                   >
                                     Zrušit
                                   </button>
@@ -2725,7 +2729,7 @@ export default function AdminDashboardClient({
                       {/* Mobile View List */}
                       <div className="block md:hidden space-y-3">
                         {bookings.map((booking) => (
-                          <div key={booking.id} className="p-4 bg-slate-50/50 dark:bg-[#131322]/20 border border-slate-200/50 dark:border-white/5 rounded-2xl space-y-3">
+                          <div key={booking.id} className="p-4 bg-slate-50/50 dark:bg-[#131322]/20 border border-slate-200/50 dark:border-white/5 rounded-none space-y-3">
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Uživatel</span>
@@ -2787,7 +2791,7 @@ export default function AdminDashboardClient({
                                     }
                                   });
                                 }}
-                                className="w-full text-center py-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/15 text-red-500 border border-red-500/20 active:scale-95 transition-all text-xs font-bold"
+                                className="w-full text-center py-3.5 rounded-none bg-red-500/10 hover:bg-red-500/15 text-red-500 border border-red-500/20 active:scale-95 transition-all text-xs font-bold"
                               >
                                 Zrušit rezervaci
                               </button>
@@ -2814,7 +2818,7 @@ export default function AdminDashboardClient({
                         open: true, mode: "add",
                         data: { id: "", name: "", token: "sec_tok_" + Math.random().toString(36).substring(3, 9), active: true }
                       })}
-                      className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center justify-center gap-1.5 rounded-xl font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
+                      className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center justify-center gap-1.5 rounded-none font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
                     >
                       <Plus size={14} />
                       Registrovat čtečku
@@ -2824,7 +2828,7 @@ export default function AdminDashboardClient({
                         open: true, mode: "add",
                         data: { id: "", name: "", token: "sec_tok_" + Math.random().toString(36).substring(3, 9), active: true }
                       })}
-                      className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-xl active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
+                      className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-none active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
                       title="Registrovat čtečku"
                     >
                       <Plus size={16} />
@@ -2834,7 +2838,7 @@ export default function AdminDashboardClient({
               </div>
 
               {/* IoT Gate Pairing Panel */}
-              <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl space-y-3.5">
+              <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5">
                 <div className="flex items-center gap-2 text-tenant-primary">
                   <QrCode size={18} />
                   <h4 className="font-extrabold text-sm text-foreground">Párování nové čtečky nebo brány</h4>
@@ -2848,7 +2852,7 @@ export default function AdminDashboardClient({
                     Nemáte oprávnění generovat párovací kódy pro brány.
                   </div>
                 ) : pairingState?.code ? (
-                  <div className="flex items-center gap-4 bg-white/50 dark:bg-black/35 p-4 rounded-2xl border border-tenant-primary/30 w-fit">
+                  <div className="flex items-center gap-4 bg-white/50 dark:bg-black/35 p-4 rounded-none border border-tenant-primary/30 w-fit">
                     <div className="space-y-1">
                       <span className="text-[9px] text-slate-400 uppercase font-bold block">Párovací kód</span>
                       <strong className="text-xl font-mono tracking-widest text-tenant-primary">{pairingState.code}</strong>
@@ -2868,7 +2872,7 @@ export default function AdminDashboardClient({
                         placeholder="např. Hlavní vstupní brána"
                         value={newDevicePairName}
                         onChange={(e) => setNewDevicePairName(e.target.value)}
-                        className="w-full text-xs py-2 px-3 bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl outline-none shadow-sm text-slate-800 dark:text-slate-200"
+                        className="w-full text-xs py-2 px-3 bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-none outline-none shadow-sm text-slate-800 dark:text-slate-200"
                       />
                     </div>
                     <button
@@ -2903,7 +2907,7 @@ export default function AdminDashboardClient({
                           alert("Došlo k chybě při komunikaci se serverem.");
                         }
                       }}
-                      className="bg-tenant-gradient text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all shadow-sm shrink-0"
+                      className="bg-tenant-gradient text-white text-xs font-bold py-2.5 px-4 rounded-none cursor-pointer hover:opacity-95 active:scale-95 transition-all shadow-sm shrink-0"
                     >
                       Generovat kód
                     </button>
@@ -2912,16 +2916,16 @@ export default function AdminDashboardClient({
               </div>
 
               {devices.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl">
+                <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none">
                   Zatím nejsou registrovány žádné čtečky. Spusťte nové zařízení s hlavičkou tenanta.
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {devices.map((dev) => (
-                    <div key={dev.id} className="p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl shadow-sm hover:scale-[1.01] hover:border-tenant-primary/20 hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3 group">
+                    <div key={dev.id} className="p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:scale-[1.01] hover:border-tenant-primary/20 hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3 group">
                       <div className="flex items-center gap-3.5 min-w-0">
                         {/* Device Icon in a Glass Circle */}
-                        <div className="p-3 rounded-xl bg-slate-100/60 dark:bg-white/[0.03] text-slate-500 dark:text-zinc-400 group-hover:text-tenant-primary group-hover:bg-tenant-primary/5 dark:group-hover:bg-tenant-primary/10 transition-colors shrink-0">
+                        <div className="p-3 rounded-none bg-slate-100/60 dark:bg-white/[0.03] text-slate-500 dark:text-zinc-400 group-hover:text-tenant-primary group-hover:bg-tenant-primary/5 dark:group-hover:bg-tenant-primary/10 transition-colors shrink-0">
                           <Smartphone size={18} />
                         </div>
                         
@@ -2931,7 +2935,7 @@ export default function AdminDashboardClient({
                             <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug group-hover:text-tenant-primary transition-colors truncate">
                               {dev.name}
                             </h4>
-                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold tracking-wide uppercase leading-none ${
+                            <span className={`px-1.5 py-0.5 rounded-none text-[8px] font-extrabold tracking-wide uppercase leading-none ${
                               dev.active 
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
                                 : "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/25"
@@ -2957,14 +2961,14 @@ export default function AdminDashboardClient({
                               mode: "edit",
                               data: { id: dev.id, name: dev.name, token: "", active: dev.active }
                             })}
-                            className="p-3 md:p-2 rounded-xl bg-slate-50 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-slate-200/50 dark:border-white/5 active:scale-95 transition-all shadow-sm cursor-pointer flex items-center justify-center"
+                            className="p-3 md:p-2 rounded-none bg-slate-50 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-slate-200/50 dark:border-white/5 active:scale-95 transition-all shadow-sm cursor-pointer flex items-center justify-center"
                             title="Upravit nastavení"
                           >
                             <Edit className="h-4 w-4 md:h-3.5 md:w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeviceDelete(dev.id)}
-                            className="p-3 md:p-2 rounded-xl bg-slate-50 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 border border-slate-200/50 dark:border-white/5 active:scale-95 transition-all shadow-sm cursor-pointer flex items-center justify-center"
+                            className="p-3 md:p-2 rounded-none bg-slate-50 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 border border-slate-200/50 dark:border-white/5 active:scale-95 transition-all shadow-sm cursor-pointer flex items-center justify-center"
                             title="Odebrat"
                           >
                             <Trash className="h-4 w-4 md:h-3.5 md:w-3.5" />
@@ -3001,7 +3005,7 @@ export default function AdminDashboardClient({
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 
                 {/* CARD 1: Vizuální styl, branding a přístupy */}
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
+                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
                   <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
                     <Building size={14} />
                     Vizuální styl, branding a přístupy
@@ -3018,7 +3022,7 @@ export default function AdminDashboardClient({
                             type="text"
                             value={settingsTagline}
                             onChange={(e) => setSettingsTagline(e.target.value)}
-                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl pl-9 pr-3 py-2 text-xs outline-none shadow-sm"
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-none pl-9 pr-3 py-2 text-xs outline-none shadow-sm"
                             placeholder="např. Volnočasové výtvarné a kreativní ateliéry"
                           />
                         </div>
@@ -3035,7 +3039,7 @@ export default function AdminDashboardClient({
                             rows={3}
                             value={settingsAdminEmails}
                             onChange={(e) => setSettingsAdminEmails(e.target.value)}
-                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl pl-9 pr-3 py-2.5 text-xs font-mono outline-none shadow-sm resize-none"
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-none pl-9 pr-3 py-2.5 text-xs font-mono outline-none shadow-sm resize-none"
                             placeholder="josef.novak@deepvision.cz, admin@sferapardubice.cz"
                           />
                         </div>
@@ -3051,7 +3055,7 @@ export default function AdminDashboardClient({
                             rows={3}
                             value={settingsAiInstructions}
                             onChange={(e) => setSettingsAiInstructions(e.target.value)}
-                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-xl px-3 py-2.5 text-xs outline-none shadow-sm resize-none"
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-none px-3 py-2.5 text-xs outline-none shadow-sm resize-none"
                             placeholder="Upřesněte kontext, tón a specifická pravidla pro ReKeepera. Např. 'Jsme fotbalový areál s umělou trávou. Máme Celou plochu a dva sektory (Sektor A, Sektor B). Zaměřujeme se na fotbalové pronájmy.'"
                           />
                         </div>
@@ -3081,7 +3085,7 @@ export default function AdminDashboardClient({
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleMouseUpOrLeave}
-                        className={`relative group rounded-2xl overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] h-[166px] select-none ${
+                        className={`relative group rounded-none overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] h-[166px] select-none ${
                           settingsBannerImage 
                             ? isDragging 
                               ? "cursor-grabbing border-tenant-primary/50" 
@@ -3099,14 +3103,14 @@ export default function AdminDashboardClient({
 
                         {/* Hover drag overlay helper for discovery */}
                         {settingsBannerImage && !isDragging && (
-                          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md border border-white/10 text-white py-1 px-2.5 rounded-xl text-[9px] font-bold flex items-center gap-1.5 opacity-75 pointer-events-none group-hover:opacity-100 transition-opacity">
+                          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md border border-white/10 text-white py-1 px-2.5 rounded-none text-[9px] font-bold flex items-center gap-1.5 opacity-75 pointer-events-none group-hover:opacity-100 transition-opacity">
                             <Move size={11} />
                             Tažením posunete výřez
                           </div>
                         )}
 
                         <div className="absolute right-3 bottom-3 bg-black/40 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20">
-                          <label className="p-2 bg-white/90 dark:bg-[#0D0D15]/90 text-zinc-950 dark:text-zinc-50 backdrop-blur-md border border-white/20 dark:border-[#1F1F35] rounded-xl cursor-pointer shadow-md text-[11px] font-bold flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all">
+                          <label className="p-2 bg-white/90 dark:bg-[#0D0D15]/90 text-zinc-950 dark:text-zinc-50 backdrop-blur-md border border-white/20 dark:border-[#1F1F35] rounded-none cursor-pointer shadow-md text-[11px] font-bold flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all">
                             <Upload size={14} />
                             {imageUploading ? "Nahrávání..." : settingsBannerImage ? "Změnit banner" : "Nahrát obrázek"}
                             <input 
@@ -3133,7 +3137,7 @@ export default function AdminDashboardClient({
                       <button
                         type="button"
                         onClick={() => setShowOnboarding(true)}
-                        className="w-full sm:w-auto border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 text-xs py-2.5 px-5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full sm:w-auto border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 text-xs py-2.5 px-5 rounded-none font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Sparkles size={14} />
                         Spustit průvodce nastavením
@@ -3141,7 +3145,7 @@ export default function AdminDashboardClient({
                       <button
                         type="submit"
                         disabled={isSavingSettings}
-                        className="w-full sm:w-auto bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-xl font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-none font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                       >
                         <Save size={14} />
                         {isSavingSettings ? "Ukládání..." : "Uložit nastavení portálu"}
@@ -3171,7 +3175,7 @@ export default function AdminDashboardClient({
                 const firstLevelResources = resources.filter(r => !r.attributes?.parentId);
                 if (firstLevelResources.length === 0) return null;
                 return (
-                  <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-[#131322] border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl w-fit">
+                  <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-[#131322] border border-slate-200/50 dark:border-[#1F1F35] rounded-none w-fit">
                     {firstLevelResources.map((res) => (
                       <button
                         key={res.id}
@@ -3184,7 +3188,7 @@ export default function AdminDashboardClient({
                           params.delete("rootId");
                           router.push(`${pathname}?${params.toString()}`, { scroll: false });
                         }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        className={`px-4 py-2 rounded-none text-xs font-bold transition-all cursor-pointer ${
                           selectedOperatingResourceId === res.id
                             ? "bg-white dark:bg-[#1d1d2c] text-tenant-primary dark:text-purple-400 shadow-sm"
                             : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
@@ -3199,7 +3203,7 @@ export default function AdminDashboardClient({
 
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 {/* CARD 2: Provozní doba */}
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
+                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
                   <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
                     <Clock size={14} />
                     Provozní doba a kalendářní omezení
@@ -3208,7 +3212,7 @@ export default function AdminDashboardClient({
                   {/* Top operational row: Display range next to presets bar */}
                   <div className="grid lg:grid-cols-3 gap-6">
                     {/* Left Column (1/3): Calendar View Range */}
-                    <div className="p-5 bg-white/60 dark:bg-[#0D0D15]/20 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl space-y-4 shadow-sm flex flex-col justify-between">
+                    <div className="p-5 bg-white/60 dark:bg-[#0D0D15]/20 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-4 shadow-sm flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <Calendar size={13} className="text-tenant-primary" />
@@ -3233,7 +3237,7 @@ export default function AdminDashboardClient({
                                     maxTime: settingsCloseTime < earliestOpeningHour ? settingsCloseTime : earliestOpeningHour
                                   });
                                 }}
-                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
                               >
                                 {settingsOpenTime}
                                 <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3257,7 +3261,7 @@ export default function AdminDashboardClient({
                                     minTime: settingsOpenTime > latestClosingHour ? settingsOpenTime : latestClosingHour
                                   });
                                 }}
-                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                                className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-xs outline-none shadow-sm cursor-pointer flex items-center justify-center text-slate-800 dark:text-slate-200 font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
                               >
                                 {settingsCloseTime}
                                 <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3272,7 +3276,7 @@ export default function AdminDashboardClient({
                     </div>
 
                     {/* Right Columns (2/3): Presets Bar */}
-                    <div className="lg:col-span-2 p-5 bg-white/60 dark:bg-[#0D0D15]/20 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl space-y-4 shadow-sm hover:border-tenant-primary/10 transition-all duration-300">
+                    <div className="lg:col-span-2 p-5 bg-white/60 dark:bg-[#0D0D15]/20 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-4 shadow-sm hover:border-tenant-primary/10 transition-all duration-300">
                       <div className="flex items-center gap-2">
                         <Settings size={13} className="text-tenant-primary" />
                         <span className="text-[10px] font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">Hromadné nastavení provozní doby</span>
@@ -3295,7 +3299,7 @@ export default function AdminDashboardClient({
                                   maxTime: presetCloseTime
                                 });
                               }}
-                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
+                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
                             >
                               {presetOpenTime}
                               <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3319,7 +3323,7 @@ export default function AdminDashboardClient({
                                   minTime: presetOpenTime
                                 });
                               }}
-                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-xl pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
+                              className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200"
                             >
                               {presetCloseTime}
                               <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3347,7 +3351,7 @@ export default function AdminDashboardClient({
                         <button
                           type="button"
                           onClick={() => applyPresetToDays([1, 2, 3, 4, 5, 6, 0])}
-                          className="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                          className="px-3 py-1.5 text-[10px] font-bold rounded-none bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
                         >
                           <Calendar size={12} />
                           Použít pro každý den
@@ -3355,7 +3359,7 @@ export default function AdminDashboardClient({
                         <button
                           type="button"
                           onClick={() => applyPresetToDays([1, 2, 3, 4, 5])}
-                          className="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                          className="px-3 py-1.5 text-[10px] font-bold rounded-none bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
                         >
                           <List size={12} />
                           Použít pro všední dny
@@ -3363,7 +3367,7 @@ export default function AdminDashboardClient({
                         <button
                           type="button"
                           onClick={() => applyPresetToDays([6, 0])}
-                          className="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                          className="px-3 py-1.5 text-[10px] font-bold rounded-none bg-white/65 dark:bg-[#131322]/65 hover:bg-tenant-primary hover:text-white dark:hover:bg-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
                         >
                           <Users size={12} />
                           Použít pro víkendy
@@ -3375,7 +3379,7 @@ export default function AdminDashboardClient({
                   {/* Opening hours list / table */}
                   <div>
                     {/* Desktop View Table */}
-                    <div className="hidden md:block overflow-x-auto scrollbar-none border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl shadow-sm">
+                    <div className="hidden md:block overflow-x-auto scrollbar-none border border-slate-200/50 dark:border-[#1F1F35] rounded-none bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl shadow-sm">
                       <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                         <thead>
                           <tr className="bg-white/40 dark:bg-[#0D0D15]/40 text-slate-500 dark:text-zinc-400 font-bold border-b border-slate-200/40 dark:border-[#1F1F35]/40 uppercase tracking-wider text-[9px]">
@@ -3389,7 +3393,7 @@ export default function AdminDashboardClient({
                           {settingsOpeningHours.map((day, idx) => (
                             <tr key={day.dayOfWeek} className={`border-b border-slate-100/50 dark:border-[#1F1F35]/10 transition-all ${day.closed ? "opacity-45 bg-slate-50/5 dark:bg-black/5" : "hover:bg-tenant-primary/5 dark:hover:bg-tenant-primary/10"}`}>
                               <td className="py-4 px-5 font-bold text-foreground">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold bg-slate-100 dark:bg-[#131322]/80 border border-slate-200/40 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 select-none">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-[10px] font-bold bg-slate-100 dark:bg-[#131322]/80 border border-slate-200/40 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 select-none">
                                   <span className={`h-1.5 w-1.5 rounded-full ${day.closed ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
                                   {day.name}
                                 </span>
@@ -3416,7 +3420,7 @@ export default function AdminDashboardClient({
                                         maxTime: day.closeTime
                                       });
                                     }}
-                                    className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
+                                    className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
                                   >
                                     {day.openTime}
                                     <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3445,7 +3449,7 @@ export default function AdminDashboardClient({
                                         minTime: day.openTime
                                       });
                                     }}
-                                    className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
+                                    className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-6 py-1.5 text-center font-mono disabled:opacity-30 text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs disabled:pointer-events-none text-slate-800 dark:text-slate-200"
                                   >
                                     {day.closeTime}
                                     <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
@@ -3482,7 +3486,7 @@ export default function AdminDashboardClient({
                     {/* Mobile View List */}
                     <div className="block md:hidden space-y-3">
                       {settingsOpeningHours.map((day, idx) => (
-                        <div key={day.dayOfWeek} className={`p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl space-y-3.5 transition-all ${day.closed ? "opacity-55" : ""}`}>
+                        <div key={day.dayOfWeek} className={`p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5 transition-all ${day.closed ? "opacity-55" : ""}`}>
                           <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/[0.04] pb-2">
                             <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
                               <span className={`h-1.5 w-1.5 rounded-full ${day.closed ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
@@ -3534,7 +3538,7 @@ export default function AdminDashboardClient({
                                         maxTime: day.closeTime
                                       });
                                     }}
-                                    className="w-full bg-white/50 dark:bg-black/35 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-3 py-2 text-left font-mono text-xs outline-none transition-all cursor-pointer flex items-center justify-between text-slate-800 dark:text-slate-200"
+                                    className="w-full bg-white/50 dark:bg-black/35 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-3 py-2 text-left font-mono text-xs outline-none transition-all cursor-pointer flex items-center justify-between text-slate-800 dark:text-slate-200"
                                   >
                                     {day.openTime}
                                     <ChevronDown size={10} className="text-slate-400 dark:text-zinc-500 pointer-events-none" />
@@ -3564,7 +3568,7 @@ export default function AdminDashboardClient({
                                         minTime: day.openTime
                                       });
                                     }}
-                                    className="w-full bg-white/50 dark:bg-black/35 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-xl pl-7 pr-3 py-2 text-left font-mono text-xs outline-none transition-all cursor-pointer flex items-center justify-between text-slate-800 dark:text-slate-200"
+                                    className="w-full bg-white/50 dark:bg-black/35 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-3 py-2 text-left font-mono text-xs outline-none transition-all cursor-pointer flex items-center justify-between text-slate-800 dark:text-slate-200"
                                   >
                                     {day.closeTime}
                                     <ChevronDown size={10} className="text-slate-400 dark:text-zinc-500 pointer-events-none" />
@@ -3585,7 +3589,7 @@ export default function AdminDashboardClient({
                     <button
                       type="submit"
                       disabled={isSavingSettings}
-                      className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-xl font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-5 rounded-none font-bold shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
                       <Save size={14} />
                       {isSavingSettings ? "Ukládání..." : "Uložit provozní dobu"}
@@ -3616,7 +3620,7 @@ export default function AdminDashboardClient({
           {activeTab === "subscription" && (
             <div className="space-y-8 animate-fade-in select-none">
               {/* Premium Plan Info Header */}
-              <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-r-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-none-r-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-full">
@@ -3641,7 +3645,7 @@ export default function AdminDashboardClient({
                 </div>
                 
                 {/* Resource Usage Limits Progress Bars */}
-                <div className="w-full md:w-80 bg-white/45 dark:bg-black/25 border border-slate-200/50 dark:border-[#2A2A40]/30 rounded-2xl p-4 space-y-3.5">
+                <div className="w-full md:w-80 bg-white/45 dark:bg-black/25 border border-slate-200/50 dark:border-[#2A2A40]/30 rounded-none p-4 space-y-3.5">
                   {/* Resources count meter */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-[10px] font-medium tracking-wide text-slate-400 dark:text-zinc-450">
@@ -3687,7 +3691,7 @@ export default function AdminDashboardClient({
                 <h4 className="text-sm font-bold text-slate-705 dark:text-slate-200">Dostupné plány a navýšení limitů</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Tier 1: Free Trial */}
-                  <div className={`relative flex flex-col justify-between p-5 rounded-2xl border transition-all ${
+                  <div className={`relative flex flex-col justify-between p-5 rounded-none border transition-all ${
                     localTenant.subscriptionPlan === "FREE_TRIAL" 
                       ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5" 
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
@@ -3717,7 +3721,7 @@ export default function AdminDashboardClient({
                         setSelectedPlanForUpgrade("FREE_TRIAL");
                         setIsUpgradeModalOpen(true);
                       }}
-                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-xl font-bold transition-all cursor-pointer ${
+                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-none font-bold transition-all cursor-pointer ${
                         localTenant.subscriptionPlan === "FREE_TRIAL"
                           ? "bg-slate-100 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 cursor-not-allowed border border-transparent"
                           : "bg-white dark:bg-black/35 hover:bg-slate-50 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-305"
@@ -3728,7 +3732,7 @@ export default function AdminDashboardClient({
                   </div>
 
                   {/* Tier 2: Starter */}
-                  <div className={`relative flex flex-col justify-between p-5 rounded-2xl border transition-all ${
+                  <div className={`relative flex flex-col justify-between p-5 rounded-none border transition-all ${
                     localTenant.subscriptionPlan === "STARTER" 
                       ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5" 
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
@@ -3758,7 +3762,7 @@ export default function AdminDashboardClient({
                         setSelectedPlanForUpgrade("STARTER");
                         setIsUpgradeModalOpen(true);
                       }}
-                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-xl font-bold transition-all cursor-pointer ${
+                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-none font-bold transition-all cursor-pointer ${
                         localTenant.subscriptionPlan === "STARTER"
                           ? "bg-slate-100 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 cursor-not-allowed border border-transparent"
                           : "bg-white dark:bg-black/35 hover:bg-slate-50 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-305"
@@ -3769,7 +3773,7 @@ export default function AdminDashboardClient({
                   </div>
 
                   {/* Tier 3: Pro */}
-                  <div className={`relative flex flex-col justify-between p-5 rounded-2xl border transition-all ${
+                  <div className={`relative flex flex-col justify-between p-5 rounded-none border transition-all ${
                     localTenant.subscriptionPlan === "PRO" 
                       ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5" 
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-355 dark:hover:border-purple-900/35"
@@ -3800,7 +3804,7 @@ export default function AdminDashboardClient({
                         setSelectedPlanForUpgrade("PRO");
                         setIsUpgradeModalOpen(true);
                       }}
-                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-xl font-bold transition-all cursor-pointer ${
+                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-none font-bold transition-all cursor-pointer ${
                         localTenant.subscriptionPlan === "PRO"
                           ? "bg-slate-100 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 cursor-not-allowed border border-transparent"
                           : "bg-white dark:bg-black/35 hover:bg-slate-50 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-305"
@@ -3811,7 +3815,7 @@ export default function AdminDashboardClient({
                   </div>
 
                   {/* Tier 4: Enterprise */}
-                  <div className={`relative flex flex-col justify-between p-5 rounded-2xl border transition-all ${
+                  <div className={`relative flex flex-col justify-between p-5 rounded-none border transition-all ${
                     localTenant.subscriptionPlan === "ENTERPRISE" 
                       ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5" 
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
@@ -3841,7 +3845,7 @@ export default function AdminDashboardClient({
                         setSelectedPlanForUpgrade("ENTERPRISE");
                         setIsUpgradeModalOpen(true);
                       }}
-                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-xl font-bold transition-all cursor-pointer ${
+                      className={`mt-6 w-full text-center text-xs py-2.5 px-4 rounded-none font-bold transition-all cursor-pointer ${
                         localTenant.subscriptionPlan === "ENTERPRISE"
                           ? "bg-slate-100 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 cursor-not-allowed border border-transparent"
                           : "bg-white dark:bg-black/35 hover:bg-slate-50 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-305"
@@ -3907,7 +3911,7 @@ export default function AdminDashboardClient({
       {/* 1. Resource CRUD Modal */}
       {resourceModal.open && (
         <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex md:items-center md:justify-center z-50 p-0 md:p-6 animate-in fade-in duration-200">
-          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border-0 md:border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full h-full md:h-auto max-h-full md:max-h-[90vh] overflow-y-auto p-5 sm:p-7 rounded-none md:rounded-[2rem] shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border-0 md:border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full h-full md:h-auto max-h-full md:max-h-[90vh] overflow-y-auto p-5 sm:p-7 rounded-none md:rounded-none shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
             <button
               type="button"
               onClick={() => setResourceModal({ ...resourceModal, open: false })}
@@ -3922,7 +3926,7 @@ export default function AdminDashboardClient({
               {resourceModal.mode === "add" ? "Nakonfigurujte vlastnosti nového zdroje níže:" : "Upravte parametry zdroje níže:"}
             </p>
             <form onSubmit={handleResourceSubmit} className="space-y-6 text-xs">
-              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-3xl border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
                   <Building size={14} className="text-tenant-primary dark:text-[#A78BFA]" />
                   Parametry rezervovatelného zdroje
@@ -3938,7 +3942,7 @@ export default function AdminDashboardClient({
                       ...resourceModal,
                       data: { ...resourceModal.data, name: e.target.value }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                     placeholder="např. Laboratoř biologie"
                   />
                 </div>
@@ -3951,7 +3955,7 @@ export default function AdminDashboardClient({
                       ...resourceModal,
                       data: { ...resourceModal.data, type: e.target.value }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                   >
                     <option value="SPACE">PROSTOR (Sportoviště / Hřiště / Místnost)</option>
                     <option value="SEAT">MÍSTO (Sedadlo / Konkrétní místo)</option>
@@ -3961,7 +3965,7 @@ export default function AdminDashboardClient({
                     <summary className="cursor-pointer text-[10px] text-tenant-primary font-semibold select-none flex items-center gap-1 group-open:mb-2 hover:underline">
                       <span>Zobrazit nápovědu k typům plochy</span>
                     </summary>
-                    <div className="p-3 bg-white/20 dark:bg-[#151522]/30 rounded-xl border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
+                    <div className="p-3 bg-white/20 dark:bg-[#151522]/30 rounded-none border border-slate-200/45 dark:border-[#1F1F35]/45 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400 space-y-2 select-none">
                       <span className="font-bold text-foreground block">Jak se typ SPACE zobrazuje na veřejném webu?</span>
                       <span>
                         V areálu typu <strong>Sports Ground</strong> se typ <strong>SPACE</strong> na veřejných kartách zobrazuje jako štítek určující typ plochy.
@@ -3974,7 +3978,7 @@ export default function AdminDashboardClient({
                         </ul>
                       </div>
                       <div className="space-y-1.5 pt-1">
-                        <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code>):</span>
+                        <span className="font-semibold text-foreground block">Další možnosti přizpůsobení (úpravou ve funkci <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded-none text-tenant-primary font-mono text-[10px]">getResourceTypeName</code> v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded-none text-foreground font-mono text-[10px]">page.tsx</code>):</span>
                         <ol className="list-decimal list-inside space-y-1 pl-1">
                           <li>
                             <strong>Možnost 2 (Formát hry):</strong> Např. <em>&bdquo;Fotbal 11v11&ldquo;</em> pro celou plochu a <em>&bdquo;Malý fotbal (5v5 / 7v7)&ldquo;</em> pro sektory. Vhodné pro rychlé pochopení velikosti týmu.
@@ -3989,7 +3993,7 @@ export default function AdminDashboardClient({
                             <strong>Možnost 5 (Účel plochy):</strong> Např. <em>&bdquo;Zápasová plocha&ldquo;</em> (s osvětlením a pevnými brankami) vs. <em>&bdquo;Tréninková plocha&ldquo;</em> (s přenosnými brankami).
                           </li>
                           <li>
-                            <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
+                            <strong>Možnost 6 (Úplné skrytí):</strong> Štítek typu lze v souboru <code className="bg-white/30 dark:bg-[#151522]/50 px-1 rounded-none text-foreground font-mono text-[10px]">page.tsx</code> zcela smazat, pokud jsou názvy ploch samy o sobě dostatečně popisné.
                           </li>
                         </ol>
                       </div>
@@ -4007,7 +4011,7 @@ export default function AdminDashboardClient({
                       ...resourceModal,
                       data: { ...resourceModal.data, maxCapacity: parseInt(e.target.value, 10) || 0 }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
                   />
                 </div>
 
@@ -4020,7 +4024,7 @@ export default function AdminDashboardClient({
                       ...resourceModal,
                       data: { ...resourceModal.data, price: e.target.value }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                     placeholder="např. 500 nebo Dle dohody"
                   />
                 </div>
@@ -4037,18 +4041,18 @@ export default function AdminDashboardClient({
                           ...resourceModal,
                           data: { ...resourceModal.data, surface: e.target.value }
                         })}
-                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                         placeholder="např. Umělá tráva 3. generace"
                       />
                     </div>
-                    <div className="border border-slate-200/60 dark:border-[#2A2A40] rounded-xl p-4 bg-slate-50/50 dark:bg-slate-900/10 space-y-4">
+                    <div className="border border-slate-200/60 dark:border-[#2A2A40] rounded-none p-4 bg-slate-50/50 dark:bg-slate-900/10 space-y-4">
                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Správa dostupného vybavení</label>
                       
                       {/* Current equipment list */}
                       {resourceModal.data.equipmentList && resourceModal.data.equipmentList.length > 0 ? (
                         <div className="space-y-2">
                           {resourceModal.data.equipmentList.map((eq) => (
-                            <div key={eq.id} className="flex justify-between items-center p-2.5 rounded-lg bg-white/60 dark:bg-[#131322]/30 border border-slate-100 dark:border-[#2A2A40] text-xs">
+                            <div key={eq.id} className="flex justify-between items-center p-2.5 rounded-none bg-white/60 dark:bg-[#131322]/30 border border-slate-100 dark:border-[#2A2A40] text-xs">
                               <div className="space-y-0.5">
                                 <span className="font-bold text-slate-800 dark:text-slate-200">{eq.name}</span>
                                 <div className="flex gap-2 text-[10px] text-slate-400">
@@ -4080,7 +4084,7 @@ export default function AdminDashboardClient({
                                     }
                                   });
                                 }}
-                                className="p-1 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                className="p-1 rounded-none text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                               >
                                 <Trash size={14} />
                               </button>
@@ -4101,7 +4105,7 @@ export default function AdminDashboardClient({
                               type="text"
                               value={newEqName}
                               onChange={(e) => setNewEqName(e.target.value)}
-                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none text-slate-800 dark:text-slate-200 font-medium"
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none text-slate-800 dark:text-slate-200 font-medium"
                               placeholder="Název (např. Brusle, Hokejky, Branky)"
                             />
                           </div>
@@ -4110,7 +4114,7 @@ export default function AdminDashboardClient({
                             <select
                               value={newEqCategory}
                               onChange={(e) => setNewEqCategory(e.target.value as any)}
-                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-200 font-medium"
                             >
                               <option value="default">V ceně (Default)</option>
                               <option value="extra">Extra placené (Půjčovna)</option>
@@ -4123,7 +4127,7 @@ export default function AdminDashboardClient({
                               min={1}
                               value={newEqQuantity}
                               onChange={(e) => setNewEqQuantity(parseInt(e.target.value, 10) || 1)}
-                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                              className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-200 font-medium"
                             />
                           </div>
 
@@ -4136,7 +4140,7 @@ export default function AdminDashboardClient({
                                   min={0}
                                   value={newEqPrice}
                                   onChange={(e) => setNewEqPrice(parseInt(e.target.value, 10) || 0)}
-                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium"
+                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-200 font-medium"
                                 />
                               </div>
                               <div>
@@ -4144,7 +4148,7 @@ export default function AdminDashboardClient({
                                 <select
                                   value={newEqCooldown}
                                   onChange={(e) => setNewEqCooldown(parseInt(e.target.value, 10))}
-                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl text-slate-800 dark:text-slate-200 font-medium outline-none"
+                                  className="w-full text-xs py-2 px-3 bg-white/70 dark:bg-[#131322]/60 border border-slate-200/60 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-200 font-medium outline-none"
                                 >
                                   <option value={0}>Bez pauzy</option>
                                   <option value={30}>30 minut</option>
@@ -4183,7 +4187,7 @@ export default function AdminDashboardClient({
                             setNewEqCooldown(0); // Bez pauzy by default
                           }}
                           disabled={!newEqName.trim()}
-                          className="w-full py-2 bg-tenant-gradient hover:opacity-95 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer"
+                          className="w-full py-2 bg-tenant-gradient hover:opacity-95 text-white text-xs font-bold rounded-none transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer"
                         >
                           + Přidat vybavení
                         </button>
@@ -4201,7 +4205,7 @@ export default function AdminDashboardClient({
                           ...resourceModal,
                           data: { ...resourceModal.data, instructor: e.target.value }
                         })}
-                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                         placeholder="např. RNDr. Pavel Černý"
                       />
                     </div>
@@ -4214,7 +4218,7 @@ export default function AdminDashboardClient({
                           ...resourceModal,
                           data: { ...resourceModal.data, room: e.target.value }
                         })}
-                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                         placeholder="např. Učebna C"
                       />
                     </div>
@@ -4229,7 +4233,7 @@ export default function AdminDashboardClient({
                       ...resourceModal,
                       data: { ...resourceModal.data, parentId: e.target.value }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                   >
                     <option value="">Žádný (Nadřazený prvek)</option>
                     {resources
@@ -4274,7 +4278,7 @@ export default function AdminDashboardClient({
                           ...resourceModal,
                           data: { ...resourceModal.data, technicalBreakMinutes: parseInt(e.target.value, 10) || 0 }
                         })}
-                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                        className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
                         placeholder="např. 15"
                       />
                     </div>
@@ -4286,13 +4290,13 @@ export default function AdminDashboardClient({
                 <button
                   type="button"
                   onClick={() => setResourceModal({ ...resourceModal, open: false })}
-                  className="py-3 px-4 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
+                  className="py-3 px-4 rounded-none text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
                 >
                   Zrušit
                 </button>
                 <button
                   type="submit"
-                  className="py-3 px-4 rounded-2xl bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
+                  className="py-3 px-4 rounded-none bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
                 >
                   Uložit
                 </button>
@@ -4306,7 +4310,7 @@ export default function AdminDashboardClient({
       {/* 3. IoT Device Register Modal */}
       {deviceModal.open && (
         <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex md:items-center md:justify-center z-50 p-0 md:p-6 animate-in fade-in duration-200">
-          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border-0 md:border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full h-full md:h-auto max-h-full md:max-h-[90vh] overflow-y-auto p-5 sm:p-7 rounded-none md:rounded-[2rem] shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border-0 md:border border-slate-200/60 dark:border-[#1F1F35] max-w-xl w-full h-full md:h-auto max-h-full md:max-h-[90vh] overflow-y-auto p-5 sm:p-7 rounded-none md:rounded-none shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-left text-xs">
             <button
               type="button"
               onClick={() => setDeviceModal({ ...deviceModal, open: false })}
@@ -4321,7 +4325,7 @@ export default function AdminDashboardClient({
               {deviceModal.mode === "add" ? "Zadejte parametry nového přístupového terminálu:" : "Upravte konfiguraci zařízení níže:"}
             </p>
             <form onSubmit={handleDeviceSubmit} className="space-y-6 text-xs">
-              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-3xl border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
+              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40] space-y-4 mb-2">
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
                   <Smartphone size={14} className="text-tenant-primary dark:text-[#A78BFA]" />
                   Parametry přístupového zařízení
@@ -4338,7 +4342,7 @@ export default function AdminDashboardClient({
                         ...deviceModal,
                         data: { ...deviceModal.data, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }
                       })}
-                      className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
+                      className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
                       placeholder="např. brana_zapad_01"
                     />
                   </div>
@@ -4354,7 +4358,7 @@ export default function AdminDashboardClient({
                       ...deviceModal,
                       data: { ...deviceModal.data, name: e.target.value }
                     })}
-                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
+                    className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-medium"
                     placeholder="např. Hlavní vstupní turniket"
                   />
                 </div>
@@ -4370,7 +4374,7 @@ export default function AdminDashboardClient({
                         ...deviceModal,
                         data: { ...deviceModal.data, token: e.target.value }
                       })}
-                      className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-xl outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
+                      className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-mono font-semibold"
                       placeholder="Zadejte tajný token pro ověřování zařízení"
                     />
                     <p className="text-[10px] text-slate-450 dark:text-slate-500 mt-1.5 font-medium leading-relaxed">
@@ -4404,13 +4408,13 @@ export default function AdminDashboardClient({
                 <button
                   type="button"
                   onClick={() => setDeviceModal({ ...deviceModal, open: false })}
-                  className="py-3 px-4 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
+                  className="py-3 px-4 rounded-none text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
                 >
                   Zrušit
                 </button>
                 <button
                   type="submit"
-                  className="py-3 px-4 rounded-2xl bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
+                  className="py-3 px-4 rounded-none bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
                 >
                   Uložit zařízení
                 </button>
@@ -4422,7 +4426,7 @@ export default function AdminDashboardClient({
       {/* 3.5. Subscription Upgrade Checkout Modal */}
       {isUpgradeModalOpen && selectedPlanForUpgrade && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-all animate-fade-in select-none">
-          <div className="bg-white dark:bg-[#0C0C14] border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl w-full max-w-md shadow-2xl p-6 relative overflow-hidden transition-all duration-300 transform scale-100 flex flex-col gap-4">
+          <div className="bg-white dark:bg-[#0C0C14] border border-slate-200/50 dark:border-[#1F1F35] rounded-none w-full max-w-md shadow-2xl p-6 relative overflow-hidden transition-all duration-300 transform scale-100 flex flex-col gap-4">
             
             {/* Animated checkout stages view */}
             {checkoutStage ? (
@@ -4475,7 +4479,7 @@ export default function AdminDashboardClient({
                 </div>
 
                 {checkoutError && (
-                  <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-semibold p-2.5 rounded-xl flex items-center gap-1.5 leading-snug">
+                  <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-semibold p-2.5 rounded-none flex items-center gap-1.5 leading-snug">
                     <ShieldAlert size={12} className="shrink-0" />
                     {checkoutError}
                   </div>
@@ -4493,7 +4497,7 @@ export default function AdminDashboardClient({
                         value={checkoutCardName}
                         onChange={(e) => setCheckoutCardName(e.target.value)}
                         placeholder="Jan Novák"
-                        className="w-full text-xs font-semibold pl-8.5 pr-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-[#2A2A40]/55 rounded-xl outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm"
+                        className="w-full text-xs font-semibold pl-8.5 pr-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -4513,7 +4517,7 @@ export default function AdminDashboardClient({
                           setCheckoutCardNumber(matches ? matches.join(" ") : val);
                         }}
                         placeholder="4242 4242 4242 4242"
-                        className="w-full text-xs font-mono font-medium pl-8.5 pr-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-xl outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm"
+                        className="w-full text-xs font-mono font-medium pl-8.5 pr-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -4534,7 +4538,7 @@ export default function AdminDashboardClient({
                           setCheckoutExpiry(val);
                         }}
                         placeholder="MM/YY"
-                        className="w-full text-xs font-mono font-medium px-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-xl outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm text-center"
+                        className="w-full text-xs font-mono font-medium px-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm text-center"
                       />
                     </div>
                     <div>
@@ -4545,7 +4549,7 @@ export default function AdminDashboardClient({
                         value={checkoutCvv}
                         onChange={(e) => setCheckoutCvv(e.target.value.replace(/\D/g, "").substring(0, 3))}
                         placeholder="•••"
-                        className="w-full text-xs font-mono font-medium px-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-xl outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm text-center"
+                        className="w-full text-xs font-mono font-medium px-4 py-2.5 bg-slate-55 dark:bg-black/30 text-slate-700 dark:text-zinc-305 border border-slate-200 dark:border-[#2A2A40]/55 rounded-none outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all shadow-sm text-center"
                       />
                     </div>
                   </div>
@@ -4558,13 +4562,13 @@ export default function AdminDashboardClient({
                       setIsUpgradeModalOpen(false);
                       setCheckoutError(null);
                     }}
-                    className="py-3 px-4 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
+                    className="py-3 px-4 rounded-none text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-350 border border-slate-200/40 dark:border-[#2A2A40] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex-1 text-center cursor-pointer"
                   >
                     Zrušit
                   </button>
                   <button
                     type="submit"
-                    className="py-3 px-4 rounded-2xl bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
+                    className="py-3 px-4 rounded-none bg-tenant-gradient hover:opacity-95 active:scale-[0.98] transition-all text-white text-xs font-bold flex-1 text-center cursor-pointer shadow-md shadow-tenant-primary/15"
                   >
                     Zaplatit a aktivovat
                   </button>
@@ -4671,7 +4675,7 @@ export default function AdminDashboardClient({
               100% { top: 0%; }
             }
           `}</style>
-          <div className="bg-[#0D0D15] border border-white/10 p-6 rounded-3xl w-full max-w-md shadow-2xl space-y-5 relative flex flex-col items-center">
+          <div className="bg-[#0D0D15] border border-white/10 p-6 rounded-none w-full max-w-md shadow-2xl space-y-5 relative flex flex-col items-center">
             <button
               type="button"
               onClick={stopScanning}
@@ -4684,7 +4688,7 @@ export default function AdminDashboardClient({
               <p className="text-slate-400 text-[11px] mt-0.5">Namiřte fotoaparát na obrazovku mobilu s QR kódem.</p>
             </div>
 
-            <div className="relative w-full aspect-square max-w-[280px] bg-black/60 rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center">
+            <div className="relative w-full aspect-square max-w-[280px] bg-black/60 rounded-none overflow-hidden border border-white/10 flex items-center justify-center">
               <video
                 ref={videoRef}
                 playsInline
@@ -4693,12 +4697,12 @@ export default function AdminDashboardClient({
               />
               {/* Target Scan Frame */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[70%] h-[70%] border-2 border-dashed border-tenant-primary/30 rounded-2xl relative">
+                <div className="w-[70%] h-[70%] border-2 border-dashed border-tenant-primary/30 rounded-none relative">
                   {/* Corners */}
-                  <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-tl-lg" />
-                  <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-tr-lg" />
-                  <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-bl-lg" />
-                  <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-br-lg" />
+                  <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-none-tl-lg" />
+                  <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-none-tr-lg" />
+                  <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-none-bl-lg" />
+                  <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-none-br-lg" />
                   {/* Scanning Laser Line */}
                   <div 
                     className="absolute left-0 right-0 h-0.5 bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" 
@@ -4719,7 +4723,7 @@ export default function AdminDashboardClient({
             <canvas ref={canvasRef} className="hidden" />
 
             <div className="w-full flex flex-col gap-2 pt-2">
-              <label className="w-full py-2.5 bg-tenant-primary/10 hover:bg-tenant-primary/20 text-tenant-primary border border-tenant-primary/25 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none text-xs">
+              <label className="w-full py-2.5 bg-tenant-primary/10 hover:bg-tenant-primary/20 text-tenant-primary border border-tenant-primary/25 rounded-none font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none text-xs">
                 <Upload size={14} />
                 Nahrát obrázek QR kódu
                 <input
@@ -4733,7 +4737,7 @@ export default function AdminDashboardClient({
               <button
                 type="button"
                 onClick={stopScanning}
-                className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-xs transition-all border border-white/5 cursor-pointer"
+                className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-none text-xs transition-all border border-white/5 cursor-pointer"
               >
                 Zrušit
               </button>

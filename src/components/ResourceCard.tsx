@@ -120,7 +120,7 @@ export default function ResourceCard({
 
   return (
     <div
-      className={`p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary hover:border-tenant-primary/30 dark:hover:border-tenant-primary/25 hover:shadow-md hover:shadow-tenant-primary/5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 rounded-2xl flex flex-col justify-between group shadow-sm shadow-slate-100/5 dark:shadow-black/5 content-visibility-auto w-full ${className}`}
+      className={`p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary hover:border-tenant-primary/30 dark:hover:border-tenant-primary/25 hover:shadow-md hover:shadow-tenant-primary/5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 rounded-none flex flex-col justify-between group shadow-sm shadow-slate-100/5 dark:shadow-black/5 content-visibility-auto w-full ${className}`}
     >
       <div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -140,7 +140,7 @@ export default function ResourceCard({
         <div className="space-y-1.5 text-xs mb-4">
           <div className="flex items-center justify-between py-1.5 border-b border-slate-200/30 dark:border-[#1F1F35]/20">
             <span className="flex items-center gap-2.5">
-              <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+              <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                 <Clock size={11} />
               </span>
               <span className="text-slate-500 dark:text-zinc-400 font-medium">Dostupný čas</span>
@@ -150,7 +150,7 @@ export default function ResourceCard({
           
           <div className="flex items-center justify-between py-1.5 border-b border-slate-200/30 dark:border-[#1F1F35]/20">
             <span className="flex items-center gap-2.5">
-              <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+              <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                 <Users size={11} />
               </span>
               <span className="text-slate-500 dark:text-zinc-400 font-medium">Kapacita</span>
@@ -160,7 +160,7 @@ export default function ResourceCard({
           
           <div className="flex items-center justify-between py-1.5">
             <span className="flex items-center gap-2.5">
-              <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+              <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                 <CreditCard size={11} />
               </span>
               <span className="text-slate-500 dark:text-zinc-400 font-medium">{priceLabel}</span>
@@ -174,7 +174,7 @@ export default function ResourceCard({
               <span className="text-tenant-primary font-bold flex items-center gap-1.5">
                 {priceText}
                 {discountedPrice !== null && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-extrabold shadow-sm select-none">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-extrabold shadow-sm select-none">
                     Sleva {partnerDiscount}%
                   </span>
                 )}
@@ -185,7 +185,7 @@ export default function ResourceCard({
           {resAttrs.surface && (
             <div className="flex items-center justify-between py-1.5 border-t border-slate-200/40 dark:border-[#1F1F35]/30 mt-1.5 pt-1.5">
               <span className="flex items-center gap-2.5">
-                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                   <Layers size={11} />
                 </span>
                 <span className="text-slate-500 dark:text-zinc-400 font-medium">Povrch</span>
@@ -197,7 +197,7 @@ export default function ResourceCard({
           {resAttrs.equipmentList && Array.isArray(resAttrs.equipmentList) && resAttrs.equipmentList.length > 0 ? (
             <div className="flex flex-col py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5 gap-1">
               <span className="flex items-center gap-2.5">
-                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                   <Wrench size={11} />
                 </span>
                 <span className="text-slate-500 dark:text-zinc-400 font-medium">Vybavení k zapůjčení</span>
@@ -216,7 +216,7 @@ export default function ResourceCard({
           ) : resAttrs.equipment ? (
             <div className="flex items-start justify-between py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5">
               <span className="flex items-center gap-2.5 shrink-0">
-                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                   <Wrench size={11} />
                 </span>
                 <span className="text-slate-500 dark:text-zinc-400 font-medium">Vybavení</span>
@@ -228,7 +228,7 @@ export default function ResourceCard({
           {resAttrs.room && (
             <div className="flex items-center justify-between py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5">
               <span className="flex items-center gap-2.5">
-                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                   <MapPin size={11} />
                 </span>
                 <span className="text-slate-500 dark:text-zinc-400 font-medium">{roomLabel}</span>
@@ -240,7 +240,7 @@ export default function ResourceCard({
           {resAttrs.instructor && (
             <div className="flex items-center justify-between py-1.5 border-t border-slate-200/30 dark:border-[#1F1F35]/20 mt-1.5 pt-1.5">
               <span className="flex items-center gap-2.5">
-                <span className="h-6.5 w-6.5 rounded-lg bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
+                <span className="h-6.5 w-6.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 flex items-center justify-center text-tenant-primary shrink-0 transition-colors group-hover:bg-tenant-primary group-hover:text-white">
                   <UserIcon size={11} />
                 </span>
                 <span className="text-slate-500 dark:text-zinc-400 font-medium">{instructorLabel}</span>

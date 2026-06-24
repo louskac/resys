@@ -577,10 +577,10 @@ export default function AdminAIAssistant({
       )}
 
       {isOpen && (
-        <div className={`fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 w-[92%] max-w-[460px] bg-[#0A0A12]/95 border border-purple-500/20 shadow-[0_20px_50px_rgba(112,0,255,0.25)] rounded-[28px] p-5 pt-8 pb-5 flex flex-col gap-4 z-50 transition-all duration-300 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
+        <div className={`fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 w-[92%] max-w-[460px] bg-[#0A0A12]/95 border border-purple-500/20 shadow-[0_20px_50px_rgba(112,0,255,0.25)] rounded-none p-5 pt-8 pb-5 flex flex-col gap-4 z-50 transition-all duration-300 font-sans ${shouldShake ? "animate-dynamic-shake" : ""}`}>
           
           {/* Subtle glowing backgrounds */}
-          <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
+          <div className="absolute inset-0 rounded-none overflow-hidden pointer-events-none z-0">
             <div className="absolute top-[-80px] left-[-60px] w-[260px] h-[260px] rounded-full bg-[#7000FF] opacity-[0.08] blur-[70px] animate-blob-orbit-1" />
             <div className="absolute bottom-[-100px] right-[-50px] w-[240px] h-[240px] rounded-full bg-[#3B82F6] opacity-[0.06] blur-[65px] animate-blob-orbit-2" />
           </div>
@@ -632,7 +632,7 @@ export default function AdminAIAssistant({
                     window.speechSynthesis.cancel();
                   }
                 }}
-                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-none border transition-colors cursor-pointer ${
                   isVoiceOutputEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-500 hover:text-white"
                 }`}
                 title={isVoiceOutputEnabled ? "Hlas zapnut" : "Hlas vypnut"}
@@ -641,14 +641,14 @@ export default function AdminAIAssistant({
               </button>
               <button
                 onClick={handleReset}
-                className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-400 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
+                className="p-1.5 rounded-none border border-white/5 text-zinc-500 hover:text-rose-400 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
                 title="Restartovat ReKeepera"
               >
                 <RotateCcw size={13} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-none border border-white/5 text-zinc-500 hover:text-white transition-colors cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -659,14 +659,14 @@ export default function AdminAIAssistant({
           {isListening ? (
             <AIWaveform label="Poslouchám pokyn..." />
           ) : (
-            <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/50 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10">
+            <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/50 backdrop-blur-md px-3.5 py-2.5 rounded-none border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10">
               {messages[messages.length - 1]?.content || "S čím vám mohu pomoci?"}
             </div>
           )}
 
           {/* Form Prefill/Draft Assist alerts */}
           {!isListening && (draftState.resourceName || draftState.ruleName || draftState.deviceName || draftState.tagline) && (
-            <div className="p-3 bg-purple-500/5 rounded-2xl border border-purple-500/10 space-y-2 animate-fadeIn z-10">
+            <div className="p-3 bg-purple-500/5 rounded-none border border-purple-500/10 space-y-2 animate-fadeIn z-10">
               <div className="flex gap-2">
                 <Check size={13} className="text-purple-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-zinc-400 leading-normal font-medium">

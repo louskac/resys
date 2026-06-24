@@ -161,7 +161,7 @@ export default function IoTSimulator() {
               key={scenario.id}
               onClick={() => runSimulation(scenario)}
               disabled={isLoading}
-              className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between h-20 group cursor-pointer ${
+              className={`p-3.5 rounded-none border text-left transition-all relative overflow-hidden flex flex-col justify-between h-20 group cursor-pointer ${
                 isActive
                   ? "bg-tenant-primary/10 border-tenant-primary/40 shadow-sm"
                   : "bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-md border-slate-200/50 dark:border-[#1F1F35]/30 hover:bg-white/80 dark:hover:bg-[#131322]/40"
@@ -173,7 +173,7 @@ export default function IoTSimulator() {
                 }`}>
                   {scenario.name}
                 </span>
-                <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
+                <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded-none border uppercase tracking-wider ${
                   isPovoleno 
                     ? "bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20" 
                     : "bg-rose-500/10 text-rose-500 border-rose-500/20"
@@ -192,7 +192,7 @@ export default function IoTSimulator() {
       </div>
 
       {/* Terminal Block */}
-      <div className="bg-[#05050A]/95 border border-slate-200/20 dark:border-[#1F1F35]/70 rounded-3xl overflow-hidden shadow-2xl relative">
+      <div className="bg-[#05050A]/95 border border-slate-200/20 dark:border-[#1F1F35]/70 rounded-none overflow-hidden shadow-2xl relative">
         {/* Terminal Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 bg-[#08080E]/90 select-none">
           <div className="flex items-center gap-1.5">
@@ -204,7 +204,7 @@ export default function IoTSimulator() {
             </span>
           </div>
           
-          <div className="flex items-center gap-1.5 text-[9px] text-zinc-450 dark:text-zinc-400 font-mono uppercase bg-white/5 dark:bg-black/30 px-2.5 py-0.5 rounded-md border border-white/5">
+          <div className="flex items-center gap-1.5 text-[9px] text-zinc-450 dark:text-zinc-400 font-mono uppercase bg-white/5 dark:bg-black/30 px-2.5 py-0.5 rounded-none border border-white/5">
             <Wifi size={10} className="text-tenant-primary animate-pulse" />
             Hardware Node
           </div>
@@ -245,7 +245,7 @@ export default function IoTSimulator() {
 
             {/* Relay open signal display */}
             {simulationResult && (
-              <div className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+              <div className={`p-3 rounded-none border flex items-center justify-between transition-all ${
                 simulationResult.granted
                   ? "bg-tenant-primary/10 border-tenant-primary/20 text-tenant-primary"
                   : "bg-rose-500/10 border-rose-500/20 text-rose-400"
@@ -272,7 +272,7 @@ export default function IoTSimulator() {
               <div className="flex justify-between items-center text-zinc-500 text-[8px] font-bold tracking-wider uppercase font-sans">
                 <span>API Request (POST /api/device/checkin)</span>
               </div>
-              <pre className="text-zinc-300 bg-[#05050A] p-3 rounded-xl border border-white/5 leading-relaxed">
+              <pre className="text-zinc-300 bg-[#05050A] p-3 rounded-none border border-white/5 leading-relaxed">
                 {"{\n  "}<span className="text-[#C084FC]">&quot;deviceId&quot;</span>{": "}<span className="text-[#38BDF8]">&quot;{activeScenario.request.deviceId}&quot;</span>{",\n  "}<span className="text-[#C084FC]">&quot;deviceToken&quot;</span>{": "}<span className="text-[#38BDF8]">&quot;{activeScenario.request.deviceToken}&quot;</span>{",\n  "}<span className="text-[#C084FC]">&quot;qrPayload&quot;</span>{": "}<span className="text-[#38BDF8]">&quot;{activeScenario.request.qrPayload}&quot;</span>{"\n}"}
               </pre>
             </div>
@@ -289,7 +289,7 @@ export default function IoTSimulator() {
                   </span>
                 )}
               </div>
-              <pre className={`p-3 rounded-xl border transition-all leading-relaxed ${
+              <pre className={`p-3 rounded-none border transition-all leading-relaxed ${
                 isLoading 
                   ? "bg-[#05050A] border-white/5 opacity-40"
                   : simulationResult

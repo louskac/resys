@@ -6,6 +6,7 @@ import { makeErrorResponse } from "@/lib/errors";
 import { triggerBookingUpdate } from "@/lib/pusher";
 import { sendSSEUpdate } from "@/lib/sse";
 import crypto from "crypto";
+import { calculateLightingSurcharge } from "@/lib/pricing";
 
 const getLocalAsUtcDate = (d: Date): Date => {
   try {
@@ -508,7 +509,20 @@ export async function POST(request: NextRequest) {
             });
           }
 
-          const totalBasePrice = basePrice + equipmentCost;
+          // Calculate automatic lighting surcharge (not subject to partner discount)
+          let lightingSurcharge = 0;
+          const resource = tenant.resources.find((r: any) => r.id === finalResourceId);
+          if (resource) {
+            const resAttrs = (resource.attributes as any) || {};
+            if (resAttrs.autoLightingPricingEnabled) {
+              const flatRate = Number(resAttrs.autoLightingFlatRate) || 0;
+              if (flatRate > 0) {
+                lightingSurcharge = calculateLightingSurcharge(reservedFrom, reservedTo, flatRate);
+              }
+            }
+          }
+
+          const totalBasePrice = basePrice + equipmentCost + lightingSurcharge;
 
           // Round to 2 decimal places
           const finalPrice = Math.round((totalBasePrice + Number.EPSILON) * 100) / 100;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
 
@@ -29,14 +29,14 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-9 h-9 rounded-xl bg-white/20 dark:bg-[#131322]/20 border border-[#E2E2ED]/40 dark:border-[#1F1F2E]/40 opacity-20 animate-pulse" />
+      <div className={`w-9 h-9 rounded-none bg-white/20 dark:bg-[#131322]/20 border border-[#E2E2ED]/40 dark:border-[#1F1F2E]/40 opacity-20 animate-pulse ${className}`} />
     );
   }
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2.5 rounded-xl bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-300 hover:text-foreground border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-slate-300 dark:hover:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
+      className={className || "p-2.5 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-300 hover:text-foreground border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-slate-300 dark:hover:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"}
       aria-label="Toggle Theme"
       title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
     >

@@ -169,7 +169,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-7 rounded-3xl shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-xs text-left"
+        className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-7 rounded-none shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-xs text-left"
       >
         {/* Elegant Corner Close Button */}
         <button
@@ -181,7 +181,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
 
         {/* Branding Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="h-12 w-12 bg-slate-100 dark:bg-[#131322]/50 border border-slate-200 dark:border-[#2A2A40] rounded-2xl flex items-center justify-center p-2 shadow-sm mb-3 animate-in zoom-in duration-300">
+          <div className="h-12 w-12 bg-slate-100 dark:bg-[#131322]/50 border border-slate-200 dark:border-[#2A2A40] rounded-none flex items-center justify-center p-2 shadow-sm mb-3 animate-in zoom-in duration-300">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 500 500"
@@ -230,7 +230,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
         </div>
 
         {error && (
-          <div className="bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 text-rose-600 dark:text-rose-450 p-3 rounded-2xl mb-4 flex items-start gap-2 text-xs font-semibold leading-relaxed animate-in slide-in-from-top duration-200">
+          <div className="bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 text-rose-600 dark:text-rose-450 p-3 rounded-none mb-4 flex items-start gap-2 text-xs font-semibold leading-relaxed animate-in slide-in-from-top duration-200">
             <AlertCircle size={15} className="shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -242,7 +242,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
             <button
               onClick={handleOneidLogin}
               disabled={isLoading}
-              className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-75 focus:outline-none outline-none"
+              className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-none transition-all flex items-center justify-center gap-2 shadow-md shadow-tenant-primary/15 cursor-pointer disabled:opacity-75 focus:outline-none outline-none"
             >
               {isLoading ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -257,14 +257,14 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
           {showAdminLogin ? (
             <div className="space-y-4 pt-1">
               {/* Tab Selector */}
-              <div className="flex bg-slate-100/50 dark:bg-[#131322]/50 p-1 rounded-xl border border-slate-200/50 dark:border-[#2A2A40]/40">
+              <div className="flex bg-slate-100/50 dark:bg-[#131322]/50 p-1 rounded-none border border-slate-200/50 dark:border-[#2A2A40]/40">
                 <button
                   type="button"
                   onClick={() => {
                     setIsRegisterMode(false);
                     clearFormFields();
                   }}
-                  className={`flex-1 py-1.5 text-center text-[11px] rounded-lg transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
+                  className={`flex-1 py-1.5 text-center text-[11px] rounded-none transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
                     !isRegisterMode
                       ? "bg-white dark:bg-[#1C1C30] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-[1.02]"
                       : "text-slate-400 dark:text-zinc-500 hover:text-tenant-primary dark:hover:text-purple-400 font-semibold"
@@ -278,7 +278,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                     setIsRegisterMode(true);
                     clearFormFields();
                   }}
-                  className={`flex-1 py-1.5 text-center text-[11px] rounded-lg transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
+                  className={`flex-1 py-1.5 text-center text-[11px] rounded-none transition-all cursor-pointer focus:outline-none focus:ring-0 outline-none ${
                     isRegisterMode
                       ? "bg-white dark:bg-[#1C1C30] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-[1.02]"
                       : "text-slate-400 dark:text-zinc-500 hover:text-tenant-primary dark:hover:text-purple-400 font-semibold"
@@ -327,7 +327,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
+                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-none transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
                   >
                     {isLoading && <Loader2 size={13} className="animate-spin" />}
                     {isLoading ? "Ověřování..." : "Přihlásit se"}
@@ -422,7 +422,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-2xl transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
+                    className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white font-bold rounded-none transition-all shadow-md shadow-tenant-primary/15 hover:shadow-tenant-primary/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 mt-2 focus:outline-none outline-none"
                   >
                     {isLoading && <Loader2 size={13} className="animate-spin" />}
                     {isLoading ? "Registrace..." : "Vytvořit účet"}

@@ -480,7 +480,7 @@ export default function BillingTab({
         setEmailSendingStatus({
           invoiceId: inv.id,
           status: "success",
-          message: `Faktura ${inv.number} byla úspěšně odeslána na e-mail ${partnerEmail}.`
+          message: `Faktura ${inv.number} byla úspěšně doručena do e-mailové schránky ${partnerEmail}.`
         });
         router.refresh();
 
@@ -572,49 +572,49 @@ export default function BillingTab({
       )}
       
       {/* SubTab Navigation header */}
-      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none bg-white/60 dark:bg-[#080810]/50 backdrop-blur-xl border border-slate-200/40 dark:border-white/5 p-1.5 rounded-2xl w-full md:w-fit select-none gap-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none bg-white/40 dark:bg-[#0F0F1A]/60 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] p-1 rounded-none w-full md:w-fit select-none gap-1 shadow-sm">
         <button
           onClick={() => setSubTab("users")}
-          className={`px-4 py-2 rounded-xl font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === "users" 
-              ? "bg-tenant-gradient text-white shadow-sm font-extrabold" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
+              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
+              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
           }`}
         >
-          <Users size={14} />
+          <Users size={12} />
           Uživatelé a Registrovaní
         </button>
         <button
           onClick={() => setSubTab("partners")}
-          className={`px-4 py-2 rounded-xl font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === "partners" 
-              ? "bg-tenant-gradient text-white shadow-sm font-extrabold" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
+              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
+              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
           }`}
         >
-          <Building size={14} />
+          <Building size={12} />
           Partneři a Slevy ({activePartners.length})
         </button>
         <button
           onClick={() => setSubTab("transactions")}
-          className={`px-4 py-2 rounded-xl font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === "transactions" 
-              ? "bg-tenant-gradient text-white shadow-sm font-extrabold" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
+              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
+              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
           }`}
         >
-          <CreditCard size={14} />
+          <CreditCard size={12} />
           Kniha transakcí ({bookings.length})
         </button>
         <button
           onClick={() => setSubTab("invoices")}
-          className={`px-4 py-2 rounded-xl font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === "invoices" 
-              ? "bg-tenant-gradient text-white shadow-sm font-extrabold" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
+              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
+              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
           }`}
         >
-          <FileText size={14} />
+          <FileText size={12} />
           Faktury a Vyúčtování ({invoices.length})
         </button>
       </div>
@@ -1087,13 +1087,13 @@ export default function BillingTab({
           <h3 className="font-bold text-sm text-foreground">Vystavené faktury a zúčtování ({invoices.length})</h3>
 
           {invoices.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-3xl font-mono">
+            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] border-l-2 border-l-slate-400 bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
               Zatím nebyly vystaveny žádné faktury. Vygenerujte fakturu pro některého z partnerů.
             </div>
           ) : (
             <div>
               {/* Desktop View Table */}
-              <div className="hidden md:block border border-slate-200/40 dark:border-[#1F1F35]/40 bg-white/30 dark:bg-black/15 rounded-2xl overflow-x-auto scrollbar-none shadow-sm">
+              <div className="hidden md:block border border-slate-200/40 dark:border-[#1F1F35]/40 bg-white/30 dark:bg-black/15 rounded-none overflow-x-auto scrollbar-none shadow-sm">
                 <table className="w-full text-left border-collapse min-w-[750px]">
                   <thead>
                     <tr className="bg-slate-200/35 dark:bg-[#08080E]/70 border-b border-slate-200/50 dark:border-[#1F1F35] text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
@@ -1117,14 +1117,14 @@ export default function BillingTab({
                         <td className="p-4 font-semibold text-slate-800 dark:text-slate-300">{inv.bookingsCount}</td>
                         <td className="p-4 font-black text-foreground">{parseFloat(inv.amount).toLocaleString("cs-CZ")} Kč</td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                          <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold border border-l-2 uppercase tracking-wider ${
                             inv.status === "PAID" 
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 border-l-emerald-500"
                               : inv.status === "SENT"
-                              ? "bg-sky-500/10 text-sky-500 border-sky-500/20"
+                              ? "bg-sky-500/10 text-sky-500 border-sky-500/20 border-l-sky-500"
                               : inv.status === "CANCELLED"
-                              ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                              : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                              ? "bg-rose-500/10 text-rose-500 border-rose-500/20 border-l-rose-500"
+                              : "bg-amber-500/10 text-amber-500 border-amber-500/20 border-l-amber-500"
                           }`}>
                             {inv.status === "PAID" ? "Uhrazeno" : inv.status === "SENT" ? "Odesláno" : inv.status === "CANCELLED" ? "Zrušeno" : "Návrh (Draft)"}
                           </span>
@@ -1133,7 +1133,7 @@ export default function BillingTab({
                           <Link
                             href={`/tenants/${tenant.id}/admin/invoices/${inv.id}`}
                             target="_blank"
-                            className="inline-flex p-1.5 bg-slate-200/40 hover:bg-slate-200/80 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35] text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] rounded-lg transition-all"
+                            className="inline-flex p-1.5 bg-slate-200/40 hover:bg-slate-200/80 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35] text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] border-l-2 border-l-slate-400 rounded-none transition-all"
                             title="Zobrazit fakturu pro tisk"
                           >
                             <Eye size={12} />
@@ -1143,7 +1143,7 @@ export default function BillingTab({
                               {inv.status === "DRAFT" ? (
                                 <button
                                   onClick={() => handleSendInvoiceByEmail(inv)}
-                                  className="p-1 px-2 bg-sky-500/10 hover:bg-sky-500 text-sky-500 hover:text-white border border-sky-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                  className="p-1 px-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 border border-sky-500/20 border-l-2 border-l-sky-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                                   title="Odeslat fakturu partnerovi na e-mail"
                                 >
                                   <Mail size={10} />
@@ -1152,7 +1152,7 @@ export default function BillingTab({
                               ) : inv.status === "SENT" ? (
                                 <button
                                   onClick={() => handleSendInvoiceByEmail(inv)}
-                                  className="p-1 px-2 bg-slate-500/10 hover:bg-slate-600 text-slate-550 hover:text-white border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                  className="p-1 px-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-500 border border-slate-200 dark:border-white/5 border-l-2 border-l-slate-400 dark:border-l-zinc-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                                   title="Znovu poslat fakturu partnerovi na e-mail"
                                 >
                                   <Mail size={10} />
@@ -1162,7 +1162,7 @@ export default function BillingTab({
                               {(inv.status === "SENT" || inv.status === "DRAFT") && (
                                 <button
                                   onClick={() => handleUpdateInvoiceStatus(inv.id, "PAID")}
-                                  className="p-1 px-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                                  className="p-1 px-2 bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-500 border border-emerald-500/20 border-l-2 border-l-emerald-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                                 >
                                   Uhradit
                                 </button>
@@ -1170,7 +1170,7 @@ export default function BillingTab({
                               {inv.status !== "CANCELLED" && (
                                 <button
                                   onClick={() => handleUpdateInvoiceStatus(inv.id, "CANCELLED")}
-                                  className="p-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                                  className="p-1 px-2 bg-rose-500/10 hover:bg-rose-500/25 text-rose-500 border border-rose-500/20 border-l-2 border-l-rose-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                                 >
                                   Stornovat
                                 </button>
@@ -1187,20 +1187,20 @@ export default function BillingTab({
               {/* Mobile View List */}
               <div className="block md:hidden space-y-3">
                 {invoices.map(inv => (
-                  <div key={inv.id} className="p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-2xl space-y-3 shadow-sm">
+                  <div key={inv.id} className="p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] border-l-[3px] border-l-tenant-primary/50 rounded-none space-y-3 shadow-sm">
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Číslo faktury</span>
                         <div className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">{inv.number}</div>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                      <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold border border-l-2 uppercase tracking-wider ${
                         inv.status === "PAID" 
-                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 border-l-emerald-500"
                           : inv.status === "SENT"
-                          ? "bg-sky-500/10 text-sky-500 border-sky-500/20"
+                          ? "bg-sky-500/10 text-sky-500 border-sky-500/20 border-l-sky-500"
                           : inv.status === "CANCELLED"
-                          ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                          ? "bg-rose-500/10 text-rose-500 border-rose-500/20 border-l-rose-500"
+                          : "bg-amber-500/10 text-amber-500 border-amber-500/20 border-l-amber-500"
                       }`}>
                         {inv.status === "PAID" ? "Uhrazeno" : inv.status === "SENT" ? "Odesláno" : inv.status === "CANCELLED" ? "Zrušeno" : "Draft"}
                       </span>
@@ -1235,7 +1235,7 @@ export default function BillingTab({
                         <Link
                           href={`/tenants/${tenant.id}/admin/invoices/${inv.id}`}
                           target="_blank"
-                          className="inline-flex p-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35] text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-white/5 rounded-lg transition-all"
+                          className="inline-flex p-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35] text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-white/5 border-l-2 border-l-slate-400 rounded-none transition-all"
                           title="Zobrazit fakturu"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -1243,7 +1243,7 @@ export default function BillingTab({
                         {inv.status === "DRAFT" ? (
                           <button
                             onClick={() => handleSendInvoiceByEmail(inv)}
-                            className="py-1.5 px-3 bg-sky-500/10 hover:bg-sky-500 text-sky-500 hover:text-white border border-sky-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                            className="py-1.5 px-3 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 border border-sky-500/20 border-l-2 border-l-sky-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                           >
                             <Mail className="h-3.5 w-3.5" />
                             Poslat na e-mail
@@ -1251,7 +1251,7 @@ export default function BillingTab({
                         ) : inv.status === "SENT" ? (
                           <button
                             onClick={() => handleSendInvoiceByEmail(inv)}
-                            className="py-1.5 px-3 bg-slate-500/10 hover:bg-slate-500 text-slate-500 hover:text-white border border-slate-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                            className="py-1.5 px-3 bg-slate-500/10 hover:bg-slate-550 hover:text-white border border-slate-500/20 border-l-2 border-l-slate-400 dark:border-l-zinc-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                           >
                             <Mail className="h-3.5 w-3.5" />
                             Poslat znovu
@@ -1260,7 +1260,7 @@ export default function BillingTab({
                         {(inv.status === "SENT" || inv.status === "DRAFT") && (
                           <button
                             onClick={() => handleUpdateInvoiceStatus(inv.id, "PAID")}
-                            className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                            className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 border-l-2 border-l-emerald-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                           >
                             Uhradit
                           </button>
@@ -1268,7 +1268,7 @@ export default function BillingTab({
                         {inv.status !== "CANCELLED" && (
                           <button
                             onClick={() => handleUpdateInvoiceStatus(inv.id, "CANCELLED")}
-                            className="py-1.5 px-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                            className="py-1.5 px-3 bg-rose-500/10 hover:bg-rose-500/25 text-rose-500 border border-rose-500/20 border-l-2 border-l-rose-500 rounded-none text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer inline-flex items-center gap-1"
                           >
                             Stornovat
                           </button>
@@ -1288,10 +1288,10 @@ export default function BillingTab({
       {/* 1. Promote User to Partner Modal */}
       {promoteModal.open && promoteModal.user && (
         <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex md:items-center md:justify-center p-0 md:p-4 z-50 animate-fade-in select-none">
-          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 p-6 rounded-none md:rounded-3xl w-full max-w-lg shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 border-l-[4px] border-l-tenant-primary p-6 rounded-none w-full max-w-lg shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
             <button
               onClick={() => setPromoteModal({ ...promoteModal, open: false, user: null })}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all border border-transparent hover:border-slate-200/30"
             >
               <X size={18} />
             </button>
@@ -1307,11 +1307,11 @@ export default function BillingTab({
             <form onSubmit={handlePromoteSubmit} className="space-y-4">
               
               {/* Type Switcher */}
-              <div className="grid grid-cols-2 gap-2 bg-slate-100/50 dark:bg-black/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
+              <div className="grid grid-cols-2 gap-1 bg-slate-100/50 dark:bg-black/40 p-1 rounded-none border border-slate-200/60 dark:border-white/5">
                 <button
                   type="button"
                   onClick={() => setPromoteModal({ ...promoteModal, promotionType: "new" })}
-                  className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`py-2 text-[10px] font-bold rounded-none transition-all cursor-pointer ${
                     promoteModal.promotionType === "new" 
                       ? "bg-tenant-gradient text-white shadow-sm" 
                       : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1322,7 +1322,7 @@ export default function BillingTab({
                 <button
                   type="button"
                   onClick={() => setPromoteModal({ ...promoteModal, promotionType: "existing" })}
-                  className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`py-2 text-[10px] font-bold rounded-none transition-all cursor-pointer ${
                     promoteModal.promotionType === "existing" 
                       ? "bg-tenant-gradient text-white shadow-sm" 
                       : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1343,7 +1343,7 @@ export default function BillingTab({
                       value={promoteModal.partnerName}
                       onChange={e => setPromoteModal({ ...promoteModal, partnerName: e.target.value })}
                       placeholder="Např. ACME Corp s.r.o."
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
 
@@ -1355,7 +1355,7 @@ export default function BillingTab({
                       value={promoteModal.partnerEmail}
                       onChange={e => setPromoteModal({ ...promoteModal, partnerEmail: e.target.value })}
                       placeholder="faktury@acme.cz"
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
 
@@ -1367,7 +1367,7 @@ export default function BillingTab({
                       max="100"
                       value={promoteModal.discount}
                       onChange={e => setPromoteModal({ ...promoteModal, discount: parseInt(e.target.value, 10) || 0 })}
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
                     />
                   </div>
                 </div>
@@ -1377,7 +1377,7 @@ export default function BillingTab({
                   <select
                     value={promoteModal.selectedPartnerId}
                     onChange={e => setPromoteModal({ ...promoteModal, selectedPartnerId: e.target.value })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2.5 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all cursor-pointer"
                   >
                     {partners.map(p => (
                       <option key={p.id} value={p.id} className="text-slate-800 dark:text-slate-200 bg-white dark:bg-[#0D0D15]">
@@ -1390,7 +1390,7 @@ export default function BillingTab({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-xl transition-all shadow-md mt-4 cursor-pointer"
+                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md mt-4 cursor-pointer"
               >
                 Uložit partnerství
               </button>
@@ -1402,10 +1402,10 @@ export default function BillingTab({
       {/* 2. Partner Edit/Add Modal */}
       {partnerModal.open && (
         <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex md:items-center md:justify-center p-0 md:p-4 z-50 animate-fade-in select-none">
-          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 p-5 sm:p-6 rounded-none md:rounded-3xl w-full max-w-lg h-full md:h-auto max-h-full md:max-h-[90vh] shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 border-l-[4px] border-l-tenant-primary p-5 sm:p-6 rounded-none w-full max-w-lg h-full md:h-auto max-h-full md:max-h-[90vh] shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
             <button
               onClick={() => setPartnerModal({ open: false, mode: "add", data: {} })}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all border border-transparent hover:border-slate-200/30"
             >
               <X size={18} />
             </button>
@@ -1427,7 +1427,7 @@ export default function BillingTab({
                     value={partnerModal.data.name || ""}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, name: e.target.value } })}
                     placeholder="Např. ACME Corp s.r.o."
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                   />
                 </div>
 
@@ -1439,7 +1439,7 @@ export default function BillingTab({
                     value={partnerModal.data.email || ""}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, email: e.target.value } })}
                     placeholder="faktury@acme.cz"
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                   />
                 </div>
               </div>
@@ -1452,7 +1452,7 @@ export default function BillingTab({
                     value={partnerModal.data.phone || ""}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, phone: e.target.value } })}
                     placeholder="+420 123 456 789"
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                   />
                 </div>
 
@@ -1463,7 +1463,7 @@ export default function BillingTab({
                     value={partnerModal.data.companyId || ""}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, companyId: e.target.value } })}
                     placeholder="12345678"
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono placeholder:text-slate-450"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all font-mono placeholder:text-slate-450"
                   />
                 </div>
 
@@ -1474,7 +1474,7 @@ export default function BillingTab({
                     value={partnerModal.data.vatId || ""}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, vatId: e.target.value } })}
                     placeholder="CZ12345678"
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono placeholder:text-slate-450"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all font-mono placeholder:text-slate-450"
                   />
                 </div>
               </div>
@@ -1489,7 +1489,7 @@ export default function BillingTab({
                       value={partnerModal.data.addressStreet || ""}
                       onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, addressStreet: e.target.value } })}
                       placeholder="Komenského 123"
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1499,7 +1499,7 @@ export default function BillingTab({
                       value={partnerModal.data.addressCity || ""}
                       onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, addressCity: e.target.value } })}
                       placeholder="Pardubice"
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
                 </div>
@@ -1512,7 +1512,7 @@ export default function BillingTab({
                       value={partnerModal.data.addressZip || ""}
                       onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, addressZip: e.target.value } })}
                       placeholder="530 02"
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1522,7 +1522,7 @@ export default function BillingTab({
                       value={partnerModal.data.addressCountry || "Česká republika"}
                       onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, addressCountry: e.target.value } })}
                       placeholder="Česká republika"
-                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-450"
+                      className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all placeholder:text-slate-450"
                     />
                   </div>
                 </div>
@@ -1539,7 +1539,7 @@ export default function BillingTab({
                     max="100"
                     value={partnerModal.data.discount || 0}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, discount: parseInt(e.target.value, 10) || 0 } })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
                   />
                 </div>
 
@@ -1552,7 +1552,7 @@ export default function BillingTab({
                     step="0.01"
                     value={partnerModal.data.creditBalance !== undefined ? partnerModal.data.creditBalance : 0}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, creditBalance: parseFloat(e.target.value) || 0 } })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all font-mono"
                   />
                 </div>
               </div>
@@ -1567,7 +1567,7 @@ export default function BillingTab({
                     step="0.01"
                     value={partnerModal.data.creditLimit !== undefined ? partnerModal.data.creditLimit : 0}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, creditLimit: parseFloat(e.target.value) || 0 } })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all font-mono"
                   />
                 </div>
 
@@ -1578,7 +1578,7 @@ export default function BillingTab({
                   <select
                     value={partnerModal.data.billingCycle || "MONTHLY"}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, billingCycle: e.target.value } })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all cursor-pointer"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all cursor-pointer"
                   >
                     <option value="WEEKLY">Týdenní (WEEKLY)</option>
                     <option value="BI-WEEKLY">Dvoutýdenní (BI-WEEKLY)</option>
@@ -1596,7 +1596,7 @@ export default function BillingTab({
                     type="number"
                     value={partnerModal.data.paymentTermsDays !== undefined ? partnerModal.data.paymentTermsDays : 14}
                     onChange={e => setPartnerModal({ ...partnerModal, data: { ...partnerModal.data, paymentTermsDays: parseInt(e.target.value, 10) || 14 } })}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all font-mono"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all font-mono"
                   />
                 </div>
 
@@ -1615,7 +1615,7 @@ export default function BillingTab({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-xl transition-all shadow-md mt-4 cursor-pointer"
+                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md mt-4 cursor-pointer"
               >
                 {partnerModal.mode === "add" ? "Registrovat partnera" : "Uložit změny"}
               </button>
@@ -1627,10 +1627,10 @@ export default function BillingTab({
       {/* 3. Generate Invoice Wizard Modal */}
       {invoiceWizard.open && (
         <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex md:items-center md:justify-center p-0 md:p-4 z-50 animate-fade-in select-none">
-          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 p-6 rounded-none md:rounded-3xl w-full max-w-2xl h-full md:h-auto max-h-full md:max-h-[85vh] shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
+          <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-white/10 border-l-[4px] border-l-tenant-primary p-6 rounded-none w-full max-w-2xl h-full md:h-auto max-h-full md:max-h-[85vh] shadow-[0_20px_50px_rgba(112,0,255,0.12)] space-y-5 relative overflow-y-auto scrollbar-none">
             <button
               onClick={() => setInvoiceWizard(prev => ({ ...prev, open: false }))}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all border border-transparent hover:border-slate-200/30"
             >
               <X size={18} />
             </button>
@@ -1643,20 +1643,20 @@ export default function BillingTab({
             </div>
 
             {invoiceWizard.error && (
-              <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 text-[11px] flex items-center gap-2">
+              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 border-l-2 border-l-rose-500 text-rose-500 dark:text-rose-400 text-[11px] flex items-center gap-2">
                 <ShieldAlert size={14} className="shrink-0" />
                 {invoiceWizard.error}
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 dark:bg-black/25 p-4 rounded-2xl border border-slate-200/60 dark:border-white/5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 dark:bg-black/25 p-4 rounded-none border border-slate-200/60 dark:border-white/5 border-l-2 border-l-slate-400 dark:border-l-zinc-650 text-xs">
               <div className="space-y-1">
                 <label className="block text-[8px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Počáteční datum</label>
                 <input
                   type="date"
                   value={invoiceWizard.startDate}
                   onChange={e => setInvoiceWizard({ ...invoiceWizard, startDate: e.target.value })}
-                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
                 />
               </div>
 
@@ -1666,14 +1666,14 @@ export default function BillingTab({
                   type="date"
                   value={invoiceWizard.endDate}
                   onChange={e => setInvoiceWizard({ ...invoiceWizard, endDate: e.target.value })}
-                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={handleFetchUninvoicedBookings}
-                className="col-span-2 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-white font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="col-span-2 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50 border-l-2 border-l-slate-400 dark:border-l-zinc-500 text-slate-700 dark:text-white font-extrabold uppercase tracking-widest text-[9.5px] rounded-none transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 Načíst nevyfakturované lekce
                 <ArrowRight size={12} />
@@ -1686,7 +1686,7 @@ export default function BillingTab({
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                     Nalezené rezervace ({invoiceWizard.previewBookings.length})
                   </span>
-                  <div className="max-h-40 overflow-y-auto border border-slate-200/60 dark:border-white/5 rounded-xl divide-y divide-slate-150 dark:divide-white/5">
+                  <div className="max-h-40 overflow-y-auto border border-slate-200/60 dark:border-white/5 border-l-2 border-l-slate-400 rounded-none divide-y divide-slate-150 dark:divide-white/5">
                     {invoiceWizard.previewBookings.map(b => (
                       <div key={b.id} className="p-3 bg-slate-50/30 dark:bg-black/15 flex justify-between items-center text-[10.5px]">
                         <div className="space-y-0.5">
@@ -1701,7 +1701,7 @@ export default function BillingTab({
                   </div>
                 </div>
 
-                <div className="border-t border-slate-200/40 dark:border-white/5 pt-4 flex justify-between items-center bg-tenant-primary/5 dark:bg-tenant-primary/10 p-4 rounded-2xl border border-tenant-primary/20 dark:border-tenant-primary/10">
+                <div className="border-t border-slate-200/40 dark:border-white/5 pt-4 flex justify-between items-center bg-tenant-primary/5 dark:bg-tenant-primary/10 p-4 rounded-none border border-tenant-primary/20 dark:border-tenant-primary/20 border-l-[3px] border-l-tenant-primary">
                   <div>
                     <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Celková částka k fakturaci (vč. DPH a slevy)</span>
                     <span className="text-slate-400 dark:text-slate-500 text-[10px]">
@@ -1717,7 +1717,7 @@ export default function BillingTab({
                   type="button"
                   disabled={invoiceWizard.loading}
                   onClick={handleGenerateInvoice}
-                  className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {invoiceWizard.loading ? "Vytvářím fakturu..." : "Vygenerovat fakturu"}
                 </button>

@@ -402,7 +402,7 @@ export default function MobileCheckinScanner({
           <button
             type="button"
             onClick={toggleSound}
-            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.02] dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all active:scale-90 cursor-pointer"
+            className="p-2.5 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.02] dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all active:scale-90 cursor-pointer"
             title={isSoundMuted ? "Zapnout zvuk" : "Vypnout zvuk"}
           >
             {isSoundMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
@@ -411,7 +411,7 @@ export default function MobileCheckinScanner({
           <button
             type="button"
             onClick={onClose}
-            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.02] dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all active:scale-90 cursor-pointer"
+            className="p-2.5 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.02] dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all active:scale-90 cursor-pointer"
           >
             <X size={15} />
           </button>
@@ -425,7 +425,7 @@ export default function MobileCheckinScanner({
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Video Feed Wrapper */}
-        <div className="relative w-full max-w-sm aspect-square bg-slate-200 dark:bg-[#05050A] rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center">
+        <div className="relative w-full max-w-sm aspect-square bg-slate-200 dark:bg-[#05050A] rounded-none overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center">
           
           {/* Camera Video tag */}
           {isScanning && (
@@ -453,7 +453,7 @@ export default function MobileCheckinScanner({
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[220px]">{cameraError}</p>
               <button
                 onClick={startCamera}
-                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/15 rounded-xl text-[10px] font-bold uppercase active:scale-95 transition-all cursor-pointer text-slate-800 dark:text-white"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/15 rounded-none text-[10px] font-bold uppercase active:scale-95 transition-all cursor-pointer text-slate-800 dark:text-white"
               >
                 Zkusit znovu
               </button>
@@ -463,12 +463,12 @@ export default function MobileCheckinScanner({
           {/* Scanning Target Frame Finder (Overlayed) */}
           {isScanning && !scanResult && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="w-[70%] h-[70%] border-2 border-dashed border-tenant-primary/45 rounded-3xl relative">
+              <div className="w-[70%] h-[70%] border-2 border-dashed border-tenant-primary/45 rounded-none relative">
                 {/* Glowing corners */}
-                <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-tl-xl" />
-                <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-tr-xl" />
-                <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-bl-xl" />
-                <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-br-xl" />
+                <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-none-tl-xl" />
+                <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-none-tr-xl" />
+                <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-none-bl-xl" />
+                <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-none-br-xl" />
               </div>
             </div>
           )}
@@ -493,7 +493,7 @@ export default function MobileCheckinScanner({
         
         {/* Manual input drawer */}
         {manualInputOpen && (
-          <div className="space-y-2 p-3.5 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl animate-fade-in">
+          <div className="space-y-2 p-3.5 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-none animate-fade-in">
             <label className="block text-[8px] font-extrabold tracking-widest uppercase text-slate-400 dark:text-slate-500">Ruční zadání UUID lístku</label>
             <div className="flex gap-2">
               <input
@@ -501,13 +501,13 @@ export default function MobileCheckinScanner({
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 placeholder="Např. e8b5c928-8687-4482-a0dc..."
-                className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-white outline-none focus:border-tenant-primary/50"
+                className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-none px-3 py-2 text-xs font-mono text-slate-800 dark:text-white outline-none focus:border-tenant-primary/50"
               />
               <button
                 type="button"
                 onClick={() => manualCode.trim() && handleScannedCode(manualCode.trim())}
                 disabled={!manualCode.trim() || isCheckingIn}
-                className="px-4 bg-tenant-gradient hover:opacity-90 active:scale-95 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider disabled:opacity-40 cursor-pointer"
+                className="px-4 bg-tenant-gradient hover:opacity-90 active:scale-95 text-white font-bold rounded-none text-[10px] uppercase tracking-wider disabled:opacity-40 cursor-pointer"
               >
                 Ověřit
               </button>
@@ -521,7 +521,7 @@ export default function MobileCheckinScanner({
                       handleScannedCode(e.target.value);
                     }
                   }}
-                  className="w-full text-[10px] py-2 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-slate-500 dark:text-slate-400"
+                  className="w-full text-[10px] py-2 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-none text-slate-500 dark:text-slate-400"
                   defaultValue=""
                 >
                   <option value="" disabled>--- Rychlý výběr z existujících rezervací ---</option>
@@ -541,7 +541,7 @@ export default function MobileCheckinScanner({
           <button
             type="button"
             onClick={() => setManualInputOpen(!manualInputOpen)}
-            className={`py-3 rounded-xl border font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${
+            className={`py-3 rounded-none border font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${
               manualInputOpen 
                 ? "bg-slate-200 dark:bg-white/10 border-slate-300 dark:border-white/20 text-slate-800 dark:text-white" 
                 : "bg-slate-50 dark:bg-white/[0.01] border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -551,7 +551,7 @@ export default function MobileCheckinScanner({
             Zadat ručně
           </button>
 
-          <label className="py-3 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer select-none">
+          <label className="py-3 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-none font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer select-none">
             <Upload size={13} />
             Nahrát kód
             <input
@@ -577,7 +577,7 @@ export default function MobileCheckinScanner({
           />
           
           <div 
-            className="relative w-full max-h-[70vh] border-t rounded-t-[2.5rem] p-8 pb-10 space-y-6 flex flex-col items-center text-center shadow-2xl transform translate-y-0 transition-transform duration-300"
+            className="relative w-full max-h-[70vh] border-t rounded-none-t-[2.5rem] p-8 pb-10 space-y-6 flex flex-col items-center text-center shadow-2xl transform translate-y-0 transition-transform duration-300"
             style={{
               backgroundColor: scanResult.status === "granted" ? "#047857" : "#be123c",
               borderColor: scanResult.status === "granted" ? "#10b981" : "#f43f5e",
@@ -609,7 +609,7 @@ export default function MobileCheckinScanner({
             <div className="space-y-4 w-full">
               {scanResult.status === "granted" ? (
                 <div 
-                  className="rounded-2xl p-5 space-y-3 shadow-sm w-full border text-center"
+                  className="rounded-none p-5 space-y-3 shadow-sm w-full border text-center"
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.15)",
                     borderColor: "rgba(255, 255, 255, 0.25)"
@@ -627,7 +627,7 @@ export default function MobileCheckinScanner({
                 </div>
               ) : (
                 <div 
-                  className="rounded-2xl p-5 shadow-sm w-full border text-center"
+                  className="rounded-none p-5 shadow-sm w-full border text-center"
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.15)",
                     borderColor: "rgba(255, 255, 255, 0.25)"
@@ -643,7 +643,7 @@ export default function MobileCheckinScanner({
               <button
                 type="button"
                 onClick={resumeScanning}
-                className="w-full py-4 rounded-2xl text-xs font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all hover:bg-slate-100 flex items-center justify-center bg-white shadow-lg shadow-black/10"
+                className="w-full py-4 rounded-none text-xs font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all hover:bg-slate-100 flex items-center justify-center bg-white shadow-lg shadow-black/10"
                 style={{
                   color: scanResult.status === "granted" ? "#047857" : "#be123c",
                 }}
