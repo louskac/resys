@@ -27,6 +27,7 @@ import AdminAIAssistant from "@/components/AdminAIAssistant";
 import AdminOnboardingWizard from "@/components/AdminOnboardingWizard";
 import BillingTab from "./BillingTab";
 import MobileCheckinScanner from "./MobileCheckinScanner";
+import DatePicker from "@/components/DatePicker";
 
 
 // UTC Date/Time format helpers to avoid client-side timezone shifts
@@ -243,9 +244,9 @@ function TimePickerDropdown({
       />
       <div
         style={{
-          position: "absolute",
-          top: `${picker.rect.bottom + window.scrollY}px`,
-          left: `${picker.rect.left + window.scrollX}px`,
+          position: "fixed",
+          top: `${picker.rect.bottom}px`,
+          left: `${picker.rect.left}px`,
           width: `${picker.rect.width}px`,
         }}
         className="z-55 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] rounded-none shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 font-mono text-xs"
@@ -270,7 +271,7 @@ function TimePickerDropdown({
                 }}
                 className={`w-full text-center py-2 transition-colors border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 cursor-pointer ${
                   isSelected
-                    ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-bold"
+                    ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-semibold"
                     : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
                 }`}
               >
@@ -319,6 +320,18 @@ export default function AdminDashboardClient({
   const [newExceptionDateTo, setNewExceptionDateTo] = useState("");
   const [newExceptionTimeTo, setNewExceptionTimeTo] = useState("23:59");
   const [isSavingException, setIsSavingException] = useState(false);
+  const [isExceptionResourceDropdownOpen, setIsExceptionResourceDropdownOpen] = useState(false);
+  const exceptionResourceDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exceptionResourceDropdownRef.current && !exceptionResourceDropdownRef.current.contains(event.target as Node)) {
+        setIsExceptionResourceDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleExceptionUpsert = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -3713,73 +3726,145 @@ export default function AdminDashboardClient({
                 {/* Form to Create Exception */}
                 {!isReceptionist && (
                   <form onSubmit={handleExceptionUpsert} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-50/50 dark:bg-black/10 p-4 border border-slate-100 dark:border-slate-800/40">
-                    <div className="md:col-span-3 space-y-1">
-                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Název uzavírky</label>
+                    {/* Row 1: Name & Resource */}
+                    <div className="md:col-span-6 space-y-1">
+                      <label className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Název uzavírky</label>
                       <input
                         type="text"
                         required
                         value={newExceptionName}
                         onChange={(e) => setNewExceptionName(e.target.value)}
                         placeholder="Např. Státní svátek, Sanitární den"
-                        className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-3 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                        className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none py-1.5 px-3 font-medium text-foreground focus:outline-none focus:border-tenant-primary text-xs h-[28px] outline-none transition-all shadow-sm"
                       />
                     </div>
-                    <div className="md:col-span-3 space-y-1">
-                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Rozsah (Zdroj)</label>
-                      <select
-                        value={newExceptionResourceId}
-                        onChange={(e) => setNewExceptionResourceId(e.target.value)}
-                        className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-3 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs cursor-pointer"
-                      >
-                        <option value="global">Celý areál (Všechny zdroje)</option>
-                        {resources.map(res => (
-                          <option key={res.id} value={res.id}>{res.name}</option>
-                        ))}
-                      </select>
+                    
+                    <div className="md:col-span-6 space-y-1">
+                      <label className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Rozsah (Zdroj)</label>
+                      <div className="relative" ref={exceptionResourceDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setIsExceptionResourceDropdownOpen(!isExceptionResourceDropdownOpen)}
+                          className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none py-1.5 px-3 text-left text-xs outline-none transition-all shadow-sm cursor-pointer flex items-center justify-between text-slate-800 dark:text-slate-200 font-medium h-[28px]"
+                        >
+                          <span>
+                            {newExceptionResourceId === "global"
+                              ? "Celý areál (Všechny zdroje)"
+                              : resources.find((r) => r.id === newExceptionResourceId)?.name || "Celý areál (Všechny zdroje)"}
+                          </span>
+                          <ChevronDown size={10} className="text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                        </button>
+                        
+                        {isExceptionResourceDropdownOpen && (
+                          <div className="absolute left-0 right-0 mt-1 bg-white/95 dark:bg-[#0D0D15]/95 backdrop-blur-xl border border-slate-200/60 dark:border-[#2A2A40] shadow-xl z-[100] rounded-none overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150 py-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewExceptionResourceId("global");
+                                setIsExceptionResourceDropdownOpen(false);
+                              }}
+                              className={`w-full text-left py-2 px-3 transition-colors text-xs cursor-pointer border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 ${
+                                newExceptionResourceId === "global"
+                                  ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-medium"
+                                  : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
+                              }`}
+                            >
+                              Celý areál (Všechny zdroje)
+                            </button>
+                            {resources.map((res) => {
+                              const isSelected = newExceptionResourceId === res.id;
+                              return (
+                                <button
+                                  key={res.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewExceptionResourceId(res.id);
+                                    setIsExceptionResourceDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left py-2 px-3 transition-colors text-xs cursor-pointer border-b border-slate-100/30 dark:border-[#1F1F35]/20 last:border-0 ${
+                                    isSelected
+                                      ? "bg-tenant-primary/10 text-tenant-primary dark:text-[#A78BFA] font-medium"
+                                      : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60 font-medium"
+                                  }`}
+                                >
+                                  {res.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="md:col-span-2 space-y-1">
-                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Od (Datum & Čas)</label>
-                      <div className="flex gap-1.5">
-                        <input
-                          type="date"
-                          required
+
+                    {/* Row 2: Starting Date/Time, Ending Date/Time, Submit Button */}
+                    <div className="md:col-span-4 space-y-1">
+                      <label className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Od (Datum & Čas)</label>
+                      <div className="flex gap-1.5 items-center">
+                        <DatePicker
                           value={newExceptionDateFrom}
-                          onChange={(e) => setNewExceptionDateFrom(e.target.value)}
-                          className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-2 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                          onChange={setNewExceptionDateFrom}
                         />
-                        <input
-                          type="time"
-                          required
-                          value={newExceptionTimeFrom}
-                          onChange={(e) => setNewExceptionTimeFrom(e.target.value)}
-                          className="bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-1 text-center font-mono text-xs w-16"
-                        />
+                        <div className="relative flex items-center w-24">
+                          <Clock size={11} className="absolute left-2.5 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setActiveTimePicker({
+                                id: "exception-time-from",
+                                rect,
+                                value: newExceptionTimeFrom,
+                                onChange: setNewExceptionTimeFrom,
+                                maxTime: (newExceptionDateFrom === newExceptionDateTo) ? newExceptionTimeTo : undefined
+                              });
+                            }}
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200 h-[28px]"
+                          >
+                            {newExceptionTimeFrom}
+                            <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div className="md:col-span-2 space-y-1">
-                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Do (Datum & Čas)</label>
-                      <div className="flex gap-1.5">
-                        <input
-                          type="date"
-                          required
+
+                    <div className="md:col-span-4 space-y-1">
+                      <label className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Do (Datum & Čas)</label>
+                      <div className="flex gap-1.5 items-center">
+                        <DatePicker
                           value={newExceptionDateTo}
-                          onChange={(e) => setNewExceptionDateTo(e.target.value)}
-                          className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-2 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                          onChange={setNewExceptionDateTo}
+                          min={newExceptionDateFrom}
                         />
-                        <input
-                          type="time"
-                          required
-                          value={newExceptionTimeTo}
-                          onChange={(e) => setNewExceptionTimeTo(e.target.value)}
-                          className="bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-1 text-center font-mono text-xs w-16"
-                        />
+                        <div className="relative flex items-center w-24">
+                          <Clock size={11} className="absolute left-2.5 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setActiveTimePicker({
+                                id: "exception-time-to",
+                                rect,
+                                value: newExceptionTimeTo,
+                                onChange: setNewExceptionTimeTo,
+                                minTime: (newExceptionDateFrom === newExceptionDateTo) ? newExceptionTimeFrom : undefined
+                              });
+                            }}
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] rounded-none pl-7 pr-6 py-1.5 text-center font-mono text-foreground outline-none transition-all shadow-sm cursor-pointer flex items-center justify-center font-medium hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75 text-xs text-slate-800 dark:text-slate-200 h-[28px]"
+                          >
+                            {newExceptionTimeTo}
+                            <ChevronDown size={10} className="absolute right-2 text-slate-405 dark:text-zinc-500 pointer-events-none" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div className="md:col-span-2">
+
+                    <div className="md:col-span-4">
                       <button
                         type="submit"
                         disabled={isSavingException}
-                        className="w-full bg-tenant-gradient hover:opacity-95 text-white font-bold text-xs py-2 px-4 rounded-none shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        className="w-full border border-tenant-primary/25 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary hover:text-white text-tenant-primary dark:text-purple-300 font-bold text-xs h-[28px] rounded-none shadow-sm active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
                         <Plus size={13} />
                         Přidat výjimku

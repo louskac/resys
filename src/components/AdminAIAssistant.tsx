@@ -571,7 +571,7 @@ export default function AdminAIAssistant({
         <AILiquidCore 
           onClick={() => setIsOpen(true)} 
           label="Spustit ReKeeper"
-          badgeText="ReKeeper Admin"
+          hoverWidth="240px"
           title="Otevřít administrátorského asistenta ReKeeper"
         />
       )}

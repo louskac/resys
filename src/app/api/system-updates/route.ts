@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: enhance calendar tooltip mouse positioning and expand ReKeeper AI button transition":
+      "Uživatelský komfort: Plovoucí detail rezervace sledující kurzor myši a vylepšená plynulá animace AI tlačítka ReKeeper.",
     "feat: implement schedule exceptions and extraordinary closures with calendar overlays":
       "Mimořádné uzavírky: Možnost naplánovat uzavření celého areálu nebo jednotlivých sportovišť s přehlednou vizualizací v kalendáři.",
     "feat: enforce sharp-edged design on scheduler, customize Siri core and refine UI details":
@@ -275,12 +277,19 @@ export async function GET(req: NextRequest) {
         files = [];
       }
 
-      // Group all 0.2.x commits under version 0.2.0 and date 2026-06-23
+      // Group all 0.2.x commits under v0.2.0 or v0.2.1
       let commitVersion = version;
       let commitDate = date;
       if (version.startsWith("0.2.")) {
-        commitVersion = "0.2.0";
-        commitDate = "2026-06-23";
+        const patchStr = version.split(".")[2] || "0";
+        const patch = parseInt(patchStr, 10);
+        if (patch >= 6) {
+          commitVersion = "0.2.1";
+          commitDate = "2026-06-25";
+        } else {
+          commitVersion = "0.2.0";
+          commitDate = "2026-06-23";
+        }
       }
 
       rawCommits.push({
@@ -350,6 +359,8 @@ export async function GET(req: NextRequest) {
       let displayVersion = groupVersions[`${g.version}|${g.date}`] || `v${g.version}`;
       if (g.version === "0.2.0") {
         displayVersion = "v0.2.0 - Design overhaul";
+      } else if (g.version === "0.2.1") {
+        displayVersion = "v0.2.1 - QoL features";
       }
       
       const benefits = Array.from(new Set(

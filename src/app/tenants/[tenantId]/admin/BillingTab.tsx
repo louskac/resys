@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import DatePicker from "@/components/DatePicker";
 
 interface Partner {
   id: string;
@@ -820,7 +821,7 @@ export default function BillingTab({
                   mode: "add",
                   data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
                 })}
-                className="flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-4 rounded-none font-bold shadow-md shadow-tenant-primary/10 items-center justify-center gap-1.5 cursor-pointer"
+                className="btn btn-tenant flex items-center justify-center gap-1.5 text-xs py-2 px-4"
               >
                 <Plus size={14} />
                 Zaregistrovat partnera
@@ -1390,7 +1391,7 @@ export default function BillingTab({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md mt-4 cursor-pointer"
+                className="btn btn-tenant w-full py-3 mt-4"
               >
                 Uložit partnerství
               </button>
@@ -1615,7 +1616,7 @@ export default function BillingTab({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md mt-4 cursor-pointer"
+                className="btn btn-tenant w-full py-3 mt-4"
               >
                 {partnerModal.mode === "add" ? "Registrovat partnera" : "Uložit změny"}
               </button>
@@ -1652,21 +1653,17 @@ export default function BillingTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 dark:bg-black/25 p-4 rounded-none border border-slate-200/60 dark:border-white/5 border-l-2 border-l-slate-400 dark:border-l-zinc-650 text-xs">
               <div className="space-y-1">
                 <label className="block text-[8px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Počáteční datum</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={invoiceWizard.startDate}
-                  onChange={e => setInvoiceWizard({ ...invoiceWizard, startDate: e.target.value })}
-                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
+                  onChange={val => setInvoiceWizard({ ...invoiceWizard, startDate: val })}
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="block text-[8px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Koncové datum</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={invoiceWizard.endDate}
-                  onChange={e => setInvoiceWizard({ ...invoiceWizard, endDate: e.target.value })}
-                  className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/60 dark:border-white/10 border-l-[3px] border-l-tenant-primary/30 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:border-l-tenant-primary transition-all"
+                  onChange={val => setInvoiceWizard({ ...invoiceWizard, endDate: val })}
                 />
               </div>
 
@@ -1717,7 +1714,7 @@ export default function BillingTab({
                   type="button"
                   disabled={invoiceWizard.loading}
                   onClick={handleGenerateInvoice}
-                  className="w-full py-3 bg-tenant-gradient hover:opacity-95 text-white font-extrabold uppercase tracking-widest rounded-none border border-tenant-primary/30 border-l-[3px] border-l-tenant-primary transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+                  className="btn btn-tenant w-full py-3 flex items-center justify-center gap-1.5"
                 >
                   {invoiceWizard.loading ? "Vytvářím fakturu..." : "Vygenerovat fakturu"}
                 </button>

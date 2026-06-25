@@ -1611,7 +1611,7 @@ export default function CalendarView({
                 }
               }}
               className={`w-9 h-5 flex items-center rounded-none p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${
-                isHorizontal ? "bg-tenant-primary" : "bg-slate-300 dark:bg-zinc-700"
+                isHorizontal ? "bg-tenant-primary" : "bg-slate-200 dark:bg-slate-700"
               }`}
               title="Zobrazit plochy/kurzy vedle sebe pro aktuální den"
             >
@@ -1791,10 +1791,10 @@ export default function CalendarView({
                                 {/* Current Time Indicator Line (Now Line) */}
                                 {showNowLine && (
                                   <div 
-                                    className="absolute left-0 right-0 border-t-2 border-rose-500 z-30 pointer-events-none flex items-center"
-                                    style={{ top: `${nowLineTop}px` }}
+                                    className="absolute left-0 right-0 h-[2px] bg-rose-500 z-30 pointer-events-none flex items-center"
+                                    style={{ top: `${nowLineTop}px`, marginTop: "-1px" }}
                                   >
-                                    <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
+                                    <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50 shrink-0" style={{ marginLeft: "-5px" }} />
                                   </div>
                                 )}
             
@@ -1885,13 +1885,40 @@ export default function CalendarView({
                                             width: event.width,
                                             ...(!isPastEvent && !isDraftEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
                                           }}
-                                          onMouseMove={!isPastEvent && !isDraftEvent ? (e) => {
+                                          onMouseEnter={(e) => {
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             const x = e.clientX - rect.left;
                                             const y = e.clientY - rect.top;
                                             e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
                                             e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-                                          } : undefined}
+                                            
+                                            const tooltipHeight = 180;
+                                            const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
+                                            const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                            e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+
+                                            const tooltipWidth = 288;
+                                            const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                            const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                            e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                                          }}
+                                          onMouseMove={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const x = e.clientX - rect.left;
+                                            const y = e.clientY - rect.top;
+                                            e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                            e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                                            
+                                            const tooltipHeight = 180;
+                                            const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
+                                            const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                            e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+
+                                            const tooltipWidth = 288;
+                                            const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                            const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                            e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                                          }}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (isPastEvent) return;
@@ -2057,7 +2084,13 @@ export default function CalendarView({
                                             })();
             
                                             return (
-                                              <div className={`absolute ${tooltipAlignmentClass} w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`}>
+                                              <div 
+                                                style={{
+                                                  top: "var(--mouse-y-tooltip, 10px)",
+                                                  left: "var(--mouse-x-tooltip, 10px)",
+                                                }}
+                                                className={`absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans`}
+                                              >
                                                 <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
                                                   <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
                                                     <span className={`w-2 h-2 rounded-none shrink-0 ${styles.barColor}`} />
@@ -2199,10 +2232,10 @@ export default function CalendarView({
                     {/* Current Time Indicator Line (Now Line) */}
                     {showNowLine && (
                       <div 
-                        className="absolute left-0 right-0 border-t-2 border-rose-500 z-30 pointer-events-none flex items-center"
-                        style={{ top: `${nowLineTop}px` }}
+                        className="absolute left-0 right-0 h-[2px] bg-rose-500 z-30 pointer-events-none flex items-center"
+                        style={{ top: `${nowLineTop}px`, marginTop: "-1px" }}
                       >
-                        <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
+                        <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50 shrink-0" style={{ marginLeft: "-5px" }} />
                       </div>
                     )}
 
@@ -2293,13 +2326,40 @@ export default function CalendarView({
                                 width: event.width,
                                 ...(!isPastEvent && !isDraftEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
                               }}
-                              onMouseMove={!isPastEvent && !isDraftEvent ? (e) => {
+                              onMouseEnter={(e) => {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 const x = e.clientX - rect.left;
                                 const y = e.clientY - rect.top;
                                 e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
                                 e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-                              } : undefined}
+                                
+                                const tooltipHeight = 180;
+                                const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
+                                const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+
+                                const tooltipWidth = 288;
+                                const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                              }}
+                              onMouseMove={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const y = e.clientY - rect.top;
+                                e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                                
+                                const tooltipHeight = 180;
+                                const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
+                                const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+
+                                const tooltipWidth = 288;
+                                const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isPastEvent) return;
@@ -2482,10 +2542,16 @@ export default function CalendarView({
                                   return borderClasses[color] || "border-indigo-500/25 dark:border-indigo-500/20";
                                 })();
 
-                                const tooltipClass = `absolute ${tooltipAlignmentClass} w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`;
+                                const tooltipClass = `absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans`;
 
                                 return (
-                                  <div className={tooltipClass}>
+                                  <div 
+                                    style={{
+                                      top: "var(--mouse-y-tooltip, 10px)",
+                                      left: "var(--mouse-x-tooltip, 10px)",
+                                    }}
+                                    className={tooltipClass}
+                                  >
                                     <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
                                       <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
                                         <span className={`w-2 h-2 rounded-none shrink-0 ${styles.barColor}`} />
