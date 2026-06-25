@@ -200,7 +200,7 @@ export default function VerticalsShowcase({ tenants, isLocal }: VerticalsShowcas
       <div className="grid lg:grid-cols-12 gap-10 items-center bg-white/45 dark:bg-[#07070C]/35 border border-slate-200/50 dark:border-[#1F1F35]/30 p-8 rounded-none backdrop-blur-xl shadow-md">
         
         {/* Left Column: Feature Specifications */}
-        <div className="lg:col-span-7 space-y-6 text-left">
+        <div key={`spec-${activeIdx}`} className="lg:col-span-7 space-y-6 text-left animate-fade-in-up">
           <div className="space-y-4">
             <div className="border-l-2 border-tenant-primary pl-3.5 select-none">
               <span className="text-[9.5px] font-black uppercase tracking-widest text-tenant-primary block leading-none">
@@ -250,7 +250,7 @@ export default function VerticalsShowcase({ tenants, isLocal }: VerticalsShowcas
         </div>
 
         {/* Right Column: Visual Sandbox Mockup */}
-        <div className="lg:col-span-5 relative w-full">
+        <div key={`mock-${activeIdx}`} className="lg:col-span-5 relative w-full animate-fade-in-up">
           <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/15 to-tenant-primary/20 blur-3xl opacity-60 rounded-none scale-95" />
           <div className="relative p-2 bg-slate-100/40 dark:bg-black/30 border border-slate-200/20 dark:border-[#1F1F35]/40 rounded-none shadow-lg">
             {activeVertical.sampleMockup}

@@ -582,4 +582,240 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   -webkit-appearance: none;
 }
 
+/* --- INTERACTIVE POLISHES & ANIMATIONS --- */
+
+/* 1. Header Scroll Shrink & Fade Animation */
+@keyframes header-scroll {
+  from {
+    background-color: rgba(7, 7, 12, 0.3);
+    border-bottom-color: rgba(63, 63, 70, 0);
+    backdrop-filter: blur(4px);
+    box-shadow: none;
+  }
+  to {
+    background-color: rgba(7, 7, 12, 0.95);
+    border-bottom-color: rgba(63, 63, 70, 0.4);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.header-scroll-animate {
+  /* Default state when scroll animation is not supported (fallback) */
+  background-color: rgba(7, 7, 12, 0.85);
+  border-bottom-color: rgba(63, 63, 70, 0.4);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .header-scroll-animate {
+      animation: header-scroll auto linear both;
+      animation-timeline: scroll(block root);
+      animation-range: 0px 100px;
+    }
+  }
+}
+
+/* 2. Hero Background Parallax */
+@keyframes hero-image-parallax {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(12%) scale(1.08);
+  }
+}
+
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax-image {
+      animation: hero-image-parallax auto linear both;
+      animation-timeline: scroll(block root);
+      animation-range: 0px 710px;
+      will-change: transform;
+    }
+  }
+}
+
+/* 3. Ghost Typography Watermark Parallax */
+@keyframes watermark-parallax {
+  from {
+    transform: translateX(-6%);
+  }
+  to {
+    transform: translateX(6%);
+  }
+}
+
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax-watermark {
+      animation: watermark-parallax auto linear both;
+      animation-timeline: scroll(block root);
+      animation-range: 0px 710px;
+      will-change: transform;
+    }
+  }
+}
+
+/* 4. Ambient Drifting Background Blobs */
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes blob-parallax-1 {
+      to {
+        transform: translateY(120px) rotate(15deg);
+      }
+    }
+    @keyframes blob-parallax-2 {
+      to {
+        transform: translateY(-80px) rotate(-10deg);
+      }
+    }
+    @keyframes blob-parallax-3 {
+      to {
+        transform: translateY(60px);
+      }
+    }
+    
+    .bg-parallax-blob-1 {
+      animation: blob-parallax-1 auto linear both;
+      animation-timeline: scroll(block root);
+      will-change: transform;
+    }
+    .bg-parallax-blob-2 {
+      animation: blob-parallax-2 auto linear both;
+      animation-timeline: scroll(block root);
+      will-change: transform;
+    }
+    .bg-parallax-blob-3 {
+      animation: blob-parallax-3 auto linear both;
+      animation-timeline: scroll(block root);
+      will-change: transform;
+    }
+  }
+}
+
+/* 5. Floating Stats Micro-Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-float-1 {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-float-2 {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+}
+
+/* 6. Smooth Tab Transitions */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 7. Ecosystem Simulator flow line animation */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.animate-flow-dash {
+  stroke-dashoffset: 0;
+  animation: flow-dash 1.2s linear infinite;
+}
+
+/* 8. Metric Cards Flat Typographic Draw Animation */
+.metric-card-hover {
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+.metric-card-hover::before {
+  content: '';
+  position: absolute;
+  top: -1px; /* Align precisely with border-t */
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--tenant-gradient);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .metric-card-hover:hover::before {
+    width: 100%;
+  }
+}
+
+/* 9. Value Pop Animation & Scale Up */
+@keyframes value-pop {
+  0% {
+    transform: scale(1);
+    filter: brightness(1.2);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.4);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-value-pop {
+  display: inline-block;
+  animation: value-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-up {
+  animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
 

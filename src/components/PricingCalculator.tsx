@@ -7,6 +7,7 @@ import {
   Smartphone, ChevronRight, X, Play, Settings, RefreshCw,
   Coins, Landmark, Timer, ClipboardList, QrCode
 } from "lucide-react";
+import ScrollReveal from "@/components/ScrollReveal";
 
 interface Plan {
   id: string;
@@ -302,80 +303,87 @@ export default function PricingCalculator() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-1">
-            {plans.map((p) => {
+            {plans.map((p, index) => {
               const isRecommended = p.id === activePlanId;
               const price = isYearly ? p.priceYearly : p.priceMonthly;
 
               return (
-                <div 
+                <ScrollReveal 
                   key={p.id}
-                  className={`relative flex flex-col justify-between p-4.5 rounded-none border transition-all duration-300 ${
-                    isRecommended 
-                      ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5 scale-[1.01]" 
-                      : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-tenant-primary/35"
-                  }`}
+                  animation="fade-down"
+                  delay={index * 150}
+                  duration={600}
+                  className="flex flex-col h-full"
                 >
-                  {/* Recommended Floating Badges */}
-                  {isRecommended && (
-                    <div className="absolute -top-2.5 right-3 bg-tenant-gradient text-white text-[8px] font-extrabold px-2 py-0.5 rounded-none shadow-sm uppercase tracking-wide select-none">
-                      Doporučeno
-                    </div>
-                  )}
-
-                  <div>
-                    {/* Header with Title and Inline popularity badge */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h5 className="font-bold text-slate-805 dark:text-white text-xs">
-                        {p.name}
-                      </h5>
-                      {p.badge && (
-                        <span className="bg-amber-500 text-white text-[7px] font-extrabold px-1.5 py-0.5 rounded-none uppercase tracking-wide select-none">
-                          {p.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 leading-tight">
-                      {p.subname}
-                    </p>
-                    
-                    <div className="mt-3 flex items-baseline gap-0.5 select-none">
-                      <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
-                        {price.toLocaleString()} Kč
-                      </span>
-                      <span className="text-slate-400 dark:text-zinc-500 text-[9px]">
-                        / měs.
-                      </span>
-                    </div>
-
-                    {isYearly && price > 0 && (
-                      <span className="block text-[8px] text-emerald-500 font-bold mt-0.5 select-none">
-                        Roční platba
-                      </span>
-                    )}
-                    
-                    {/* Features List */}
-                    <ul className="mt-4 space-y-2 text-[10px] text-slate-650 dark:text-zinc-350 border-t border-slate-200/50 dark:border-[#1F1F35]/40 pt-3">
-                      {p.features.map((f, idx) => (
-                        <li key={idx} className="flex items-center gap-1">
-                          <Check size={10} className="text-tenant-primary shrink-0" />
-                          <span className="truncate">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  {/* CTA Button */}
-                  <button
-                    onClick={() => handleOpenSetup(p.name)}
-                    className={`mt-5 w-full text-center text-[10.5px] py-2 px-3 rounded-none font-bold transition-all cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98] ${
-                      isRecommended
-                        ? "bg-tenant-gradient text-white border border-transparent shadow-xs"
-                        : "bg-white dark:bg-black/35 hover:bg-slate-5 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-300"
+                  <div 
+                    className={`relative flex flex-col justify-between p-4.5 rounded-none border transition-all duration-300 h-full ${
+                      isRecommended 
+                        ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5 scale-[1.01]" 
+                        : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-tenant-primary/35"
                     }`}
                   >
-                    Aktivovat
-                  </button>
-                </div>
+                    {/* Recommended Floating Badges */}
+                    {isRecommended && (
+                      <div className="absolute -top-2.5 right-3 bg-tenant-gradient text-white text-[8px] font-extrabold px-2 py-0.5 rounded-none shadow-sm uppercase tracking-wide select-none">
+                        Doporučeno
+                      </div>
+                    )}
+
+                    <div>
+                      {/* Header with Title and Inline popularity badge */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h5 className="font-bold text-slate-805 dark:text-white text-xs">
+                          {p.name}
+                        </h5>
+                        {p.badge && (
+                          <span className="bg-amber-500 text-white text-[7px] font-extrabold px-1.5 py-0.5 rounded-none uppercase tracking-wide select-none">
+                            {p.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 leading-tight">
+                        {p.subname}
+                      </p>
+                      
+                      <div className="mt-3 flex items-baseline gap-0.5 select-none">
+                        <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
+                          {price.toLocaleString()} Kč
+                        </span>
+                        <span className="text-slate-400 dark:text-zinc-500 text-[9px]">
+                          / měs.
+                        </span>
+                      </div>
+
+                      {isYearly && price > 0 && (
+                        <span className="block text-[8px] text-emerald-500 font-bold mt-0.5 select-none">
+                          Roční platba
+                        </span>
+                      )}
+                      
+                      {/* Features List */}
+                      <ul className="mt-4 space-y-2 text-[10px] text-slate-650 dark:text-zinc-350 border-t border-slate-200/50 dark:border-[#1F1F35]/40 pt-3">
+                        {p.features.map((f, idx) => (
+                          <li key={idx} className="flex items-center gap-1">
+                            <Check size={10} className="text-tenant-primary shrink-0" />
+                            <span className="truncate">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {/* CTA Button */}
+                    <button
+                      onClick={() => handleOpenSetup(p.name)}
+                      className={`mt-5 w-full text-center text-[10.5px] py-2 px-3 rounded-none font-bold transition-all cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98] ${
+                        isRecommended
+                          ? "bg-tenant-gradient text-white border border-transparent shadow-xs"
+                          : "bg-white dark:bg-black/35 hover:bg-slate-5 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-300"
+                      }`}
+                    >
+                      Aktivovat
+                    </button>
+                  </div>
+                </ScrollReveal>
               );
             })}
           </div>
@@ -449,12 +457,12 @@ export default function PricingCalculator() {
           <div className="p-4 bg-white/45 dark:bg-black/35 border border-tenant-primary/20 rounded-none space-y-2.5 select-none">
             <div className="flex justify-between items-center">
               <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Celkový měsíční přínos</span>
-              <span className="text-[9px] bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/15 px-2 py-0.5 rounded-none font-black font-mono">
+              <span key={roiRatio} className="text-[9px] bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/15 px-2 py-0.5 rounded-none font-black font-mono animate-value-pop">
                 {roiRatio}x ROI
               </span>
             </div>
             <div className="space-y-0.5">
-              <strong className="text-2xl font-black text-tenant-primary font-mono block">
+              <strong key={netProfitBenefit} className="text-2xl font-black text-tenant-primary font-mono block animate-value-pop">
                 +{Math.round(netProfitBenefit).toLocaleString()} Kč
               </strong>
               <span className="text-[9px] text-slate-450 dark:text-zinc-500 block leading-tight">

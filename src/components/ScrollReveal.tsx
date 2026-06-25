@@ -75,9 +75,7 @@ export default function ScrollReveal({
     }
   };
 
-  const initialStyles: React.CSSProperties = {
-    opacity: 0,
-    transform: getInitialTransform(),
+  const baseStyles: React.CSSProperties = {
     transitionProperty: "opacity, transform",
     transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)", // Premium spring-like ease-out curve
     transitionDuration: `${duration}ms`,
@@ -85,7 +83,14 @@ export default function ScrollReveal({
     willChange: "transform, opacity",
   };
 
+  const initialStyles: React.CSSProperties = {
+    ...baseStyles,
+    opacity: 0,
+    transform: getInitialTransform(),
+  };
+
   const activeStyles: React.CSSProperties = {
+    ...baseStyles,
     opacity: 1,
     transform: "translate3d(0, 0, 0) scale3d(1, 1, 1)",
   };

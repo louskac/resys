@@ -34,18 +34,18 @@ export default async function Home() {
     <div className="flex-1 bg-background text-foreground flex flex-col font-sans transition-colors duration-150 relative overflow-hidden">
       
       {/* Background ambient glow blobs */}
-      <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] pointer-events-none select-none -z-10">
+      <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] pointer-events-none select-none -z-10 bg-parallax-blob-1">
         <div className="w-full h-full rounded-full bg-tenant-primary/10 dark:bg-tenant-primary/5 blur-[100px]" />
       </div>
-      <div className="absolute bottom-[15%] right-[-5%] w-[55%] h-[55%] pointer-events-none select-none -z-10">
+      <div className="absolute bottom-[15%] right-[-5%] w-[55%] h-[55%] pointer-events-none select-none -z-10 bg-parallax-blob-2">
         <div className="w-full h-full rounded-full bg-[#7000FF]/10 dark:bg-[#7000FF]/5 blur-[120px]" />
       </div>
-      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] pointer-events-none select-none -z-10">
+      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] pointer-events-none select-none -z-10 bg-parallax-blob-3">
         <div className="w-full h-full rounded-full bg-[#7000FF]/8 dark:bg-[#7000FF]/4 blur-[110px]" />
       </div>
 
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 w-full z-50 border-b border-zinc-900/40 bg-[#07070c]/85 backdrop-blur-md transition-all shadow-md shadow-black/20 select-none text-white">
+      <header className="fixed top-0 left-0 right-0 w-full z-50 select-none text-white header-scroll-animate">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           
           {/* Logo Brand */}
@@ -149,7 +149,7 @@ export default async function Home() {
             
             {/* Metric 1: OneID */}
             <ScrollReveal animation="fade-up" delay={100} duration={600}>
-              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group transition-colors duration-300 metric-card-hover">
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Jediný účet</span>
                 </div>
@@ -169,7 +169,7 @@ export default async function Home() {
 
             {/* Metric 2: Zámky & světla */}
             <ScrollReveal animation="fade-up" delay={200} duration={600}>
-              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group transition-colors duration-300 metric-card-hover">
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Přímé spínání</span>
                 </div>
@@ -189,7 +189,7 @@ export default async function Home() {
 
             {/* Metric 3: B2B Kredit */}
             <ScrollReveal animation="fade-up" delay={300} duration={600}>
-              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group transition-colors duration-300 metric-card-hover">
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Pro firmy a kluby</span>
                 </div>
@@ -209,7 +209,7 @@ export default async function Home() {
 
             {/* Metric 4: Provize */}
             <ScrollReveal animation="fade-up" delay={400} duration={600}>
-              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group hover:border-tenant-primary/60 transition-colors duration-300">
+              <div className="border-t border-slate-200/60 dark:border-[#1F1F35]/40 pt-6 space-y-3 group transition-colors duration-300 metric-card-hover">
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] text-tenant-primary font-black tracking-widest uppercase">Platíte jen z rezervací</span>
                 </div>

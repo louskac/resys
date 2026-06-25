@@ -192,10 +192,22 @@ export default function EcosystemMap() {
       <div className="grid lg:grid-cols-12 gap-8 items-stretch bg-white/45 dark:bg-[#07070C]/35 border border-slate-200/50 dark:border-[#1F1F35]/30 p-6 md:p-8 rounded-none backdrop-blur-xl shadow-md">
         
         {/* Left Column: Compact Visual Data Flow Simulator (Span 6) */}
-        <div className="lg:col-span-6 p-6 bg-slate-50/50 dark:bg-black/35 border border-slate-200/60 dark:border-zinc-800/40 rounded-none flex flex-col justify-center min-h-[300px] relative overflow-hidden">
+        <div key={`flow-${activeNode}`} className="lg:col-span-6 p-6 bg-slate-50/50 dark:bg-black/35 border border-slate-200/60 dark:border-zinc-800/40 rounded-none flex flex-col justify-center min-h-[300px] relative overflow-hidden animate-fade-in-up">
           
-          {/* Vertical dotted connector line */}
-          <div className="absolute left-[34px] top-8 bottom-8 w-[1.5px] border-l border-dashed border-tenant-primary/30 dark:border-tenant-primary/20 z-0" />
+          {/* Vertical animated connector line */}
+          <svg className="absolute left-[34px] top-8 bottom-8 w-[2px] h-[calc(100%-4rem)] z-0" overflow="visible">
+            <line 
+              x1="0" 
+              y1="0" 
+              x2="0" 
+              y2="100%" 
+              stroke="var(--tenant-primary)" 
+              strokeWidth="1.5" 
+              strokeDasharray="4,6" 
+              className="animate-flow-dash"
+              opacity="0.3"
+            />
+          </svg>
           
           <div className="flex flex-col gap-5 relative z-10">
             {flow.map((item, index) => {
@@ -225,7 +237,7 @@ export default function EcosystemMap() {
         </div>
 
         {/* Right Column: Clean Details Card (Span 6) */}
-        <div className="lg:col-span-6 flex flex-col justify-between border border-slate-200/60 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-[#09090F]/45 p-6 md:p-8 rounded-none shadow-sm transition-colors duration-300 min-h-[300px]">
+        <div key={`details-${activeNode}`} className="lg:col-span-6 flex flex-col justify-between border border-slate-200/60 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-[#09090F]/45 p-6 md:p-8 rounded-none shadow-sm transition-colors duration-300 min-h-[300px] animate-fade-in-up">
           
           <div className="space-y-6 text-left">
             

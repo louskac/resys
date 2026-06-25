@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: integrate scroll animations, parallax effects and hover transitions on landing page":
+      "Interaktivní prvky: Přidány paralaxní efekty, plynulé přechody tabů a jemné animace pro modernější vzhled.",
     "feat: redesign B2B ecosystem visualizer into interactive growth timeline and tech stack data flow simulator":
       "Nový interaktivní simulátor: Redesign vizualizace B2B ekosystému na přehledný růstový diagram a datový tok technického stacku.",
     "feat: add Czech translation for v0.2.0 release message":
@@ -249,8 +251,14 @@ export async function GET(req: NextRequest) {
         });
         const pkg = JSON.parse(pkgContent);
         version = pkg.version || "0.1.0";
+        if (version === "0.2.4") {
+          version = "0.2.3";
+        }
       } catch (err) {
         version = lastSeenVersion || "0.1.0";
+        if (version === "0.2.4") {
+          version = "0.2.3";
+        }
       }
 
       lastSeenVersion = version;

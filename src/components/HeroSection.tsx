@@ -14,13 +14,13 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
     <section className="relative w-full h-[560px] sm:h-[640px] lg:h-[710px] bg-slate-950 overflow-hidden">
       
       {/* 1. BACKGROUND IMAGE (Flipped 180deg and stretched to 100% screen width) */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         <Image
           src="/hero-vibe-1.jpg"
           alt="Venkovní tenisový kurt s přístupovým sloupkem"
           fill
           priority
-          className="object-cover object-[center_12%] pointer-events-none"
+          className="object-cover object-[center_12%] pointer-events-none hero-parallax-image"
           sizes="100vw"
         />
       </div>
@@ -36,7 +36,7 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
       {/* 4. LEANING INTO GHOST TYPOGRAPHY DESIGN LANGUAGE */}
       {/* Solid text with low opacity to prevent diacritic rendering issues on Á and Ů */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-15 overflow-hidden">
-        <span className="text-[9.5vw] font-black tracking-tighter uppercase leading-none whitespace-nowrap text-white opacity-[0.08]">
+        <span className="text-[9.5vw] font-black tracking-tighter uppercase leading-none whitespace-nowrap text-white opacity-[0.08] hero-parallax-watermark">
           AUTOMATIZACE AREÁLŮ
         </span>
       </div>
@@ -91,11 +91,11 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
 
           {/* Right Column: Subtle typographic stats with left accent border, no backgrounds */}
           <div className="absolute bottom-20 lg:bottom-24 right-6 hidden md:flex items-center gap-10 select-none">
-            <div className="pl-4 border-l-2 border-tenant-primary">
+            <div className="pl-4 border-l-2 border-tenant-primary animate-float-1">
               <div className="text-[9px] font-black text-tenant-primary uppercase tracking-widest leading-none">PROVOZ BEZ RECEPČNÍ</div>
               <div className="text-3xl lg:text-4xl font-black text-white mt-1.5 tracking-tight leading-none">Bezobslužně</div>
             </div>
-            <div className="pl-4 border-l-2 border-tenant-primary">
+            <div className="pl-4 border-l-2 border-tenant-primary animate-float-2">
               <div className="text-[9px] font-black text-tenant-primary uppercase tracking-widest leading-none">GARANTOVANÁ PLATBA</div>
               <div className="text-3xl lg:text-4xl font-black text-white mt-1.5 tracking-tight leading-none">100% online</div>
             </div>
