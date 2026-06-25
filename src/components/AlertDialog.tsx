@@ -114,7 +114,7 @@ export default function AlertDialog({
         {/* Animated Icon Circle */}
         <div className="flex items-center justify-center">
           {type === "success" ? (
-            <div className="h-16 w-16 rounded-full flex items-center justify-center border border-transparent animate-success-glow relative overflow-visible">
+            <div className="h-16 w-16 rounded-none flex items-center justify-center border border-transparent animate-success-glow relative overflow-visible">
               <svg className="w-16 h-16" viewBox="0 0 52 52">
                 <circle 
                   className="animate-checkmark-circle fill-none stroke-[2.5] -rotate-90 origin-[26px_26px]" 
@@ -130,11 +130,11 @@ export default function AlertDialog({
               </svg>
             </div>
           ) : type === "error" ? (
-            <div className="h-14 w-14 rounded-full bg-rose-500/10 dark:bg-rose-500/15 flex items-center justify-center animate-[shake_0.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/20">
+            <div className="h-14 w-14 rounded-none bg-rose-500/10 dark:bg-rose-500/15 flex items-center justify-center animate-[shake_0.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/20">
               <AlertCircle className="text-rose-550 dark:text-rose-450" size={26} />
             </div>
           ) : (
-            <div className="h-14 w-14 rounded-full bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(112,0,255,0.2)] border border-purple-500/20">
+            <div className="h-14 w-14 rounded-none bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(112,0,255,0.2)] border border-purple-500/20">
               <Info className="text-purple-550 dark:text-purple-400" size={26} />
             </div>
           )}

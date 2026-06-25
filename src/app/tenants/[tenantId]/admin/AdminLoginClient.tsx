@@ -71,11 +71,11 @@ export default function AdminLoginClient({
           <ThemeToggle />
         </div>
 
-        <div className="max-w-md w-full bg-card border border-border rounded-3xl p-8 shadow-xl relative overflow-hidden">
+        <div className="max-w-md w-full bg-card border border-border rounded-none p-8 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 h-40 w-40 bg-red-500/10 blur-3xl rounded-full" />
           
           <div className="flex flex-col items-center text-center">
-            <div className="h-14 w-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-6 shadow-lg shadow-red-500/5">
+            <div className="h-14 w-14 rounded-none bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-6 shadow-lg shadow-red-500/5">
               <ShieldAlert size={28} />
             </div>
 
@@ -92,7 +92,7 @@ export default function AdminLoginClient({
               Tento účet však nemá oprávnění administrátora pro <span className="text-foreground font-semibold">{tenantName}</span>.
             </p>
 
-            <div className="w-full bg-secondary border border-border p-4 rounded-2xl mb-6 text-left text-[11px] text-muted-foreground space-y-2">
+            <div className="w-full bg-secondary border border-border p-4 rounded-none mb-6 text-left text-[11px] text-muted-foreground space-y-2">
               <p><strong>Poznámka pro vývojáře</strong>:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground/80">
                 <li>Nakonfigurujte tuto e-mailovou adresu v nastavení administrace tenanta.</li>
@@ -128,13 +128,13 @@ export default function AdminLoginClient({
         <ThemeToggle />
       </div>
 
-      <div className="max-w-md w-full bg-card border border-border rounded-3xl p-8 shadow-xl relative overflow-hidden">
+      <div className="max-w-md w-full bg-card border border-border rounded-none p-8 shadow-xl relative overflow-hidden">
         {/* Ambient background glow */}
         <div className="absolute top-0 right-0 h-48 w-48 bg-tenant-gradient opacity-10 blur-3xl rounded-full" />
 
         <div className="flex flex-col items-center">
           {/* Tenant Logo Mark */}
-          <div className="h-14 w-14 rounded-2xl bg-tenant-gradient flex items-center justify-center font-extrabold text-white text-lg shadow-lg">
+          <div className="h-14 w-14 rounded-none bg-tenant-gradient flex items-center justify-center font-extrabold text-white text-lg shadow-lg">
             {tenantId[0].toUpperCase()}
           </div>
 
@@ -146,7 +146,7 @@ export default function AdminLoginClient({
           </span>
 
           {error && (
-            <div className="w-full bg-red-500/10 border border-red-500/25 text-red-500 text-xs p-3 rounded-2xl mb-4 flex items-start gap-2">
+            <div className="w-full bg-red-500/10 border border-red-500/25 text-red-500 text-xs p-3 rounded-none mb-4 flex items-start gap-2">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -204,7 +204,7 @@ export default function AdminLoginClient({
 
           <button
             onClick={handleOneidLogin}
-            className="w-full py-2.5 border border-border hover:bg-secondary/40 text-foreground text-xs font-semibold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 border border-border hover:bg-secondary/40 text-foreground text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <ShieldCheck size={14} className="text-muted-foreground" />
             Přihlásit se přes OneiD SSO

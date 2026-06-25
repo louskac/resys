@@ -126,7 +126,7 @@ export default function HeroProductSwitcher() {
                 <span className="h-2.5 w-2.5 rounded-full bg-tenant-primary border-2 border-white dark:border-black cursor-pointer shadow-md" />
                 
                 {/* Pointer glass tooltip */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-44 scale-90 opacity-0 pointer-events-none group-hover/ann:scale-100 group-hover/ann:opacity-100 transition-all duration-200 bg-white/90 dark:bg-[#090912]/95 border border-slate-200/50 dark:border-[#1F1F35]/50 p-2 rounded-xl shadow-xl text-center backdrop-blur-md z-30">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-44 scale-90 opacity-0 pointer-events-none group-hover/ann:scale-100 group-hover/ann:opacity-100 transition-all duration-200 bg-white/90 dark:bg-[#090912]/95 border border-slate-200/50 dark:border-[#1F1F35]/50 p-2 rounded-none shadow-xl text-center backdrop-blur-md z-30">
                   <p className="text-[10px] leading-relaxed text-slate-800 dark:text-zinc-250 font-bold font-sans">
                     {ann.label}
                   </p>

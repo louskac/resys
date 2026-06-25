@@ -140,75 +140,75 @@ const sapphireV2StylesMap: Record<string, {
   colorName: string;
 }> = {
   rose: {
-    badgeBg: "bg-rose-500/10 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/15 dark:border-rose-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-rose-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-rose-950 dark:text-rose-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-rose-500/40 dark:hover:border-rose-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-rose-950 dark:text-rose-200",
-    barColor: "bg-rose-500 shadow-[0_0_8px_#f43f5e]",
-    glowColor: "rgba(244,63,94,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "rose"
   },
   amber: {
-    badgeBg: "bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/15 dark:border-amber-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-amber-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-amber-950 dark:text-amber-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-amber-500/40 dark:hover:border-amber-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-amber-955 dark:text-amber-200",
-    barColor: "bg-amber-500 shadow-[0_0_8px_#f59e0b]",
-    glowColor: "rgba(245,158,11,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "amber"
   },
   emerald: {
-    badgeBg: "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/15 dark:border-emerald-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-emerald-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-emerald-950 dark:text-emerald-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-emerald-500/40 dark:hover:border-emerald-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-emerald-955 dark:text-emerald-200",
-    barColor: "bg-emerald-500 shadow-[0_0_8px_#10b981]",
-    glowColor: "rgba(16,185,129,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "emerald"
   },
   orange: {
-    badgeBg: "bg-orange-500/10 dark:bg-orange-500/20 text-orange-850 dark:text-orange-300 border border-orange-500/15 dark:border-orange-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-orange-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-orange-955 dark:text-orange-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-orange-500/40 dark:hover:border-orange-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-orange-955 dark:text-orange-200",
-    barColor: "bg-orange-500 shadow-[0_0_8px_#f97316]",
-    glowColor: "rgba(249,115,22,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "orange"
   },
   blue: {
-    badgeBg: "bg-blue-500/10 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/15 dark:border-blue-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-blue-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-blue-955 dark:text-blue-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-blue-500/40 dark:hover:border-blue-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-blue-955 dark:text-blue-200",
-    barColor: "bg-blue-500 shadow-[0_0_8px_#3b82f6]",
-    glowColor: "rgba(59,130,246,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "blue"
   },
   violet: {
-    badgeBg: "bg-violet-500/10 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-500/15 dark:border-violet-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-violet-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-violet-955 dark:text-[#A78BFA] shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-violet-500/40 dark:hover:border-violet-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-violet-955 dark:text-[#A78BFA]",
-    barColor: "bg-violet-500 shadow-[0_0_8px_#8b5cf6]",
-    glowColor: "rgba(139,92,246,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "violet"
   },
   indigo: {
-    badgeBg: "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 border border-indigo-500/15 dark:border-indigo-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-indigo-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-indigo-955 dark:text-[#A78BFA] shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-indigo-500/40 dark:hover:border-indigo-400/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-indigo-955 dark:text-[#A78BFA]",
-    barColor: "bg-indigo-500 shadow-[0_0_8px_#6366f1]",
-    glowColor: "rgba(99,102,241,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "indigo"
   },
   cyan: {
-    badgeBg: "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-500/15 dark:border-cyan-500/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
-    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-cyan-500 border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-cyan-955 dark:text-cyan-200 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
-    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-cyan-500/40 dark:hover:border-cyan-450/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
-    textHex: "text-cyan-955 dark:text-cyan-200",
-    barColor: "bg-cyan-500 shadow-[0_0_8px_#06b6d4]",
-    glowColor: "rgba(6,182,212,0.15)",
+    badgeBg: "bg-tenant-primary/10 dark:bg-tenant-primary/20 text-tenant-primary dark:text-zinc-200 border border-tenant-primary/15 dark:border-tenant-primary/10 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase",
+    themeClassOccupied: "bg-white dark:bg-[#0E0E18] border-l-[4px] border-l-tenant-primary border-y border-r border-[#E2E2ED]/85 dark:border-[#1F1F2E]/85 text-tenant-primary dark:text-zinc-100 shadow-sm rounded-none hover:scale-[1.01] hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:shadow-md transition-all duration-300 ease-out font-medium",
+    themeClassFree: "bg-white dark:bg-[#0E0E18] border border-[#E2E2ED] dark:border-[#1F1F2E] text-slate-800 dark:text-slate-355 hover:border-tenant-primary/40 dark:hover:border-tenant-primary/30 hover:bg-slate-50/50 dark:hover:bg-[#131322]/50 hover:scale-[1.01] hover:shadow-md transition-all duration-300 ease-out shadow-sm rounded-none",
+    textHex: "text-tenant-primary dark:text-zinc-100",
+    barColor: "bg-tenant-primary shadow-[0_0_8px_#7000FF]",
+    glowColor: "rgba(112,0,255,0.15)",
     colorName: "cyan"
   }
 };
@@ -237,8 +237,8 @@ function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherP
             onClick={() => onChange(option.value)}
             className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all duration-200 cursor-pointer ${
               isActive
-                ? "bg-white dark:bg-[#1B1B2E] border border-[#E2E2ED] dark:border-[#2A2A3E]/60 text-[#7000FF] dark:text-[#A78BFA] shadow-sm scale-[1.02]"
-                : "border border-transparent bg-white/40 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-450 hover:text-[#7000FF] dark:hover:text-[#A78BFA]"
+                ? "bg-white dark:bg-[#1B1B2E] border border-[#E2E2ED] dark:border-[#2A2A3E]/60 text-tenant-primary dark:text-white shadow-sm scale-[1.02]"
+                : "border border-transparent bg-white/40 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-450 hover:text-tenant-primary dark:hover:text-white"
             }`}
           >
             {option.label}
@@ -1551,13 +1551,13 @@ export default function CalendarView({
           <div className="flex items-center gap-1">
             <button 
               onClick={handlePrevWeek}
-              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-[#7000FF]/30 dark:hover:border-[#A78BFA]/30 hover:scale-105 shadow-sm shadow-[#7000FF]/5 transition-all flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-tenant-primary dark:hover:text-white border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-tenant-primary/30 dark:hover:border-tenant-primary/30 hover:scale-105 shadow-sm shadow-tenant-primary/5 transition-all flex items-center justify-center cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={handleNextWeek}
-              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-[#7000FF] dark:hover:text-[#A78BFA] border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-[#7000FF]/30 dark:hover:border-[#A78BFA]/30 hover:scale-105 shadow-sm shadow-[#7000FF]/5 transition-all flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-tenant-primary dark:hover:text-white border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-tenant-primary/30 dark:hover:border-tenant-primary/30 hover:scale-105 shadow-sm shadow-tenant-primary/5 transition-all flex items-center justify-center cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
@@ -1566,7 +1566,7 @@ export default function CalendarView({
           {!isCurrent && (
             <button 
               onClick={handleToday}
-              className="px-4 py-1.5 rounded-none bg-[#7000FF]/10 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] border border-[#7000FF]/30 dark:border-[#7000FF]/40 hover:bg-[#7000FF]/20 dark:hover:bg-[#7000FF]/25 hover:scale-105 shadow-sm transition-all text-xs font-bold cursor-pointer backdrop-blur-sm"
+              className="px-4 py-1.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary dark:text-white border border-tenant-primary/30 dark:border-tenant-primary/40 hover:bg-tenant-primary/20 dark:hover:bg-tenant-primary/25 hover:scale-105 shadow-sm transition-all text-xs font-bold cursor-pointer backdrop-blur-sm"
             >
               Dnes
             </button>
@@ -1599,25 +1599,25 @@ export default function CalendarView({
                   setViewMode("day");
                 }
               }}
-              className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${
+              className={`w-9 h-5 flex items-center rounded-none p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${
                 isHorizontal ? "bg-[#7000FF] dark:bg-[#A78BFA]" : "bg-slate-300 dark:bg-slate-700"
               }`}
               title="Zobrazit plochy/kurzy vedle sebe pro aktuální den"
             >
               <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                className={`bg-white w-4 h-4 rounded-none shadow-md transform transition-transform duration-200 ${
                   isHorizontal ? "translate-x-4" : "translate-x-0"
                 }`}
               />
             </button>
           </div>
 
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#7000FF]/8 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#C084FC] border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-none bg-[#7000FF]/8 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#C084FC] border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
             {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
           </span>
         </div>
         
-        <h2 className="text-xl font-extrabold tracking-tight xl:text-right bg-clip-text text-transparent bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-indigo-500 dark:from-[#A78BFA] dark:via-[#C084FC] dark:to-indigo-400">
+        <h2 className="text-xl font-extrabold tracking-tight xl:text-right text-tenant-primary dark:text-zinc-100">
           {headerTitle}
         </h2>
       </div>
@@ -1815,16 +1815,16 @@ export default function CalendarView({
                                         isDisabled 
                                           ? "bg-stripes-cosmic border-b border-[#E2E2ED] dark:border-[#1F1F2E] cursor-not-allowed"
                                           : isHighlighted 
-                                            ? "bg-[#7000FF]/15 dark:bg-[#7000FF]/25 border border-[#7000FF] shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
+                                            ? "bg-tenant-primary/15 dark:bg-tenant-primary/25 border border-tenant-primary shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
                                             : isHighlightedByAssistant
-                                              ? "bg-purple-500/20 dark:bg-purple-500/35 border-y-2 border-dashed border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer z-10"
-                                              : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
+                                              ? "bg-tenant-primary/20 dark:bg-tenant-primary/35 border-y-2 border-dashed border-tenant-primary shadow-[0_0_12px_rgba(112,0,255,0.4)] animate-pulse cursor-pointer z-10"
+                                              : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-tenant-primary/[0.02] dark:hover:bg-tenant-primary/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
                                       }`}
                                     >
                                       {/* Hover select block */}
                                       {!isDragging && !isDisabled && (
                                         <div className="absolute inset-0 flex items-center justify-center transition-all pointer-events-none">
-                                          <span className="px-3 py-1.5 rounded-none text-[9px] font-extrabold text-[#7000FF] dark:text-[#C084FC] bg-white/80 dark:bg-[#131322]/60 border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
+                                          <span className="px-3 py-1.5 rounded-none text-[9px] font-extrabold text-tenant-primary dark:text-zinc-200 bg-white/80 dark:bg-[#131322]/60 border border-tenant-primary/25 dark:border-tenant-primary/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
                                             + Rezervovat
                                           </span>
                                         </div>
@@ -1848,8 +1848,8 @@ export default function CalendarView({
                                       const isPastEvent = isEventInPast(event.dayIndex, event.startHour, event.durationHours);
                                       const isDraftEvent = (event as any).isDraft;
             
-                                      const cardThemeClass = isDraftEvent
-                                        ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-dashed border-purple-500/85 text-purple-950 dark:text-purple-200 shadow-md shadow-purple-500/5 cursor-pointer rounded-none animate-pulse"
+                                       const cardThemeClass = isDraftEvent
+                                        ? "bg-tenant-primary/10 dark:bg-tenant-primary/20 border-2 border-dashed border-tenant-primary/85 text-tenant-primary dark:text-tenant-primary shadow-md shadow-tenant-primary/5 cursor-pointer rounded-none animate-pulse"
                                         : event.status === "TECHNICAL_BREAK"
                                           ? styles.themeClass
                                           : isPastEvent 
@@ -1857,7 +1857,7 @@ export default function CalendarView({
                                             : styles.themeClass;
             
                                       const badgeBgClass = isDraftEvent
-                                        ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase"
+                                        ? "bg-tenant-primary/20 text-tenant-primary dark:text-tenant-primary border border-tenant-primary/30 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase"
                                         : event.status === "TECHNICAL_BREAK"
                                           ? styles.badgeBg
                                           : isPastEvent 
@@ -1980,12 +1980,12 @@ export default function CalendarView({
                                                 </div>
                                                 <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
                                                   isDraftEvent
-                                                    ? "font-extrabold text-[10px] md:text-[11px] text-purple-800 dark:text-purple-300"
+                                                    ? "font-extrabold text-[10px] md:text-[11px] text-tenant-primary dark:text-tenant-primary"
                                                     : isPastEvent && event.status !== "TECHNICAL_BREAK"
                                                       ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
                                                       : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                                 }`}>
-                                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
                                                   {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                                 </h4>
                                               </div>
@@ -2005,7 +2005,7 @@ export default function CalendarView({
                                                     event.status === "TECHNICAL_BREAK" ? (
                                                       <AlertCircle size={10} />
                                                     ) : isDraftEvent ? (
-                                                      <span className="text-[8px] font-bold text-purple-500">?</span>
+                                                      <span className="text-[8px] font-bold text-tenant-primary">?</span>
                                                     ) : (
                                                       <Lock size={10} />
                                                     )
@@ -2116,7 +2116,7 @@ export default function CalendarView({
                     key={day.key}
                     className={`p-2.5 text-center font-semibold text-xs border-r border-[#E2E2ED] dark:border-[#1F1F2E] flex flex-col items-center justify-center gap-0.5 ${
                       isToday 
-                        ? "text-[#7000FF] dark:text-[#A78BFA] bg-[#7000FF]/5 dark:bg-[#A78BFA]/5 font-bold" 
+                        ? "text-tenant-primary dark:text-white bg-tenant-primary/5 dark:bg-tenant-primary/10 font-bold" 
                         : isPastDay 
                           ? "text-muted-foreground/50 opacity-60" 
                           : "text-slate-700 dark:text-slate-355"
@@ -2223,16 +2223,16 @@ export default function CalendarView({
                             isDisabled 
                               ? "bg-stripes-cosmic border-b border-[#E2E2ED] dark:border-[#1F1F2E] cursor-not-allowed"
                               : isHighlighted 
-                                ? "bg-[#7000FF]/15 dark:bg-[#7000FF]/25 border border-[#7000FF] shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
+                                ? "bg-tenant-primary/15 dark:bg-tenant-primary/25 border border-tenant-primary shadow-[0_0_15px_rgba(112,0,255,0.3)] cursor-pointer z-10" 
                                 : isHighlightedByAssistant
-                                  ? "bg-purple-500/20 dark:bg-purple-500/35 border-y-2 border-dashed border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer z-10"
-                                  : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-[#7000FF]/[0.02] dark:hover:bg-[#7000FF]/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
+                                  ? "bg-tenant-primary/20 dark:bg-tenant-primary/35 border-y-2 border-dashed border-tenant-primary shadow-[0_0_12px_rgba(112,0,255,0.4)] animate-pulse cursor-pointer z-10"
+                                  : "border-b border-[#E2E2ED] dark:border-[#1F1F2E] hover:bg-tenant-primary/[0.02] dark:hover:bg-tenant-primary/[0.03] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.06)] dark:hover:shadow-[inset_0_0_20px_rgba(112,0,255,0.1)] transition-all duration-200 cursor-pointer"
                           }`}
                         >
                           {/* Hover select block */}
                           {!isDragging && !isDisabled && (
                             <div className="absolute inset-0 flex items-center justify-center transition-all pointer-events-none">
-                              <span className="px-3 py-1.5 rounded-none text-[9px] font-extrabold text-[#7000FF] dark:text-[#C084FC] bg-white/80 dark:bg-[#131322]/60 border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
+                              <span className="px-3 py-1.5 rounded-none text-[9px] font-extrabold text-tenant-primary dark:text-zinc-200 bg-white/80 dark:bg-[#131322]/60 border border-tenant-primary/25 dark:border-tenant-primary/30 backdrop-blur-sm shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_4px_rgba(112,0,255,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 ease-out select-none">
                                 + Rezervovat
                               </span>
                             </div>
@@ -2257,7 +2257,7 @@ export default function CalendarView({
                           const isDraftEvent = (event as any).isDraft;
 
                           const cardThemeClass = isDraftEvent
-                            ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-dashed border-purple-500/85 text-purple-950 dark:text-purple-200 shadow-md shadow-purple-500/5 cursor-pointer rounded-none animate-pulse"
+                            ? "bg-tenant-primary/10 dark:bg-tenant-primary/20 border-2 border-dashed border-tenant-primary/85 text-tenant-primary dark:text-tenant-primary shadow-md shadow-tenant-primary/5 cursor-pointer rounded-none animate-pulse"
                             : event.status === "TECHNICAL_BREAK"
                               ? styles.themeClass
                               : isPastEvent 
@@ -2265,7 +2265,7 @@ export default function CalendarView({
                                 : styles.themeClass;
 
                           const badgeBgClass = isDraftEvent
-                            ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase"
+                            ? "bg-tenant-primary/20 text-tenant-primary dark:text-tenant-primary border border-tenant-primary/30 font-bold text-[7.5px] tracking-wide rounded-none px-1.5 py-0.5 uppercase"
                             : event.status === "TECHNICAL_BREAK"
                               ? styles.badgeBg
                               : isPastEvent 
@@ -2388,12 +2388,12 @@ export default function CalendarView({
                                     </div>
                                     <h4 className={`leading-tight uppercase truncate flex items-center gap-1.5 ${
                                       isDraftEvent
-                                        ? "font-extrabold text-[10px] md:text-[11px] text-purple-800 dark:text-purple-300"
+                                        ? "font-extrabold text-[10px] md:text-[11px] text-tenant-primary dark:text-tenant-primary"
                                         : isPastEvent && event.status !== "TECHNICAL_BREAK"
                                           ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
                                           : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-purple-500 shadow-[0_0_8px_#a855f7]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
                                       {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                     </h4>
                                   </div>
@@ -2413,7 +2413,7 @@ export default function CalendarView({
                                         event.status === "TECHNICAL_BREAK" ? (
                                           <AlertCircle size={10} />
                                         ) : isDraftEvent ? (
-                                          <span className="text-[8px] font-bold text-purple-500">?</span>
+                                          <span className="text-[8px] font-bold text-tenant-primary">?</span>
                                         ) : (
                                           <Lock size={10} />
                                         )
@@ -2524,7 +2524,7 @@ export default function CalendarView({
               {["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].map((d) => (
                 <div 
                   key={d} 
-                  className="text-center py-1.5 uppercase font-bold text-[10px] font-sans font-extrabold tracking-widest text-[#7000FF] dark:text-[#A78BFA]"
+                  className="text-center py-1.5 uppercase font-bold text-[10px] font-sans font-extrabold tracking-widest text-tenant-primary dark:text-tenant-primary"
                 >
                   {d}
                 </div>
@@ -2569,10 +2569,10 @@ export default function CalendarView({
                       }}
                       className={`h-16 rounded-none p-2 flex flex-col justify-between transition-all hover:scale-[1.03] text-left cursor-pointer ${(() => {
                         if (isToday) {
-                          return "border border-[#7000FF] dark:border-[#A78BFA] bg-[#7000FF]/15 dark:bg-[#7000FF]/10 text-[#7000FF] dark:text-[#A78BFA] font-extrabold shadow-[inset_0_0_12px_rgba(112,0,255,0.15),0_0_15px_rgba(112,0,255,0.25)]";
+                          return "border border-tenant-primary dark:border-tenant-primary/60 bg-tenant-primary/15 dark:bg-tenant-primary/10 text-tenant-primary dark:text-white font-extrabold shadow-[inset_0_0_12px_rgba(112,0,255,0.15),0_0_15px_rgba(112,0,255,0.25)]";
                         }
                         if (isCurrentMonth) {
-                          return "border border-[#ECECF3] dark:border-[#1F1F2E] bg-white dark:bg-[#0B0B0F]/45 hover:border-[#7000FF] dark:hover:border-[#A78BFA] hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.08),0_4px_12px_rgba(112,0,255,0.06)] hover:bg-[#7000FF]/[0.01] dark:hover:bg-[#7000FF]/[0.02] text-slate-800 dark:text-slate-350 shadow-sm transition-all duration-200";
+                          return "border border-[#ECECF3] dark:border-[#1F1F2E] bg-white dark:bg-[#0B0B0F]/45 hover:border-tenant-primary dark:hover:border-tenant-primary hover:shadow-[inset_0_0_12px_rgba(112,0,255,0.08),0_4px_12px_rgba(112,0,255,0.06)] hover:bg-tenant-primary/[0.01] dark:hover:bg-tenant-primary/[0.02] text-slate-800 dark:text-slate-350 shadow-sm transition-all duration-200";
                         } else {
                           return "border border-dashed border-[#ECECF3]/40 dark:border-[#1F1F2E]/40 bg-transparent opacity-25 cursor-not-allowed text-slate-500";
                         }
@@ -2581,8 +2581,8 @@ export default function CalendarView({
                       <span className="text-[10px]">{d.getDate()}</span>
                       {dayEventsCount > 0 && (
                         <div className="flex gap-1 items-center">
-                          <span className="h-1 w-1 rounded-full bg-[#7000FF] dark:bg-[#A78BFA] shadow-[0_0_4px_#7000FF]" />
-                          <span className="text-[8px] font-bold text-[#7000FF] dark:text-[#C084FC]">
+                          <span className="h-1 w-1 rounded-full bg-tenant-primary dark:bg-tenant-primary shadow-[0_0_4px_#7000FF]" />
+                          <span className="text-[8px] font-bold text-tenant-primary dark:text-zinc-200">
                             {dayEventsCount} {dayEventsCount === 1 ? "rezervace" : dayEventsCount >= 2 && dayEventsCount <= 4 ? "rezervace" : "rezervací"}
                           </span>
                         </div>
@@ -2630,7 +2630,7 @@ export default function CalendarView({
               <X size={16} />
             </button>
 
-            <h3 className="text-xl font-bold bg-gradient-to-r from-[#7000FF] via-[#8B5CF6] to-[#3B82F6] bg-clip-text text-transparent mb-1 font-sans">
+            <h3 className="text-xl font-bold text-tenant-primary mb-1 font-sans">
               {bookingType === "admin_view" 
                 ? (isAdmin ? "Detaily rezervace" : "Detaily mé rezervace") 
                 : "Nová rezervace"}
@@ -2666,7 +2666,7 @@ export default function CalendarView({
             {!isBooked && bookingType === "admin_view" && selectedEvent && (
               <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40] mb-6 space-y-3.5">
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 flex items-center gap-1.5 font-sans tracking-wider">
-                  <ShieldCheck size={14} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                  <ShieldCheck size={14} className="text-tenant-primary dark:text-white" />
                   Detaily rezervované lekce / plochy
                 </p>
                 <div className="text-xs space-y-2.5">
@@ -2679,12 +2679,12 @@ export default function CalendarView({
                       <span className="text-slate-400 dark:text-slate-500">Stav:</span>
                       <span className={`px-2 py-0.5 rounded-none text-[10px] font-bold ${
                         selectedEvent.status === "CONFIRMED"
-                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          ? "bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20"
                           : selectedEvent.status === "ATTENDED"
-                            ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                            ? "bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20"
                             : selectedEvent.status === "PENDING_PAYMENT"
-                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                              : "bg-slate-500/10 text-slate-500 border border-slate-500/20"
+                              ? "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border border-zinc-500/20"
+                              : "bg-slate-500/10 text-slate-550 border border-slate-500/20"
                       }`}>
                         {selectedEvent.status === "CONFIRMED" ? "Potvrzeno" : selectedEvent.status === "PENDING_PAYMENT" ? "Čeká na platbu" : selectedEvent.status === "ATTENDED" ? "Odbaveno" : selectedEvent.status}
                       </span>
@@ -2740,7 +2740,7 @@ export default function CalendarView({
               return (
                 <div className="space-y-4 mb-6 bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40]">
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
-                    <Calendar size={14} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                    <Calendar size={14} className="text-tenant-primary dark:text-white" />
                     Rezervace hrací plochy
                   </p>
    
@@ -2768,7 +2768,7 @@ export default function CalendarView({
                               setIsAreaDropdownOpen(!isAreaDropdownOpen);
                               setIsDurationDropdownOpen(false);
                             }}
-                            className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                            className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
                           >
                             <span>
                               {activeResource ? activeResource.name : "Vyberte plochu/sektor"}
@@ -2796,12 +2796,12 @@ export default function CalendarView({
                                       !available 
                                         ? "text-slate-400/40 dark:text-slate-650/40 line-through cursor-not-allowed bg-slate-50/20 dark:bg-slate-900/10" 
                                         : isSelected
-                                          ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
-                                          : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                          ? "bg-tenant-primary/15 text-tenant-primary dark:text-white font-semibold"
+                                          : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
                                     }`}
                                   >
                                     <span>{res.name}</span>
-                                    {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                    {isSelected && <Check size={12} className="text-tenant-primary dark:text-white" />}
                                     {!available && <span className="text-[9px] opacity-75 font-normal italic">(Obsazeno)</span>}
                                   </button>
                                 );
@@ -2835,7 +2835,7 @@ export default function CalendarView({
                           setIsDurationDropdownOpen(!isDurationDropdownOpen);
                           setIsAreaDropdownOpen(false);
                         }}
-                        className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
+                        className="w-full flex items-center justify-between text-xs py-2.5 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-left text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary transition-all hover:bg-white/80 dark:hover:bg-[#1B1B2B]/75"
                       >
                         <span>{formatDurationCzech(customDuration)}</span>
                         <ChevronDown size={14} className={`text-slate-450 dark:text-slate-500 transition-transform duration-200 ${isDurationDropdownOpen ? "rotate-180" : ""}`} />
@@ -2857,12 +2857,12 @@ export default function CalendarView({
                                 }}
                                 className={`w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between transition-colors ${
                                   isSelected
-                                    ? "bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
-                                    : "text-slate-700 dark:text-slate-350 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
+                                    ? "bg-tenant-primary/15 text-tenant-primary dark:text-white font-semibold"
+                                    : "text-slate-700 dark:text-slate-355 hover:bg-slate-100/60 dark:hover:bg-[#1A1A2E]/60"
                                 }`}
                               >
                                 <span>{formatDurationCzech(val)}</span>
-                                {isSelected && <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />}
+                                {isSelected && <Check size={12} className="text-tenant-primary dark:text-white" />}
                               </button>
                             );
                           })}
@@ -2874,10 +2874,10 @@ export default function CalendarView({
                                 setIsDurationDropdownOpen(false);
                                 setModalError(null);
                               }}
-                              className="w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between bg-[#7000FF]/15 text-[#7000FF] dark:text-[#A78BFA] font-semibold"
+                              className="w-full text-left text-xs py-2.5 px-3.5 flex items-center justify-between bg-tenant-primary/15 text-tenant-primary dark:text-white font-semibold"
                             >
                               <span>{formatDurationCzech(customDuration)}</span>
-                              <Check size={12} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                              <Check size={12} className="text-tenant-primary dark:text-white" />
                             </button>
                           )}
                         </div>
@@ -2887,7 +2887,7 @@ export default function CalendarView({
 
                   {/* Price info if > 0 */}
                   {estimatedPrice > 0 && (
-                    <div className="flex justify-between items-center py-2.5 px-4 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-none text-xs font-semibold text-emerald-600 dark:text-emerald-400 select-none animate-in fade-in duration-200">
+                    <div className="flex justify-between items-center py-2.5 px-4 bg-tenant-primary/10 dark:bg-tenant-primary/5 border border-tenant-primary/20 rounded-none text-xs font-semibold text-tenant-primary dark:text-zinc-200 select-none animate-in fade-in duration-200">
                       <span>Cena pronájmu:</span>
                       <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{estimatedPrice.toLocaleString("cs-CZ")} Kč</span>
                     </div>
@@ -3002,7 +3002,7 @@ export default function CalendarView({
                     }
                   </span>
                   {isAdmin && (
-                    <span className="bg-[#7000FF]/15 text-[#7000FF] dark:bg-[#A78BFA]/15 dark:text-[#A78BFA] px-2 py-0.5 rounded-none text-[9px] uppercase font-bold tracking-wider border border-[#7000FF]/25">
+                    <span className="bg-tenant-primary/15 text-tenant-primary dark:bg-tenant-primary/10 dark:text-zinc-200 px-2 py-0.5 rounded-none text-[9px] uppercase font-bold tracking-wider border border-tenant-primary/20">
                       Admin vstup
                     </span>
                   )}
@@ -3078,15 +3078,15 @@ export default function CalendarView({
             )}
 
             {isBooked ? (
-              <div className="flex flex-col items-center justify-center py-4 text-[#7000FF] dark:text-[#A78BFA] gap-4">
+              <div className="flex flex-col items-center justify-center py-4 text-tenant-primary dark:text-white gap-4">
                 <div className="flex flex-col items-center gap-2">
                   {isPendingPayment ? (
-                    <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-pulse shadow-neon-glow">
-                      <span className="w-5 h-5 border-3 border-[#7000FF] dark:border-[#A78BFA] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-12 w-12 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/10 flex items-center justify-center animate-pulse shadow-neon-glow">
+                      <span className="w-5 h-5 border-3 border-tenant-primary dark:border-tenant-primary border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : (
-                    <div className="h-12 w-12 rounded-full bg-[#7000FF]/10 dark:bg-[#A78BFA]/10 flex items-center justify-center animate-bounce shadow-neon-glow">
-                      <Check size={24} className="text-[#7000FF] dark:text-[#A78BFA]" />
+                    <div className="h-12 w-12 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/10 flex items-center justify-center animate-bounce shadow-neon-glow">
+                      <Check size={24} className="text-tenant-primary dark:text-white" />
                     </div>
                   )}
                   <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -3113,7 +3113,7 @@ export default function CalendarView({
                       setBookingType(null);
                       setSelectedEvent(null);
                     }}
-                    className="flex-1 py-2.5 rounded-none text-xs font-bold text-white transition-all duration-200 bg-gradient-to-tr from-[#7000FF] to-[#8B5CF6] hover:opacity-95 active:scale-98 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer animate-in fade-in zoom-in-95 duration-200"
+                    className="flex-1 py-2.5 rounded-none text-xs font-bold text-white transition-all duration-200 bg-tenant-primary hover:opacity-95 active:scale-98 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer animate-in fade-in zoom-in-95 duration-200"
                   >
                     <Ticket size={14} />
                     Vstupenka
@@ -3283,10 +3283,10 @@ export default function CalendarView({
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
               
               {/* Glow badge */}
-              <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-tr from-[#7000FF] to-indigo-500 opacity-[0.12] dark:opacity-20 blur-2xl rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-tr from-tenant-primary to-tenant-primary opacity-[0.12] dark:opacity-20 blur-2xl rounded-full pointer-events-none" />
               
               <div className="flex items-center justify-between relative z-20">
-                <span className="font-extrabold text-[10px] uppercase tracking-widest text-[#7000FF] dark:text-[#A78BFA]">
+                <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary dark:text-white">
                   Rezervační portál
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider animate-pulse">
@@ -3321,7 +3321,7 @@ export default function CalendarView({
               {/* Metallic Sheen Overlay */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
               
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-full text-[9px] font-extrabold uppercase tracking-wider animate-pulse relative z-20">
+              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider animate-pulse relative z-20">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Aktivní zabezpečený kód
               </div>
@@ -3345,12 +3345,12 @@ export default function CalendarView({
               </div>
 
               <div className="space-y-1.5 relative z-20 w-full">
-                <code className="text-[9px] font-mono text-slate-550 dark:text-slate-400 uppercase tracking-widest bg-white/70 dark:bg-slate-900/40 py-1 px-3.5 rounded-full border border-slate-200 dark:border-white/[0.05]">
+                <code className="text-[9px] font-mono text-slate-550 dark:text-slate-400 uppercase tracking-widest bg-white/70 dark:bg-slate-900/40 py-1 px-3.5 rounded-none border border-slate-200 dark:border-white/[0.05]">
                   {activeTicket.id.substring(0, 8)}...{activeTicket.id.substring(activeTicket.id.length - 8)}
                 </code>
                 
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500 font-semibold select-none">
-                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
                     <span 
                       className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
                       style={{ width: `${(qrTimeLeft / 60) * 100}%` }}

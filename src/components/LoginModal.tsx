@@ -174,7 +174,7 @@ function LoginModalContent({ tenantId }: LoginModalProps) {
         {/* Elegant Corner Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer focus:outline-none outline-none"
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer focus:outline-none outline-none"
         >
           <X size={16} />
         </button>

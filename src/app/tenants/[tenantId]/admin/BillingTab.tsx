@@ -542,7 +542,7 @@ export default function BillingTab({
       {/* Floating email sending simulation toast */}
       {emailSendingStatus.status !== "idle" && (
         <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-6 duration-300 max-w-sm w-full select-none pointer-events-auto">
-          <div className={`p-4 rounded-2xl backdrop-blur-xl border shadow-xl flex items-center gap-3 ${
+          <div className={`p-4 rounded-none backdrop-blur-xl border shadow-xl flex items-center gap-3 ${
             emailSendingStatus.status === "sending"
               ? "bg-[#090915]/90 border-sky-500/35 text-white"
               : emailSendingStatus.status === "success"
@@ -637,13 +637,13 @@ export default function BillingTab({
                   placeholder="Hledat jméno nebo e-mail..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="w-full bg-white/45 dark:bg-black/20 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl py-2 pl-9 pr-4 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400"
+                  className="w-full bg-white/45 dark:bg-black/20 border border-slate-200/50 dark:border-[#1F1F35] rounded-none py-2 pl-9 pr-4 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             {filteredUsers.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-3xl font-mono">
+              <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
                 Nenašli jsme žádné registrované uživatele odpovídající vyhledávání.
               </div>
             ) : (
@@ -655,7 +655,7 @@ export default function BillingTab({
                       key={user.id}
                       draggable={!isUserPartner}
                       onDragStart={(e) => handleDragStart(e, user)}
-                      className={`p-4 bg-white/45 dark:bg-[#0D0D15]/45 border rounded-2xl flex flex-col justify-between transition-all duration-300 group shadow-sm select-none ${
+                      className={`p-4 bg-white/45 dark:bg-[#0D0D15]/45 border rounded-none flex flex-col justify-between transition-all duration-300 group shadow-sm select-none ${
                         isUserPartner 
                           ? "border-emerald-500/20 bg-emerald-500/[0.01] hover:scale-[1.01]" 
                           : "border-slate-200/50 dark:border-[#1F1F35] cursor-grab active:cursor-grabbing hover:scale-[1.01] hover:border-tenant-primary/30 hover:shadow-md"
@@ -699,7 +699,7 @@ export default function BillingTab({
                       <div className="border-t border-slate-100 dark:border-white/[0.04] pt-3 mt-3 flex justify-between items-center">
                         {isUserPartner ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 uppercase tracking-widest shadow-sm">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-[9px] font-extrabold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 uppercase tracking-widest shadow-sm">
                               <ShieldCheck size={10} />
                               Partner ({user.partnerDiscount}%)
                             </span>
@@ -719,7 +719,7 @@ export default function BillingTab({
                             {isUserPartner ? (
                               <button
                                 onClick={() => handleDemoteUser(user.id)}
-                                className="p-1.5 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                                className="p-1.5 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 rounded-none transition-all cursor-pointer"
                                 title="Zrušit partnerství"
                               >
                                 <Ban size={12} />
@@ -727,7 +727,7 @@ export default function BillingTab({
                             ) : (
                               <button
                                 onClick={() => triggerPromotionModal(user)}
-                                className="p-1 px-2 bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white border border-tenant-primary/20 rounded-lg font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1"
+                                className="p-1 px-2 bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white border border-tenant-primary/20 rounded-none font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1"
                                 title="Promovat na partnera"
                               >
                                 <UserPlus size={10} />
@@ -749,8 +749,8 @@ export default function BillingTab({
             <h3 className="font-extrabold text-sm text-foreground">Promování partnerů</h3>
             
             {isReceptionist ? (
-              <div className="p-6 border-2 border-dashed border-rose-500/20 bg-rose-500/[0.02] rounded-3xl flex flex-col items-center justify-center text-center gap-3 min-h-60">
-                <div className="p-4 rounded-full bg-rose-500/10 text-rose-500">
+              <div className="p-6 border-2 border-dashed border-rose-500/20 bg-rose-500/[0.02] rounded-none flex flex-col items-center justify-center text-center gap-3 min-h-60">
+                <div className="p-4 rounded-none bg-rose-500/10 text-rose-500">
                   <ShieldAlert size={32} />
                 </div>
                 <h4 className="font-bold text-xs text-rose-500">Přístup odepřen</h4>
@@ -763,13 +763,13 @@ export default function BillingTab({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`p-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-center gap-4 min-h-60 transition-all duration-300 ${
+                className={`p-6 border-2 border-dashed rounded-none flex flex-col items-center justify-center text-center gap-4 min-h-60 transition-all duration-300 ${
                   isDragOver 
                     ? "border-tenant-primary bg-tenant-primary/10 scale-[1.02] shadow-lg shadow-tenant-primary/5 text-tenant-primary" 
                     : "border-slate-350 dark:border-white/10 bg-white/20 dark:bg-black/10 text-slate-400"
                 }`}
               >
-                <div className={`p-4 rounded-full transition-colors ${isDragOver ? "bg-tenant-primary/10 text-tenant-primary" : "bg-slate-100 dark:bg-white/5"}`}>
+                <div className={`p-4 rounded-none transition-colors ${isDragOver ? "bg-tenant-primary/10 text-tenant-primary" : "bg-slate-100 dark:bg-white/5"}`}>
                   <UserPlus size={32} className={isDragOver ? "animate-bounce" : ""} />
                 </div>
                 <div>
@@ -784,7 +784,7 @@ export default function BillingTab({
             )}
 
             {/* Partner Program FAQ Card */}
-            <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-3xl space-y-3.5">
+            <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5">
               <h4 className="font-extrabold text-xs text-foreground flex items-center gap-1.5">
                 <BadgePercent size={14} className="text-tenant-primary" />
                 Jak funguje partnerský účet?
@@ -820,7 +820,7 @@ export default function BillingTab({
                   mode: "add",
                   data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
                 })}
-                className="flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-4 rounded-xl font-bold shadow-md shadow-tenant-primary/10 items-center justify-center gap-1.5 cursor-pointer"
+                className="flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2.5 px-4 rounded-none font-bold shadow-md shadow-tenant-primary/10 items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Plus size={14} />
                 Zaregistrovat partnera
@@ -829,7 +829,7 @@ export default function BillingTab({
           </div>
 
           {activePartners.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-3xl font-mono">
+            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
               Zatím nejsou registrováni žádní partneři. Promujte uživatele nebo registrujte nového partnera.
             </div>
           ) : (
@@ -840,10 +840,10 @@ export default function BillingTab({
                 const linkedUsers = users.filter(u => u.partnerId === partner.id);
 
                 return (
-                  <div key={partner.id} className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary rounded-2xl flex flex-col justify-between group shadow-sm hover:scale-[1.01] hover:border-tenant-primary/20 hover:shadow-md transition-all duration-300">
+                  <div key={partner.id} className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] border-l-[4px] border-l-tenant-primary rounded-none flex flex-col justify-between group shadow-sm hover:scale-[1.01] hover:border-tenant-primary/20 hover:shadow-md transition-all duration-300">
                     <div className="space-y-3">
                       <div className="flex justify-between items-start">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
+                        <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
                           Aktivní
                         </span>
                         {partner.discount > 0 && (
@@ -880,7 +880,7 @@ export default function BillingTab({
                       </div>
 
                       {/* Financial Credit Metrics */}
-                      <div className="bg-slate-200/15 dark:bg-[#131322]/20 p-3.5 rounded-2xl border border-slate-200/35 dark:border-[#1F1F35]/30 space-y-1.5 mt-1 font-sans">
+                      <div className="bg-slate-200/15 dark:bg-[#131322]/20 p-3.5 rounded-none border border-slate-200/35 dark:border-[#1F1F35]/30 space-y-1.5 mt-1 font-sans">
                         <div className="flex justify-between items-center text-[10.5px]">
                           <span className="text-slate-500 dark:text-zinc-450">Prepaid Kredit:</span>
                           <strong className={`font-bold ${parseFloat(String(partner.creditBalance || 0)) <= 0 ? "text-rose-500" : "text-emerald-500"}`}>
@@ -899,7 +899,7 @@ export default function BillingTab({
                         </div>
                       </div>
 
-                      <div className="bg-slate-200/10 dark:bg-black/10 p-3 rounded-xl grid grid-cols-2 gap-4 border border-slate-200/30 dark:border-[#1F1F35]/20 mt-2">
+                      <div className="bg-slate-200/10 dark:bg-black/10 p-3 rounded-none grid grid-cols-2 gap-4 border border-slate-200/30 dark:border-[#1F1F35]/20 mt-2">
                         <div>
                           <span className="text-[9px] text-slate-500 uppercase font-bold block">Celkem rezervací</span>
                           <span className="text-sm font-black text-foreground">{partnerBookings.length}</span>
@@ -924,7 +924,7 @@ export default function BillingTab({
                             error: null,
                             loading: false,
                           })}
-                          className="bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white transition-all text-xs font-bold py-2 px-3 rounded-xl border border-tenant-primary/20 flex items-center gap-1 cursor-pointer"
+                          className="bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white transition-all text-xs font-bold py-2 px-3 rounded-none border border-tenant-primary/20 flex items-center gap-1 cursor-pointer"
                           disabled={uninvoiced.length === 0}
                           title={uninvoiced.length === 0 ? "Žádné nevyfakturované lekce" : "Fakturovat lekce"}
                         >
@@ -937,14 +937,14 @@ export default function BillingTab({
                             mode: "edit",
                             data: partner
                           })}
-                          className="p-2 bg-slate-200/35 hover:bg-slate-200/50 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/65 text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          className="p-2 bg-slate-200/35 hover:bg-slate-200/50 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/65 text-slate-600 dark:text-zinc-300 border border-slate-200/50 dark:border-[#1F1F35] rounded-none hover:scale-105 active:scale-95 transition-all cursor-pointer"
                           title="Upravit profil partnera"
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handlePartnerDeactivate(partner.id)}
-                          className="p-2 bg-slate-200/35 hover:bg-red-500/10 dark:bg-[#131322]/40 dark:hover:bg-red-500/15 text-rose-500 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          className="p-2 bg-slate-200/35 hover:bg-red-500/10 dark:bg-[#131322]/40 dark:hover:bg-red-500/15 text-rose-500 border border-slate-200/50 dark:border-[#1F1F35] rounded-none hover:scale-105 active:scale-95 transition-all cursor-pointer"
                           title="Deaktivovat partnera"
                         >
                           <Trash className="h-3.5 w-3.5" />
@@ -973,7 +973,7 @@ export default function BillingTab({
               <select
                 value={txnTypeFilter}
                 onChange={(e: any) => setTxnTypeFilter(e.target.value)}
-                className="bg-white/45 dark:bg-[#0D0D15]/45 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl py-2 px-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                className="bg-white/45 dark:bg-[#0D0D15]/45 border border-slate-200/50 dark:border-[#1F1F35] rounded-none py-2 px-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
               >
                 <option value="all">Všechny typy</option>
                 <option value="direct">Přímé platby</option>
@@ -984,7 +984,7 @@ export default function BillingTab({
               <select
                 value={txnStatusFilter}
                 onChange={(e: any) => setTxnStatusFilter(e.target.value)}
-                className="bg-white/45 dark:bg-[#0D0D15]/45 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl py-2 px-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                className="bg-white/45 dark:bg-[#0D0D15]/45 border border-slate-200/50 dark:border-[#1F1F35] rounded-none py-2 px-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
               >
                 <option value="all">Všechny stavy</option>
                 <option value="confirmed">Potvrzené/Uhrazené</option>
@@ -1000,18 +1000,18 @@ export default function BillingTab({
                   placeholder="Hledat..."
                   value={txnSearch}
                   onChange={(e) => setTxnSearch(e.target.value)}
-                  className="w-full bg-white/45 dark:bg-black/20 border border-slate-200/50 dark:border-[#1F1F35] rounded-xl py-2 pl-8 pr-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary transition-all"
+                  className="w-full bg-white/45 dark:bg-black/20 border border-slate-200/50 dark:border-[#1F1F35] rounded-none py-2 pl-8 pr-3 text-xs font-semibold text-foreground focus:outline-none focus:border-tenant-primary transition-all"
                 />
               </div>
             </div>
           </div>
 
           {filteredTxns.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-3xl font-mono">
+            <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
               Nebyly nalezeny žádné transakce odpovídající vybraným filtrům.
             </div>
           ) : (
-            <div className="border border-slate-200/40 dark:border-[#1F1F35]/40 bg-white/30 dark:bg-black/15 rounded-2xl overflow-x-auto scrollbar-none shadow-sm">
+            <div className="border border-slate-200/40 dark:border-[#1F1F35]/40 bg-white/30 dark:bg-black/15 rounded-none overflow-x-auto scrollbar-none shadow-sm">
               <table className="w-full text-left border-collapse min-w-[850px]">
                 <thead>
                   <tr className="bg-slate-200/35 dark:bg-[#08080E]/70 border-b border-slate-200/50 dark:border-[#1F1F35] text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
@@ -1061,7 +1061,7 @@ export default function BillingTab({
                           )}
                         </td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                          <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold border ${
                             txn.status === "CONFIRMED" || txn.status === "ATTENDED"
                               ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                               : txn.status === "PENDING_PAYMENT"

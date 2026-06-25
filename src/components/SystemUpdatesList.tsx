@@ -37,7 +37,7 @@ function UpdateCard({
   return (
     <div className="relative group">
       {/* Timeline Node Badge */}
-      <span className="absolute -left-[35px] top-6 bg-white dark:bg-[#0D0D15] p-1 rounded-full border-2 border-slate-200 dark:border-[#1F1F35] flex items-center justify-center z-10 shadow-sm">
+      <span className="absolute -left-[35px] top-6 bg-white dark:bg-[#0D0D15] p-1 rounded-none border-2 border-slate-200 dark:border-[#1F1F35] flex items-center justify-center z-10 shadow-sm">
         <Circle className={`h-2.5 w-2.5 ${isHost ? "fill-primary text-primary" : "fill-tenant-primary text-tenant-primary"}`} />
       </span>
 
@@ -46,7 +46,7 @@ function UpdateCard({
         
         {/* Card Header (Version Tag + Date) */}
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className={`px-2.5 py-0.5 border rounded-full text-[10px] font-black tracking-wider uppercase select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)] ${badgeStyles}`}>
+          <span className={`px-2.5 py-0.5 border rounded-none text-[10px] font-black tracking-wider uppercase select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)] ${badgeStyles}`}>
             {upg.version}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-zinc-500 font-semibold select-none">

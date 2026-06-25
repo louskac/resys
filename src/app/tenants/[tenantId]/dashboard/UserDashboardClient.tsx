@@ -358,7 +358,7 @@ export default function UserDashboardClient({
             <div className="space-y-1.5">
               <div className="flex flex-col sm:flex-row items-center gap-2">
                 <h1 className="text-xl font-extrabold text-foreground tracking-tight">{user.name}</h1>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide">
+                <span className="px-2 py-0.5 rounded-none text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-wide">
                   {user.role === "USER" ? "Zákazník" : user.role === "ADMIN" ? "Správce" : "Superadmin"}
                 </span>
               </div>
@@ -931,7 +931,7 @@ export default function UserDashboardClient({
           {/* Boarding Pass Ticket representation */}
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-none-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
+            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-none shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
           >
             {/* Ticket Top Part */}
             <div className="p-6 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative">
@@ -964,14 +964,14 @@ export default function UserDashboardClient({
 
             {/* Ticket Divider with Semi-circle notches on edges */}
             <div className="relative h-6 flex items-center justify-center">
-              <div className="absolute -left-3 h-6 w-6 rounded-full bg-[#07070C] border-r border-slate-200/50 dark:border-[#1F1F35]" />
-              <div className="absolute -right-3 h-6 w-6 rounded-full bg-[#07070C] border-l border-slate-200/50 dark:border-[#1F1F35]" />
+              <div className="absolute -left-3 h-6 w-6 rounded-none bg-[#07070C] border-r border-slate-200/50 dark:border-[#1F1F35]" />
+              <div className="absolute -right-3 h-6 w-6 rounded-none bg-[#07070C] border-l border-slate-200/50 dark:border-[#1F1F35]" />
               <div className="w-full border-t border-dashed border-slate-300 dark:border-[#2A2A45] mx-5" />
             </div>
 
             {/* Ticket Bottom Part (QR Code) */}
             <div className="p-6 flex flex-col items-center bg-slate-50/50 dark:bg-slate-900/20 text-center gap-4">
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-full text-[9px] font-extrabold uppercase tracking-wider animate-pulse">
+              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider animate-pulse">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Aktivní zabezpečený kód
               </div>
@@ -995,12 +995,12 @@ export default function UserDashboardClient({
               </div>
 
               <div className="space-y-1.5">
-                <code className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-full border border-border">
+                <code className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-none border border-border">
                   {activeTicket.id.substring(0, 8)}...{activeTicket.id.substring(activeTicket.id.length - 8)}
                 </code>
                 
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500 font-semibold select-none">
-                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
                     <span 
                       className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
                       style={{ width: `${(qrTimeLeft / 60) * 100}%` }}

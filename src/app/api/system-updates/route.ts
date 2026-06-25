@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: redesign B2B ecosystem visualizer into interactive growth timeline and tech stack data flow simulator":
+      "Nový interaktivní simulátor: Redesign vizualizace B2B ekosystému na přehledný růstový diagram a datový tok technického stacku.",
     "feat: add Czech translation for v0.2.0 release message":
       "Optimalizace aktualizací: Přidán český popis pro hlavní verzi v0.2.0 rezervačního portálu.",
     "feat: B2B subscription billing, real-time sync, system updates timeline and local HTTPS proxy":

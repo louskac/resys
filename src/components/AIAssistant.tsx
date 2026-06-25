@@ -1017,7 +1017,7 @@ export default function AIAssistant({
                   }
                 }}
                 className={`p-1.5 rounded-none border transition-colors cursor-pointer ${
-                  isVoiceOutputEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-500 hover:text-white"
+                  isVoiceOutputEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-550 hover:text-white"
                 }`}
                 title={isVoiceOutputEnabled ? "Mluvení zapnuto" : "Mluvení vypnuto"}
               >

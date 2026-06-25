@@ -168,7 +168,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
   if (success) {
     return (
       <div className="w-full max-w-md p-8 rounded-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl shadow-xl dark:shadow-2xl flex flex-col items-center justify-center text-center gap-6 animate-fade-in transition-colors duration-250">
-        <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+        <div className="h-16 w-16 bg-emerald-500/10 rounded-none flex items-center justify-center border border-emerald-500/20 text-emerald-400">
           <CheckCircle2 size={36} className="animate-scale-in" />
         </div>
         <div>

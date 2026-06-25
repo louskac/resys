@@ -50,7 +50,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
         <p className="mb-4 font-semibold text-sm">Pro přístup k této stránce se musíte přihlásit.</p>
         <Link
           href={`/tenants/${tenantId}/admin`}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-none text-xs font-bold transition"
         >
           Přihlásit se
         </Link>
@@ -75,7 +75,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
         <p className="mb-4 font-semibold text-sm">Nemáte oprávnění k zobrazení této stránky.</p>
         <Link
           href={`/tenants/${tenantId}/admin`}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-none text-xs font-bold transition"
         >
           Zpět do administrace
         </Link>
@@ -137,7 +137,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
               window.print();
             }
           }}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2"
+          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-none text-xs font-bold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2"
         >
           <Printer size={15} />
           Vytisknout / Uložit PDF
@@ -145,7 +145,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
       </div>
 
       {/* Invoice Sheet */}
-      <div className="max-w-4xl mx-auto bg-white dark:bg-zinc-950 print:bg-white print:dark:bg-white dark:border-zinc-800 border border-slate-200 rounded-3xl print:border-0 print:rounded-none shadow-xl print:shadow-none p-8 md:p-12 font-sans select-text">
+      <div className="max-w-4xl mx-auto bg-white dark:bg-zinc-950 print:bg-white print:dark:bg-white dark:border-zinc-800 border border-slate-200 rounded-none print:border-0 print:rounded-none shadow-xl print:shadow-none p-8 md:p-12 font-sans select-text">
         {/* Header Block */}
         <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-200/80 dark:border-zinc-800 pb-8 gap-6">
           <div className="space-y-1.5">
@@ -157,7 +157,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             </p>
             <div className="inline-block mt-1">
               <span
-                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                className={`px-3 py-1 rounded-none text-[10px] font-bold uppercase tracking-wider border ${
                   invoice.status === "PAID"
                     ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/25"
                     : invoice.status === "SENT"
@@ -216,7 +216,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           </div>
 
           {/* Customer Info */}
-          <div className="space-y-4 bg-slate-50/50 dark:bg-zinc-900/40 print:bg-transparent p-5 rounded-2xl border border-slate-100 dark:border-zinc-900 print:border-0 print:p-0">
+          <div className="space-y-4 bg-slate-50/50 dark:bg-zinc-900/40 print:bg-transparent p-5 rounded-none border border-slate-100 dark:border-zinc-900 print:border-0 print:p-0">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Odběratel</h3>
             <div className="space-y-1 text-xs">
               <p className="font-bold text-slate-800 dark:text-slate-200 print:text-black">{partner.name}</p>

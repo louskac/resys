@@ -124,7 +124,7 @@ export default function ResourceCard({
     >
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-widest select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-widest select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
             {typeLabel}
           </span>
           {parentName && (

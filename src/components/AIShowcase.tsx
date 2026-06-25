@@ -273,8 +273,8 @@ export default function AIShowcase() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7000FF]/15 border border-[#7000FF]/30 text-[#A78BFA] text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
-                <Sparkles size={11} className="text-[#A78BFA] animate-spin" style={{ animationDuration: '3s' }} />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary text-[10px] font-black uppercase tracking-widest shadow-xs select-none">
+                <Sparkles size={11} className="text-tenant-primary animate-spin" style={{ animationDuration: '3s' }} />
                 AI Assistant Core
               </div>
               <h3 className="text-sm font-extrabold text-zinc-400">ReKeeper AI Copilot</h3>
@@ -283,7 +283,7 @@ export default function AIShowcase() {
 
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
             Budoucnost rezervací s <br />
-            <span className="text-[#A78BFA]">
+            <span className="text-tenant-primary">
               autonomním AI agentem.
             </span>
           </h2>
@@ -293,17 +293,17 @@ export default function AIShowcase() {
           </p>
  
           {/* Interactive controls */}
-          <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4 shadow-none">
-            <h3 className="text-xs font-bold text-[#A78BFA] uppercase tracking-wider">Spustit interaktivní simulaci:</h3>
+          <div className="p-5 bg-white/[0.02] border border-white/5 rounded-none space-y-4 shadow-none">
+            <h3 className="text-xs font-bold text-tenant-primary uppercase tracking-wider">Spustit interaktivní simulaci:</h3>
             
             <div className="flex flex-col gap-3.5">
               {/* Option A: One-Shot */}
               <button 
                 onClick={triggerOneShotDemo}
                 disabled={isTypingText || isListening}
-                className="w-full text-left p-3.5 bg-[#7000FF]/5 hover:bg-[#7000FF]/15 border border-[#7000FF]/20 hover:border-[#7000FF]/40 rounded-xl transition-all cursor-pointer group flex items-start gap-3 disabled:opacity-55 disabled:cursor-not-allowed"
+                className="w-full text-left p-3.5 bg-tenant-primary/5 hover:bg-tenant-primary/15 border border-tenant-primary/20 hover:border-tenant-primary/40 rounded-none transition-all cursor-pointer group flex items-start gap-3 disabled:opacity-55 disabled:cursor-not-allowed"
               >
-                <div className="h-6 w-6 rounded-lg bg-[#7000FF]/20 flex items-center justify-center shrink-0 text-[#C084FC] group-hover:scale-105 transition-transform mt-0.5">
+                <div className="h-6 w-6 rounded-none bg-tenant-primary/20 flex items-center justify-center shrink-0 text-tenant-primary group-hover:scale-105 transition-transform mt-0.5">
                   <Play size={12} fill="currentColor" />
                 </div>
                 <div className="space-y-0.5">
@@ -315,9 +315,9 @@ export default function AIShowcase() {
               </button>
  
               {/* Option B: Step by Step Flow */}
-              <div className="p-4 bg-black/45 border border-zinc-800/80 rounded-2xl space-y-3.5">
+              <div className="p-4 bg-black/45 border border-zinc-800/80 rounded-none space-y-3.5">
                 <div className="text-xs font-bold text-white flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="text-[#A78BFA] uppercase tracking-wider text-[10px]">Postupná konverzace (Krok za krokem)</span>
+                  <span className="text-tenant-primary uppercase tracking-wider text-[10px]">Postupná konverzace (Krok za krokem)</span>
                   <button 
                     onClick={resetSimulation}
                     className="text-[10px] font-bold text-zinc-400 hover:text-rose-455 flex items-center gap-1 cursor-pointer transition-colors"
@@ -342,7 +342,7 @@ export default function AIShowcase() {
                       simStep === 0
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 0
-                          ? "border-purple-550 bg-[#7000FF]/25 text-purple-300"
+                          ? "border-tenant-primary bg-tenant-primary/25 text-white"
                           : "border-zinc-800 bg-zinc-950 text-zinc-650"
                     }`}>
                       <MapPin size={15} />
@@ -350,7 +350,7 @@ export default function AIShowcase() {
                     <div className="space-y-0.5 text-left">
                       <div className="text-xs font-bold text-white flex items-center gap-2">
                         1. Výběr sportoviště
-                        {simStep > 0 && <span className="text-[9px] text-[#A78BFA] font-medium">({parsedParams.area})</span>}
+                        {simStep > 0 && <span className="text-[9px] text-tenant-primary font-medium">({parsedParams.area})</span>}
                       </div>
                       <p className="text-[9.5px] text-zinc-455 leading-relaxed">
                         Vyhledá strukturu areálu a zvolí cílovou hrací plochu či sektor.
@@ -373,7 +373,7 @@ export default function AIShowcase() {
                       simStep === 1
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 1
-                          ? "border-purple-555 bg-[#7000FF]/25 text-purple-300"
+                          ? "border-tenant-primary bg-tenant-primary/25 text-white"
                           : "border-zinc-800 bg-zinc-950 text-zinc-650"
                     }`}>
                       <Calendar size={15} />
@@ -381,7 +381,7 @@ export default function AIShowcase() {
                     <div className="space-y-0.5 text-left">
                       <div className="text-xs font-bold text-white flex items-center gap-2">
                         2. Volba data
-                        {simStep > 1 && <span className="text-[9px] text-[#A78BFA] font-medium">({parsedParams.date})</span>}
+                        {simStep > 1 && <span className="text-[9px] text-tenant-primary font-medium">({parsedParams.date})</span>}
                       </div>
                       <p className="text-[9.5px] text-zinc-455 leading-relaxed">
                         Vyhodnotí otevírací dobu, státní svátky a prázdninové provozy.
@@ -404,7 +404,7 @@ export default function AIShowcase() {
                       simStep === 2
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 2
-                          ? "border-purple-550 bg-[#7000FF]/25 text-purple-300"
+                          ? "border-tenant-primary bg-tenant-primary/25 text-white"
                           : "border-zinc-800 bg-zinc-950 text-zinc-650"
                     }`}>
                       <Clock size={15} />
@@ -412,7 +412,7 @@ export default function AIShowcase() {
                     <div className="space-y-0.5 text-left">
                       <div className="text-xs font-bold text-white flex items-center gap-2">
                         3. Časový slot
-                        {simStep > 2 && <span className="text-[9px] text-[#A78BFA] font-medium">({parsedParams.time})</span>}
+                        {simStep > 2 && <span className="text-[9px] text-tenant-primary font-medium">({parsedParams.time})</span>}
                       </div>
                       <p className="text-[9.5px] text-zinc-455 leading-relaxed">
                         Ověří kolize v kalendáři, technické breaky a úklidové časy.
@@ -435,7 +435,7 @@ export default function AIShowcase() {
                       simStep === 3
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 3
-                          ? "border-purple-555 bg-[#7000FF]/25 text-purple-300"
+                          ? "border-tenant-primary bg-tenant-primary/25 text-white"
                           : "border-zinc-800 bg-zinc-950 text-zinc-650"
                     }`}>
                       <User size={15} />
@@ -443,7 +443,7 @@ export default function AIShowcase() {
                     <div className="space-y-0.5 text-left">
                       <div className="text-xs font-bold text-white flex items-center gap-2">
                         4. Identifikace
-                        {simStep > 3 && <span className="text-[9px] text-[#A78BFA] font-medium">({parsedParams.client})</span>}
+                        {simStep > 3 && <span className="text-[9px] text-tenant-primary font-medium">({parsedParams.client})</span>}
                       </div>
                       <p className="text-[9.5px] text-zinc-455 leading-relaxed">
                         Vyhledá profil klienta a prověří kredity či permanentky.
@@ -523,7 +523,7 @@ export default function AIShowcase() {
                     {simStep >= 3 && (
                       <div className={`absolute top-[45%] left-0 right-0 h-[25%] rounded-md p-1.5 flex flex-col justify-between transition-all duration-500 ${
                         simStep === 6 
-                          ? "bg-gradient-to-r from-[#7000FF]/35 to-indigo-650/45 border-[#7000FF]/70 shadow-[0_0_15px_rgba(112,0,255,0.25)] animate-pulse" 
+                          ? "bg-gradient-to-r from-[#7000FF]/35 to-[#7000FF]/45 border-[#7000FF]/70 shadow-[0_0_15px_rgba(112,0,255,0.25)] animate-pulse" 
                           : "border-dashed border-[#00F5FF] bg-[#00F5FF]/10"
                       } border`}>
                         <div className="flex justify-between items-start">
@@ -531,7 +531,7 @@ export default function AIShowcase() {
                             {parsedParams.client ? "Rezervace" : "Zpracovávám..."}
                           </span>
                           {simStep === 6 ? (
-                            <Lock size={8} className="text-purple-350" />
+                            <Lock size={8} className="text-tenant-primary" />
                           ) : (
                             <span className="h-1 w-1 rounded-full bg-[#00F5FF] animate-ping" />
                           )}
@@ -620,7 +620,7 @@ export default function AIShowcase() {
                       </button>
                       <button 
                         onClick={() => setSimStep(6)} 
-                        className="py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7000FF] to-[#8B5CF6] hover:opacity-95 active:scale-95 transition-all cursor-pointer text-center shadow-md shadow-purple-500/20"
+                        className="py-2.5 rounded-xl text-xs font-bold text-white bg-tenant-primary hover:opacity-95 active:scale-95 transition-all cursor-pointer text-center shadow-md shadow-tenant-primary/20"
                       >
                         Potvrdit rezervaci
                       </button>
@@ -786,7 +786,7 @@ export default function AIShowcase() {
               <span className="text-zinc-200 text-sm font-extrabold tracking-wide whitespace-nowrap rotate-[8deg]" style={{ fontFamily: '"Caveat", cursive' }}>
                 Vyzkoušejte mě!
               </span>
-              <svg width="75" height="60" viewBox="0 0 75 60" fill="none" className="rotate-[10deg] text-[#A78BFA] drop-shadow-[0_2px_8px_rgba(167,139,250,0.45)]">
+              <svg width="75" height="60" viewBox="0 0 75 60" fill="none" className="rotate-[10deg] text-tenant-primary drop-shadow-[0_2px_8px_rgba(112,0,255,0.45)]">
                 {/* Curved Arrow Body from right to left */}
                 <path d="M65,10 C50,5 25,15 15,38" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" fill="none" />
                 {/* Arrow Head pointing to bottom-left */}

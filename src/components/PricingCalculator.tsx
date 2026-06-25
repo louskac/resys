@@ -66,12 +66,12 @@ export default function PricingCalculator() {
       maxResources: 5,
       maxDevices: 3,
       features: [
-        "Max 5 ploch / zdrojů",
+        "Max 5 ploch / zdroje",
         "Max 3 automatické vstupy",
         "Pokročilá pravidla",
         "Lidé, slevy a faktury"
       ],
-      color: "from-blue-500 to-indigo-500",
+      color: "from-tenant-primary to-tenant-primary",
       borderColor: "border-slate-200/60 dark:border-[#2A2A40]/40"
     },
     {
@@ -88,7 +88,7 @@ export default function PricingCalculator() {
         "Prioritní podpora",
         "Právní logy a audity"
       ],
-      color: "from-[#7000FF] to-purple-600",
+      color: "from-tenant-primary to-tenant-primary",
       borderColor: "border-slate-200/60 dark:border-[#2A2A40]/40",
       badge: "Nejpopulárnější"
     },
@@ -106,7 +106,7 @@ export default function PricingCalculator() {
         "SLA & telefonní linka",
         "Správce účtu"
       ],
-      color: "from-cyan-500 to-teal-500",
+      color: "from-tenant-primary to-tenant-primary",
       borderColor: "border-slate-200/60 dark:border-[#2A2A40]/40"
     }
   ];
@@ -191,28 +191,28 @@ export default function PricingCalculator() {
     <section className="py-20 lg:py-28 max-w-7xl mx-auto px-6 border-b border-slate-200/30 dark:border-[#1F1F35]/30">
       
       {/* Section Header */}
-      <div className="text-center mb-12 space-y-3">
-        <span className="text-tenant-primary font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 select-none">
-          <Calculator size={14} className="text-tenant-primary animate-pulse" /> Interaktivní kalkulátor
-        </span>
+      <div className="text-center mb-16 space-y-4">
+        <div className="text-[10px] font-black text-tenant-primary uppercase tracking-widest select-none flex items-center justify-center gap-1.5">
+          <span className="text-tenant-primary font-bold">|</span> Interaktivní kalkulátor
+        </div>
         <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
           Spočítejte si plán přesně pro vaše sportoviště či firmu
         </h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
+        <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
           Upravte parametry areálu a automatických vstupů. Systém doporučí vhodný plán a vyhodnotí finanční návratnost.
         </p>
       </div>
 
       {/* TOP: Premium Plan Info Header (Matches Admin Console Gradient styling) */}
-      <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-r-3xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-8 mb-10 max-w-7xl mx-auto">
+      <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-none p-6 shadow-sm flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-8 mb-10 max-w-7xl mx-auto">
         
         {/* Left Side: Plan Info display */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 select-none">
-            <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-full">
+            <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-none">
               Předplatné systému
             </span>
-            <span className="bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-bold px-2 py-0.5 rounded-full select-none uppercase tracking-wider animate-pulse">
+            <span className="bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 text-[9px] font-bold px-2 py-0.5 rounded-none select-none uppercase tracking-wider animate-pulse">
               Simulátor
             </span>
           </div>
@@ -225,12 +225,12 @@ export default function PricingCalculator() {
         </div>
 
         {/* Right Side: Slim Configurators inside the header */}
-        <div className="bg-white/45 dark:bg-black/25 border border-slate-200/50 dark:border-[#2A2A40]/30 rounded-2xl p-4 flex-1 max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
+        <div className="bg-white/45 dark:bg-black/25 border border-slate-200/50 dark:border-[#2A2A40]/30 rounded-none p-4 flex-1 max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
           
           {/* Billing Cycle */}
           <div className="space-y-1.5 select-none">
             <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Účtování</span>
-            <div className="flex bg-slate-100 dark:bg-black/40 p-0.5 rounded-lg border border-slate-200/20 dark:border-white/5">
+            <div className="flex bg-slate-100 dark:bg-black/40 p-0.5 rounded-none border border-slate-200/20 dark:border-white/5">
               <button 
                 onClick={() => setIsYearly(false)}
                 className={`flex-1 text-center py-1 text-[10.5px] font-bold rounded transition-all cursor-pointer ${
@@ -266,7 +266,7 @@ export default function PricingCalculator() {
               max="25"
               value={resources}
               onChange={(e) => setResources(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-slate-200/80 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
+              className="w-full h-1.5 bg-slate-200/80 dark:bg-zinc-800 rounded-none appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
             />
           </div>
 
@@ -282,7 +282,7 @@ export default function PricingCalculator() {
               max="15"
               value={devices}
               onChange={(e) => setDevices(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-slate-200/80 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
+              className="w-full h-1.5 bg-slate-200/80 dark:bg-zinc-800 rounded-none appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
             />
           </div>
 
@@ -309,15 +309,15 @@ export default function PricingCalculator() {
               return (
                 <div 
                   key={p.id}
-                  className={`relative flex flex-col justify-between p-4.5 rounded-2xl border transition-all duration-300 ${
+                  className={`relative flex flex-col justify-between p-4.5 rounded-none border transition-all duration-300 ${
                     isRecommended 
                       ? "border-tenant-primary bg-tenant-primary/[0.02] dark:bg-tenant-primary/[0.04] shadow-md shadow-tenant-primary/5 scale-[1.01]" 
-                      : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
+                      : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-tenant-primary/35"
                   }`}
                 >
                   {/* Recommended Floating Badges */}
                   {isRecommended && (
-                    <div className="absolute -top-2.5 right-3 bg-tenant-gradient text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wide select-none">
+                    <div className="absolute -top-2.5 right-3 bg-tenant-gradient text-white text-[8px] font-extrabold px-2 py-0.5 rounded-none shadow-sm uppercase tracking-wide select-none">
                       Doporučeno
                     </div>
                   )}
@@ -329,7 +329,7 @@ export default function PricingCalculator() {
                         {p.name}
                       </h5>
                       {p.badge && (
-                        <span className="bg-amber-500 text-white text-[7px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wide select-none">
+                        <span className="bg-amber-500 text-white text-[7px] font-extrabold px-1.5 py-0.5 rounded-none uppercase tracking-wide select-none">
                           {p.badge}
                         </span>
                       )}
@@ -357,7 +357,7 @@ export default function PricingCalculator() {
                     <ul className="mt-4 space-y-2 text-[10px] text-slate-650 dark:text-zinc-350 border-t border-slate-200/50 dark:border-[#1F1F35]/40 pt-3">
                       {p.features.map((f, idx) => (
                         <li key={idx} className="flex items-center gap-1">
-                          <Check size={10} className="text-emerald-500 shrink-0" />
+                          <Check size={10} className="text-tenant-primary shrink-0" />
                           <span className="truncate">{f}</span>
                         </li>
                       ))}
@@ -367,7 +367,7 @@ export default function PricingCalculator() {
                   {/* CTA Button */}
                   <button
                     onClick={() => handleOpenSetup(p.name)}
-                    className={`mt-5 w-full text-center text-[10.5px] py-2 px-3 rounded-lg font-bold transition-all cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98] ${
+                    className={`mt-5 w-full text-center text-[10.5px] py-2 px-3 rounded-none font-bold transition-all cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98] ${
                       isRecommended
                         ? "bg-tenant-gradient text-white border border-transparent shadow-xs"
                         : "bg-white dark:bg-black/35 hover:bg-slate-5 border border-slate-250 dark:border-[#2A2A40] text-slate-700 dark:text-zinc-300"
@@ -382,7 +382,7 @@ export default function PricingCalculator() {
         </div>
 
         {/* RIGHT: Creative ROI & Profit Benefits Widget (Span 4) */}
-        <div className="lg:col-span-4 p-5 bg-gradient-to-br from-[#7000FF]/[0.03] to-[#3B82F6]/[0.03] dark:from-[#7000FF]/[0.08] dark:to-[#3B82F6]/[0.02] border border-tenant-primary/15 rounded-3xl space-y-5 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 p-5 bg-gradient-to-br from-[#7000FF]/[0.03] to-[#7000FF]/[0.01] dark:from-[#7000FF]/[0.08] dark:to-[#7000FF]/[0.02] border border-tenant-primary/15 rounded-none space-y-5 shadow-sm flex flex-col justify-between">
           
           <div className="space-y-4">
             <div className="flex justify-between items-start border-b border-[#E2E8F0] dark:border-white/5 pb-3">
@@ -408,7 +408,7 @@ export default function PricingCalculator() {
                 step="50"
                 value={avgPrice}
                 onChange={(e) => setAvgPrice(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-200/85 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
+                className="w-full h-1.5 bg-slate-200/85 dark:bg-zinc-800 rounded-none appearance-none cursor-pointer accent-tenant-primary focus:outline-none"
               />
               <div className="flex justify-between text-[8px] font-bold text-slate-400 select-none">
                 <span>200 Kč</span>
@@ -417,28 +417,28 @@ export default function PricingCalculator() {
             </div>
 
             {/* Calculations logic description list */}
-            <div className="space-y-2.5 text-[10.5px] text-slate-500 dark:text-zinc-400">
+            <div className="space-y-2.5 text-[10.5px] text-slate-550 dark:text-zinc-400">
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-[#1F1F35]/20">
                 <span className="flex items-center gap-1"><ClipboardList size={11} className="text-slate-400" /> Měsíční obrat z ploch</span>
-                <strong className="text-foreground font-mono text-slate-800 dark:text-white">
+                <strong className="text-foreground font-mono text-slate-808 dark:text-white">
                   {Math.round(monthlyBookingsRev).toLocaleString()} Kč
                 </strong>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-[#1F1F35]/20">
                 <span className="flex items-center gap-1"><Timer size={11} className="text-slate-405" /> Úspora času personálu</span>
-                <strong className="text-emerald-500 font-mono">
+                <strong className="text-tenant-primary font-mono">
                   {monthlyLaborHoursSaved} hod / měs.
                 </strong>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-[#1F1F35]/20">
                 <span className="flex items-center gap-1"><Building size={11} className="text-slate-405" /> Mzdová úspora (vstupy)</span>
-                <strong className="text-emerald-500 font-mono">
+                <strong className="text-tenant-primary font-mono">
                   +{monthlyLaborCostSaved.toLocaleString()} Kč
                 </strong>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-400">Náklady na platformu:</span>
-                <span className="text-slate-500 dark:text-zinc-400 font-mono font-bold">
+                <span className="text-slate-505 dark:text-zinc-400 font-mono font-bold">
                   -{activePlanPrice.toLocaleString()} Kč
                 </span>
               </div>
@@ -446,15 +446,15 @@ export default function PricingCalculator() {
           </div>
 
           {/* NET VALUE OUTPUT (ROI highlighted box) */}
-          <div className="p-4 bg-white/45 dark:bg-black/35 border border-tenant-primary/20 rounded-2xl space-y-2.5 select-none">
+          <div className="p-4 bg-white/45 dark:bg-black/35 border border-tenant-primary/20 rounded-none space-y-2.5 select-none">
             <div className="flex justify-between items-center">
               <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Celkový měsíční přínos</span>
-              <span className="text-[9px] bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/15 px-2 py-0.5 rounded font-black font-mono">
+              <span className="text-[9px] bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/15 px-2 py-0.5 rounded-none font-black font-mono">
                 {roiRatio}x ROI
               </span>
             </div>
             <div className="space-y-0.5">
-              <strong className="text-2xl font-black text-emerald-500 font-mono block">
+              <strong className="text-2xl font-black text-tenant-primary font-mono block">
                 +{Math.round(netProfitBenefit).toLocaleString()} Kč
               </strong>
               <span className="text-[9px] text-slate-450 dark:text-zinc-500 block leading-tight">
@@ -471,7 +471,7 @@ export default function PricingCalculator() {
       {modalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm animate-fade-in">
           
-          <div className="bg-white dark:bg-[#09090F] border border-slate-200/80 dark:border-[#1F1F35]/70 rounded-[32px] w-full max-w-md shadow-2xl relative overflow-hidden animate-scale-up p-6">
+          <div className="bg-white dark:bg-[#09090F] border border-slate-200/80 dark:border-[#1F1F35]/70 rounded-none w-full max-w-md shadow-2xl relative overflow-hidden animate-scale-up p-6">
             <div className="absolute top-0 right-0 h-40 w-40 bg-tenant-primary/5 blur-2xl rounded-full -z-10" />
 
             {/* Header */}
@@ -482,7 +482,7 @@ export default function PricingCalculator() {
               </div>
               <button 
                 onClick={() => setModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 dark:text-zinc-50 transition-colors cursor-pointer"
+                className="p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 dark:text-zinc-50 transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -491,7 +491,7 @@ export default function PricingCalculator() {
             {/* PHASE 0: SETUP FORM */}
             {setupStep === 0 && (
               <div className="space-y-4">
-                <div className="p-3 bg-tenant-primary/[0.02] border border-tenant-primary/15 rounded-2xl select-none text-[10.5px] text-slate-500 dark:text-zinc-450 leading-relaxed">
+                <div className="p-3 bg-tenant-primary/[0.02] border border-tenant-primary/15 rounded-none select-none text-[10.5px] text-slate-500 dark:text-zinc-450 leading-relaxed">
                   Vyberte si název a okamžitě zprovozníme váš testovací tenant na plánu <strong className="text-tenant-primary uppercase font-bold">{selectedPlanName}</strong>.
                 </div>
 
@@ -505,7 +505,7 @@ export default function PricingCalculator() {
                     value={tenantName}
                     onChange={(e) => setTenantName(e.target.value)}
                     placeholder="Např. Arena Pardubice, Yoga Flow"
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/70 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/70 dark:border-white/10 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all"
                   />
                 </div>
 
@@ -519,7 +519,7 @@ export default function PricingCalculator() {
                       disabled
                       value={tenantId}
                       placeholder="arena-pardubice"
-                      className="w-full bg-slate-100/50 dark:bg-black/50 text-slate-500 dark:text-zinc-50 border border-slate-200/70 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-mono font-bold outline-none"
+                      className="w-full bg-slate-100/50 dark:bg-black/50 text-slate-505 dark:text-zinc-50 border border-slate-200/70 dark:border-white/10 rounded-none py-2 px-4 text-xs font-mono font-bold outline-none"
                     />
                     <span className="absolute right-4 text-[10px] text-slate-400 font-mono select-none">
                       .localhost:3000
@@ -534,7 +534,7 @@ export default function PricingCalculator() {
                   <select
                     value={vertical}
                     onChange={(e) => setVertical(e.target.value)}
-                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/70 dark:border-white/10 rounded-xl py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all cursor-pointer"
+                    className="w-full bg-slate-50/50 dark:bg-black/40 border border-slate-200/70 dark:border-white/10 rounded-none py-2 px-4 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-tenant-primary focus:ring-1 focus:ring-tenant-primary/20 transition-all cursor-pointer"
                   >
                     <option value="SPORTS_GROUND">Sportoviště (Časový grid & kurty)</option>
                     <option value="EDUCATIONAL_COURSE">Vzdělávání (Kapacitní lekce)</option>
@@ -546,7 +546,7 @@ export default function PricingCalculator() {
                   type="button"
                   disabled={!tenantName}
                   onClick={startSimulation}
-                  className="w-full mt-2 bg-tenant-gradient text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all shadow-md shadow-tenant-primary/10 flex items-center justify-center gap-1.5 disabled:opacity-40"
+                  className="w-full mt-2 bg-tenant-gradient text-white text-xs font-bold py-2.5 px-4 rounded-none cursor-pointer hover:opacity-95 active:scale-95 transition-all shadow-md shadow-tenant-primary/10 flex items-center justify-center gap-1.5 disabled:opacity-40"
                 >
                   <Play size={13} fill="white" />
                   Spustit Sandbox Setup
@@ -558,7 +558,7 @@ export default function PricingCalculator() {
             {setupStep === 1 && (
               <div className="space-y-5 py-3 text-center">
                 <div className="flex justify-center">
-                  <div className="h-10 w-10 rounded-full bg-tenant-primary/10 text-tenant-primary flex items-center justify-center animate-spin" style={{ animationDuration: '2.5s' }}>
+                  <div className="h-10 w-10 rounded-none bg-tenant-primary/10 text-tenant-primary flex items-center justify-center animate-spin" style={{ animationDuration: '2.5s' }}>
                     <RefreshCw size={20} />
                   </div>
                 </div>
@@ -570,10 +570,10 @@ export default function PricingCalculator() {
                   </p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-black/45 rounded-2xl border border-slate-200/30 dark:border-white/5 p-4 text-[10px] font-mono text-left space-y-1.5 h-36 overflow-y-auto">
+                <div className="bg-slate-50 dark:bg-black/45 rounded-none border border-slate-200/30 dark:border-white/5 p-4 text-[10px] font-mono text-left space-y-1.5 h-36 overflow-y-auto">
                   {completedSteps.map((step, idx) => (
                     <div key={idx} className="flex items-start gap-1.5 text-slate-500 dark:text-zinc-400">
-                      <span className="text-emerald-500 font-bold shrink-0">✔</span>
+                      <span className="text-tenant-primary font-bold shrink-0">✔</span>
                       <span>{step}</span>
                     </div>
                   ))}
@@ -589,7 +589,7 @@ export default function PricingCalculator() {
             {setupStep === 2 && (
               <div className="space-y-6 text-center select-none">
                 <div className="flex justify-center">
-                  <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
+                  <div className="h-10 w-10 rounded-none bg-tenant-primary/10 text-tenant-primary flex items-center justify-center border border-tenant-primary/20">
                     <Check size={20} className="stroke-[3]" />
                   </div>
                 </div>
@@ -601,7 +601,7 @@ export default function PricingCalculator() {
                   </p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-black/45 p-4 rounded-2xl border border-slate-200/40 dark:border-white/5 space-y-2 text-left">
+                <div className="bg-slate-50 dark:bg-black/45 p-4 rounded-none border border-slate-200/40 dark:border-white/5 space-y-2 text-left">
                   <div className="flex justify-between items-center text-[10.5px]">
                     <span className="text-slate-400">Klientský portál:</span>
                     <a 
@@ -628,7 +628,7 @@ export default function PricingCalculator() {
                   </div>
                   <div className="flex justify-between items-center text-[10.5px] border-t border-slate-200/45 dark:border-white/5 pt-1.5 mt-1.5">
                     <span className="text-slate-400">Stav tarifu:</span>
-                    <span className="text-emerald-500 font-extrabold uppercase text-[9.5px] tracking-wide bg-emerald-500/10 border border-emerald-500/15 px-2 py-0.5 rounded-md">
+                    <span className="text-tenant-primary font-extrabold uppercase text-[9.5px] tracking-wide bg-tenant-primary/10 border border-tenant-primary/15 px-2 py-0.5 rounded-none">
                       AKTIVNÍ / {selectedPlanName}
                     </span>
                   </div>
@@ -637,7 +637,7 @@ export default function PricingCalculator() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setModalOpen(false)}
-                    className="btn-secondary flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-slate-100/80 active:scale-95"
+                    className="btn-secondary flex-1 py-2 rounded-none text-xs font-bold transition-all cursor-pointer hover:bg-slate-100/80 active:scale-95"
                   >
                     Zavřít
                   </button>
@@ -645,7 +645,7 @@ export default function PricingCalculator() {
                     href={`http://${tenantId}.localhost:3000/admin`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-tenant-gradient text-white text-xs font-bold py-2 px-4 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all text-center flex items-center justify-center gap-1 flex-1 shadow-md shadow-tenant-primary/15"
+                    className="bg-tenant-gradient text-white text-xs font-bold py-2 px-4 rounded-none cursor-pointer hover:opacity-95 active:scale-95 transition-all text-center flex items-center justify-center gap-1 flex-1 shadow-md shadow-tenant-primary/15"
                   >
                     Přejít do adminu
                     <ArrowRight size={12} />

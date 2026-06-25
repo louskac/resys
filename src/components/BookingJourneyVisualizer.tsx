@@ -104,7 +104,7 @@ export default function BookingJourneyVisualizer() {
                 className="flex flex-col items-center text-center gap-2 group cursor-pointer focus:outline-none"
               >
                 <div 
-                  className={`h-9 w-9 rounded-full flex items-center justify-center border-2 font-bold text-xs transition-all ${
+                  className={`h-9 w-9 rounded-none flex items-center justify-center border-2 font-bold text-xs transition-all ${
                     isCompleted 
                       ? "bg-tenant-gradient border-transparent text-white shadow-md shadow-tenant-primary/10" 
                       : isActive 
@@ -362,7 +362,7 @@ export default function BookingJourneyVisualizer() {
               <div className="space-y-5 py-2 text-center animate-fade-in">
                 {iotResult === "granted" ? (
                   <div className="space-y-4 animate-scale-up">
-                    <div className="mx-auto h-14 w-14 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/5">
+                    <div className="mx-auto h-14 w-14 rounded-none bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/5">
                       <Unlock size={24} className="animate-bounce" />
                     </div>
                     <div className="space-y-1">

@@ -11,7 +11,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
   return (
-    <section className="relative w-full h-[600px] sm:h-[700px] lg:h-[780px] bg-slate-950 overflow-hidden">
+    <section className="relative w-full h-[560px] sm:h-[640px] lg:h-[710px] bg-slate-950 overflow-hidden">
       
       {/* 1. BACKGROUND IMAGE (Flipped 180deg and stretched to 100% screen width) */}
       <div className="absolute inset-0 z-0">
@@ -20,7 +20,7 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
           alt="Venkovní tenisový kurt s přístupovým sloupkem"
           fill
           priority
-          className="object-cover object-center pointer-events-none"
+          className="object-cover object-[center_12%] pointer-events-none"
           sizes="100vw"
         />
       </div>
@@ -43,17 +43,17 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
 
       {/* 5. OVERLAY CONTENT GRID (Aligned to max-w-7xl) */}
       <div className="absolute inset-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 h-full w-full relative flex items-center justify-between pt-24 sm:pt-32 pb-16">
+        <div className="max-w-7xl mx-auto px-6 h-full w-full relative flex items-center justify-between pt-20 sm:pt-24 pb-12">
           
           {/* Left Column: B2B Copywriting & CTAs */}
-          <div className="max-w-xl space-y-6 md:space-y-8 text-left">
+          <div className="max-w-xl space-y-5 md:space-y-6 text-left">
             <ScrollReveal animation="fade-right" duration={800} delay={100} className="space-y-2 select-none">
-              <div className="inline-block border border-tenant-primary px-3 py-1.5 text-[9.5px] font-black text-tenant-primary uppercase tracking-widest leading-none bg-tenant-primary/5 rounded-none mb-3">
-                PROVOZOVATELÉ AREÁLŮ
+              <div className="text-[10px] font-black text-tenant-primary uppercase tracking-widest mb-2 flex items-center select-none">
+                <span className="text-tenant-primary font-bold mr-2">|</span> PROVOZOVATELÉ AREÁLŮ
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5.5xl font-black tracking-tighter uppercase leading-none text-white pt-1">
                 AUTOMATICKÁ SPRÁVA. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B766FF] to-[#38BDF8]">
+                <span className="text-tenant-primary">
                   OD REZERVACE PO VSTUP.
                 </span>
               </h1>
@@ -68,14 +68,14 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
             <ScrollReveal animation="fade-right" duration={800} delay={250} className="flex flex-wrap gap-3 pt-2">
               <a 
                 href={hostConsoleUrl}
-                className="group bg-[#581c87] hover:bg-[#6b21a8] border border-[#a855f7]/50 shadow-lg shadow-purple-500/10 text-white text-[11px] sm:text-xs py-3.5 px-6 rounded-none font-extrabold uppercase tracking-widest transition-all duration-300 flex items-center gap-2 cursor-pointer"
+                className="group border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary shadow-lg shadow-tenant-primary/10 text-white text-[11px] sm:text-xs py-3.5 px-6 rounded-none font-bold uppercase tracking-widest transition-all duration-300 flex items-center gap-2 cursor-pointer"
               >
                 SPUSTIT ADMINISTRACI (HOST)
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
               </a>
               <a 
                 href="#sandbox"
-                className="px-5 sm:px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-slate-200 hover:text-white text-[11px] sm:text-xs rounded-none font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer"
+                className="border border-white/10 border-l-[3px] border-l-white bg-white/5 hover:bg-white hover:text-black text-slate-200 text-[11px] sm:text-xs py-3.5 px-6 rounded-none font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer"
               >
                 PROHLÉDNOUT PORTÁLY
               </a>
@@ -83,14 +83,14 @@ export default function HeroSection({ hostConsoleUrl }: HeroSectionProps) {
 
             {/* Developer credentials (Futuristically elegant & premium single point) */}
             <ScrollReveal animation="fade-right" duration={800} delay={300}>
-              <div className="flex items-center pt-8 sm:pt-10 text-[8px] sm:text-[8.5px] font-mono uppercase tracking-widest text-slate-500 select-none">
+              <div className="flex items-center pt-6 sm:pt-8 text-[8px] sm:text-[8.5px] font-mono uppercase tracking-widest text-slate-500 select-none">
                 <span>VÝVOJ A TECHNICKÁ SPRÁVA &bull; <span className="text-slate-400 font-bold">DEEPVISION S.R.O.</span></span>
               </div>
             </ScrollReveal>
           </div>
 
           {/* Right Column: Subtle typographic stats with left accent border, no backgrounds */}
-          <div className="absolute bottom-24 lg:bottom-28 right-6 hidden md:flex items-center gap-10 select-none">
+          <div className="absolute bottom-20 lg:bottom-24 right-6 hidden md:flex items-center gap-10 select-none">
             <div className="pl-4 border-l-2 border-tenant-primary">
               <div className="text-[9px] font-black text-tenant-primary uppercase tracking-widest leading-none">PROVOZ BEZ RECEPČNÍ</div>
               <div className="text-3xl lg:text-4xl font-black text-white mt-1.5 tracking-tight leading-none">Bezobslužně</div>

@@ -251,7 +251,7 @@ export default function VerticalsShowcase({ tenants, isLocal }: VerticalsShowcas
 
         {/* Right Column: Visual Sandbox Mockup */}
         <div className="lg:col-span-5 relative w-full">
-          <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/15 to-indigo-500/20 blur-3xl opacity-60 rounded-none scale-95" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-tenant-primary/15 to-tenant-primary/20 blur-3xl opacity-60 rounded-none scale-95" />
           <div className="relative p-2 bg-slate-100/40 dark:bg-black/30 border border-slate-200/20 dark:border-[#1F1F35]/40 rounded-none shadow-lg">
             {activeVertical.sampleMockup}
           </div>

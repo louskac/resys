@@ -32,7 +32,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
       <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-6 rounded-none shadow-[0_20px_50px_rgba(112,0,255,0.12)] relative transition-all duration-300 text-xs text-left">
         <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-3.5 flex items-center gap-2 select-none">
-          <AlertCircle className="text-amber-500 dark:text-amber-400 bg-amber-500/10 p-0.5 rounded-full" size={18} />
+          <AlertCircle className="text-amber-500 dark:text-amber-400 bg-amber-500/10 p-0.5 rounded-none" size={18} />
           {title}
         </h3>
         <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 whitespace-pre-line font-medium">

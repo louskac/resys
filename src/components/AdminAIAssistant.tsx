@@ -587,27 +587,27 @@ export default function AdminAIAssistant({
 
           {/* Stepper / Active status chips row */}
           <div className="flex flex-wrap items-center gap-1.5 z-10 select-none">
-            <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-none bg-purple-500/10 border border-purple-500/20 text-purple-300 flex items-center gap-1.5">
               <Layout size={10} />
               Sekce: {czechTabNames[draftState.tab] || draftState.tab}
             </span>
 
             {draftState.resourceName && (
-              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center gap-1.5 animate-pulse">
+              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-none bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center gap-1.5 animate-pulse">
                 <Building size={10} />
                 Příprava: {draftState.resourceName}
               </span>
             )}
 
             {draftState.ruleName && (
-              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-1.5 animate-pulse">
+              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-1.5 animate-pulse">
                 <Sparkles size={10} />
                 Příprava slotu: {draftState.ruleName}
               </span>
             )}
 
             {draftState.deviceName && (
-              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center gap-1.5 animate-pulse">
+              <span className="text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center gap-1.5 animate-pulse">
                 <Cpu size={10} />
                 Příprava čtečky: {draftState.deviceName}
               </span>

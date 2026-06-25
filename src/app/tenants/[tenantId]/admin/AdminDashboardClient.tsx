@@ -1746,7 +1746,7 @@ export default function AdminDashboardClient({
             <div className="flex justify-between items-start flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-widest select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-[9px] font-extrabold bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary uppercase tracking-widest select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
                     {typeLabel}
                   </span>
                   {level > 0 && (
@@ -1933,13 +1933,13 @@ export default function AdminDashboardClient({
           {/* Middle Header Widgets */}
           <div className="hidden lg:flex items-center gap-3">
             {/* Czech Formatted Date */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-slate-500 dark:text-zinc-400 text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none text-slate-500 dark:text-zinc-400 text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-zinc-500 shrink-0" />
               <span>{czechFormattedDate}</span>
             </div>
 
             {/* Status Pill (Open/Closed) */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
               <span className={`h-1.5 w-1.5 rounded-full shadow-lg shrink-0 animate-pulse ${isOpenNow ? "bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-amber-500 shadow-[0_0_8px_#F59E0B]"}`} />
               <span className={isOpenNow ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
                 {isOpenNow ? "Nyní otevřeno" : "Zavřeno"}
@@ -2163,9 +2163,9 @@ export default function AdminDashboardClient({
                 className="fixed inset-0 z-40 bg-black/60 dark:bg-black/85 backdrop-blur-[3px] transition-opacity duration-300 md:hidden"
               />
               {/* Bottom Sheet Drawer */}
-              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#07070F]/95 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-none-t-[2rem] p-6 pb-8 space-y-5 animate-slide-up md:hidden select-none max-h-[85vh] overflow-y-auto scrollbar-none shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#07070F]/95 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-none p-6 pb-8 space-y-5 animate-slide-up md:hidden select-none max-h-[85vh] overflow-y-auto scrollbar-none shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 {/* Visual Handle */}
-                <div className="w-12 h-1 bg-slate-300 dark:bg-white/20 rounded-full mx-auto mb-2" />
+                <div className="w-12 h-1 bg-slate-300 dark:bg-white/20 rounded-none mx-auto mb-2" />
                 
                 <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/[0.06] pb-3">
                   <div className="flex flex-col">
@@ -2213,7 +2213,7 @@ export default function AdminDashboardClient({
                         {/* Glowing Active Indicator - Vertical Neon Bar on the left */}
                         {isActive && (
                           <div 
-                            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-none-r-md bg-tenant-gradient" 
+                            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-none bg-tenant-gradient" 
                             style={{
                               boxShadow: "0 0 10px var(--tenant-primary), 0 0 5px var(--tenant-primary)"
                             }}
@@ -2390,7 +2390,7 @@ export default function AdminDashboardClient({
                               <td className="py-3 text-foreground">{log.deviceName}</td>
                               <td className="py-3 text-muted-foreground">{log.resourceName}</td>
                               <td className="py-3 text-right">
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getResultBadgeColor(log.result)}`}>
+                                <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold ${getResultBadgeColor(log.result)}`}>
                                   {log.result === "SUCCESS" ? "ÚSPĚCH" : log.result === "ALREADY_ATTENDED" ? "JIŽ POUŽITO" : "NEÚSPĚCH"}
                                 </span>
                               </td>
@@ -2406,7 +2406,7 @@ export default function AdminDashboardClient({
                         <div key={log.id} className="p-4 bg-slate-50/50 dark:bg-[#131322]/20 border border-slate-200/50 dark:border-white/5 rounded-none space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">{formatUTCTime(log.scannedAt)}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getResultBadgeColor(log.result)}`}>
+                            <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold ${getResultBadgeColor(log.result)}`}>
                               {log.result === "SUCCESS" ? "ÚSPĚCH" : log.result === "ALREADY_ATTENDED" ? "JIŽ POUŽITO" : "NEÚSPĚCH"}
                             </span>
                           </div>
@@ -2470,7 +2470,7 @@ export default function AdminDashboardClient({
                               {log.userName || "System"}
                             </td>
                             <td className="py-3">
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold ${
                                 log.action.includes("CREATE") 
                                   ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/25"
                                   : log.action.includes("DELETE") || log.action.includes("CANCEL")
@@ -2675,7 +2675,7 @@ export default function AdminDashboardClient({
                                   </span>
                                 </td>
                                 <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
+                                  <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
                                     {booking.status === "CONFIRMED" ? "Potvrzeno" : booking.status === "PENDING_PAYMENT" ? "Čeká na platbu" : booking.status === "ATTENDED" ? "Odbaveno" : "Zrušeno"}
                                   </span>
                                 </td>
@@ -2736,7 +2736,7 @@ export default function AdminDashboardClient({
                                 <div className="text-xs font-bold text-slate-800 dark:text-slate-100">{booking.userName}</div>
                                 <div className="text-[10px] text-muted-foreground font-mono truncate">{booking.userEmail}</div>
                               </div>
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
+                              <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold ${getStatusBadgeColor(booking.status)}`}>
                                 {booking.status === "CONFIRMED" ? "Potvrzeno" : booking.status === "PENDING_PAYMENT" ? "Čeká na platbu" : booking.status === "ATTENDED" ? "Odbaveno" : "Zrušeno"}
                               </span>
                             </div>
@@ -3070,7 +3070,7 @@ export default function AdminDashboardClient({
                       <div className="flex items-center justify-between">
                         <label className="block text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[9px]">Obrázek banneru portálu</label>
                         {settingsBannerImage && (
-                          <span className="text-[9px] bg-tenant-primary/10 border border-tenant-primary/25 text-tenant-primary px-2.5 py-0.5 rounded-full font-bold select-none animate-pulse">
+                          <span className="text-[9px] bg-tenant-primary/10 border border-tenant-primary/25 text-tenant-primary px-2.5 py-0.5 rounded-none font-bold select-none animate-pulse">
                             Aktivní pozice: {settingsBannerPosition}
                           </span>
                         )}
@@ -3339,7 +3339,7 @@ export default function AdminDashboardClient({
                               onChange={(e) => setPresetClosed(e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-full peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+                            <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
                             <span className={`ml-2 text-[10px] font-bold tracking-wide transition-colors ${presetClosed ? "text-red-500" : "text-slate-500 dark:text-zinc-400"}`}>
                               {presetClosed ? "HROMADNĚ ZAVŘENO" : "HROMADNĚ OTEVŘENO"}
                             </span>
@@ -3470,7 +3470,7 @@ export default function AdminDashboardClient({
                                       }}
                                       className="sr-only peer"
                                     />
-                                    <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-full peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+                                    <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
                                     <span className={`ml-2 text-[10px] font-bold tracking-wide transition-colors ${day.closed ? "text-red-500" : "text-emerald-500"}`}>
                                       {day.closed ? "ZAVŘENO" : "OTEVŘENO"}
                                     </span>
@@ -3506,7 +3506,7 @@ export default function AdminDashboardClient({
                                   }}
                                   className="sr-only peer"
                                 />
-                                <div className="w-8 h-4.5 bg-slate-200 dark:bg-[#1f1f35] rounded-full peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[2.5px] after:left-[2.5px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3.5"></div>
+                                <div className="w-8 h-4.5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[2.5px] after:left-[2.5px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3.5"></div>
                                 <span className={`ml-2 text-[9px] font-bold tracking-wide transition-colors ${day.closed ? "text-red-500" : "text-emerald-500"}`}>
                                   {day.closed ? "Zavřeno" : "Otevřeno"}
                                 </span>
@@ -3620,10 +3620,10 @@ export default function AdminDashboardClient({
           {activeTab === "subscription" && (
             <div className="space-y-8 animate-fade-in select-none">
               {/* Premium Plan Info Header */}
-              <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-none-r-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-none p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-full">
+                    <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-none">
                       Předplatné systému
                     </span>
                   </div>
@@ -3632,7 +3632,7 @@ export default function AdminDashboardClient({
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-1.5">
                     Stav předplatného: 
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-none font-bold text-[10px] ${
                       localTenant.subscriptionStatus === "ACTIVE" 
                         ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
                         : localTenant.subscriptionStatus === "TRIALING"
@@ -3657,9 +3657,9 @@ export default function AdminDashboardClient({
                         <span className="text-slate-400 dark:text-zinc-550 ml-1">({Math.min(100, Math.round((resources.length / (localTenant.maxResourcesLimit || 2)) * 100))}%)</span>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-full h-1.5 overflow-hidden border border-slate-300/10 dark:border-white/5">
+                    <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-none h-1.5 overflow-hidden border border-slate-300/10 dark:border-white/5">
                       <div 
-                        className="h-full rounded-full bg-tenant-gradient transition-all duration-505"
+                        className="h-full rounded-none bg-tenant-gradient transition-all duration-505"
                         style={{ width: `${Math.min(100, Math.round((resources.length / (localTenant.maxResourcesLimit || 2)) * 100))}%` }}
                       />
                     </div>
@@ -3676,9 +3676,9 @@ export default function AdminDashboardClient({
                         <span className="text-slate-400 dark:text-zinc-555 ml-1">({Math.min(100, Math.round((devices.length / (localTenant.maxDevicesLimit || 1)) * 100))}%)</span>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-full h-1.5 overflow-hidden border border-slate-300/10 dark:border-white/5">
+                    <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-none h-1.5 overflow-hidden border border-slate-300/10 dark:border-white/5">
                       <div 
-                        className="h-full rounded-full bg-tenant-gradient transition-all duration-505"
+                        className="h-full rounded-none bg-tenant-gradient transition-all duration-505"
                         style={{ width: `${Math.min(100, Math.round((devices.length / (localTenant.maxDevicesLimit || 1)) * 100))}%` }}
                       />
                     </div>
@@ -3697,7 +3697,7 @@ export default function AdminDashboardClient({
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
                   }`}>
                     {localTenant.subscriptionPlan === "FREE_TRIAL" && (
-                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
+                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-none shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
                     )}
                     <div>
                       <h5 className="font-bold text-slate-800 dark:text-white text-sm">Free Trial</h5>
@@ -3738,7 +3738,7 @@ export default function AdminDashboardClient({
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
                   }`}>
                     {localTenant.subscriptionPlan === "STARTER" && (
-                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
+                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-none shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
                     )}
                     <div>
                       <h5 className="font-bold text-slate-800 dark:text-white text-sm">Starter</h5>
@@ -3779,9 +3779,9 @@ export default function AdminDashboardClient({
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-355 dark:hover:border-purple-900/35"
                   }`}>
                     {localTenant.subscriptionPlan === "PRO" && (
-                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
+                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-none shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
                     )}
-                    <div className="absolute -top-3 left-4 bg-amber-500 text-white text-[8px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm uppercase tracking-wide">Nejpopulárnější</div>
+                    <div className="absolute -top-3 left-4 bg-amber-500 text-white text-[8px] font-extrabold px-2.5 py-0.5 rounded-none shadow-sm uppercase tracking-wide">Nejpopulárnější</div>
                     <div>
                       <h5 className="font-bold text-slate-800 dark:text-white text-sm">Pro</h5>
                       <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1">Pro aktivní sportovní centra</p>
@@ -3821,7 +3821,7 @@ export default function AdminDashboardClient({
                       : "border-slate-200/60 dark:border-[#2A2A40]/40 bg-white/40 dark:bg-[#0A0A10]/25 hover:border-slate-350 dark:hover:border-purple-900/35"
                   }`}>
                     {localTenant.subscriptionPlan === "ENTERPRISE" && (
-                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
+                      <div className="absolute -top-3 right-4 bg-tenant-gradient text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-none shadow-sm shadow-tenant-primary/15 uppercase tracking-wide">Aktivní</div>
                     )}
                     <div>
                       <h5 className="font-bold text-slate-800 dark:text-white text-sm">Enterprise</h5>
@@ -3885,7 +3885,7 @@ export default function AdminDashboardClient({
           
           <div className="h-px w-12 bg-slate-200 dark:bg-[#1F1F35]" />
           
-          <div className="flex items-center gap-2.5 bg-slate-100/60 dark:bg-[#131322]/50 border border-slate-200/50 dark:border-[#2A2A40]/50 rounded-full py-1.5 px-4 text-[10px] font-semibold tracking-wide shadow-sm hover:border-slate-300 dark:hover:border-[#383857] transition-all">
+          <div className="flex items-center gap-2.5 bg-slate-100/60 dark:bg-[#131322]/50 border border-slate-200/50 dark:border-[#2A2A40]/50 rounded-none py-1.5 px-4 text-[10px] font-semibold tracking-wide shadow-sm hover:border-slate-300 dark:hover:border-[#383857] transition-all">
             <span className="text-slate-400 dark:text-zinc-500">Jednotné přihlášení:</span>
             <a 
               href="https://oneid.cz" 
@@ -3915,7 +3915,7 @@ export default function AdminDashboardClient({
             <button
               type="button"
               onClick={() => setResourceModal({ ...resourceModal, open: false })}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -4262,7 +4262,7 @@ export default function AdminDashboardClient({
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
                     </label>
                   </div>
 
@@ -4314,7 +4314,7 @@ export default function AdminDashboardClient({
             <button
               type="button"
               onClick={() => setDeviceModal({ ...deviceModal, open: false })}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all p-1.5 rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -4399,7 +4399,7 @@ export default function AdminDashboardClient({
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
                   </label>
                 </div>
               </div>
@@ -4454,7 +4454,7 @@ export default function AdminDashboardClient({
                 )}
                 {checkoutStage === "success" && (
                   <>
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center animate-bounce">
+                    <div className="w-12 h-12 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center animate-bounce">
                       <Check className="w-6 h-6" />
                     </div>
                     <h4 className="text-sm font-bold text-emerald-500 mt-2">Platba úspěšně potvrzena!</h4>

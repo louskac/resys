@@ -423,13 +423,13 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           {/* Middle Header Widgets */}
           <div className="hidden lg:flex items-center gap-3">
             {/* Czech Formatted Date */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-slate-500 dark:text-zinc-400 text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none text-slate-500 dark:text-zinc-400 text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-zinc-500 shrink-0" />
               <span>{czechFormattedDate}</span>
             </div>
 
             {/* Status Pill (Open/Closed) */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-full text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
               <span className={`h-1.5 w-1.5 rounded-full shadow-lg shrink-0 animate-pulse ${isOpenNow ? "bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-amber-500 shadow-[0_0_8px_#F59E0B]"}`} />
               <span className={isOpenNow ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
                 {isOpenNow ? "Nyní otevřeno" : "Zavřeno"}
@@ -559,7 +559,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               objectPosition={attributes.bannerPosition || "center"}
             />
             {/* Floating Glass category badge */}
-            <span className="absolute top-4 left-4 z-10 backdrop-blur-md bg-black/40 dark:bg-black/60 border border-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 select-none transition-transform duration-300 hover:scale-105">
+            <span className="absolute top-4 left-4 z-10 backdrop-blur-md bg-black/40 dark:bg-black/60 border border-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-none shadow-lg flex items-center gap-1.5 select-none transition-transform duration-300 hover:scale-105">
               <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)] animate-pulse" />
               Rezervační portál
             </span>
@@ -570,7 +570,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           
           <div className="p-6">
             {/* Dynamic Status / Hours Badge */}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-3 select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-3 select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Dnes otevřeno: {activeHours.openTime} - {activeHours.closeTime}
             </span>
@@ -660,7 +660,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           
           <div className="h-px w-12 bg-slate-200 dark:bg-[#1F1F35]" />
           
-          <div className="flex items-center gap-2.5 bg-slate-100/60 dark:bg-[#131322]/50 border border-slate-200/50 dark:border-[#2A2A40]/50 rounded-full py-1.5 px-4 text-[10px] font-semibold tracking-wide shadow-sm hover:border-slate-300 dark:hover:border-[#383857] transition-all">
+          <div className="flex items-center gap-2.5 bg-slate-100/60 dark:bg-[#131322]/50 border border-slate-200/50 dark:border-[#2A2A40]/50 rounded-none py-1.5 px-4 text-[10px] font-semibold tracking-wide shadow-sm hover:border-slate-300 dark:hover:border-[#383857] transition-all">
             <span className="text-slate-400 dark:text-zinc-500">Jednotné přihlášení:</span>
             <a 
               href="https://oneid.cz" 

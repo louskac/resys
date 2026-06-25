@@ -3,14 +3,13 @@
     <!-- Cosmic brand gradient -->
     <linearGradient id="resysGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#7000FF" /> <!-- Deep Violet-Purple -->
-      <stop offset="50%" stop-color="#8B5CF6" /> <!-- Violet -->
-      <stop offset="100%" stop-color="#3B82F6" /> <!-- Sapphire Blue -->
+      <stop offset="100%" stop-color="#7000FF" />
     </linearGradient>
 
     <!-- Glowing booked slot gradient -->
     <linearGradient id="slotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00F5FF" /> <!-- Cyan Glow -->
-      <stop offset="100%" stop-color="#3B82F6" /> <!-- Sapphire Blue -->
+      <stop offset="0%" stop-color="#7000FF" /> <!-- Purple Glow -->
+      <stop offset="100%" stop-color="#7000FF" />
     </linearGradient>
     
     <!-- Cosmic Neon Glow effect -->

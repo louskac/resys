@@ -46,7 +46,7 @@ export default function AIStepper({ steps, className = "", onStepClick }: AIStep
             style={{ animationDelay: step.animationDelay || "0ms" }}
           >
             <div
-              className={`h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] backdrop-blur-md ${bubbleStyles}`}
+              className={`h-12 w-12 rounded-none border flex items-center justify-center transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] backdrop-blur-md ${bubbleStyles}`}
               title={step.tooltip || step.label}
             >
               {step.icon}

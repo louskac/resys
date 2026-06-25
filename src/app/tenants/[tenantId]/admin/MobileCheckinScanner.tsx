@@ -465,10 +465,10 @@ export default function MobileCheckinScanner({
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <div className="w-[70%] h-[70%] border-2 border-dashed border-tenant-primary/45 rounded-none relative">
                 {/* Glowing corners */}
-                <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-none-tl-xl" />
-                <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-none-tr-xl" />
-                <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-none-bl-xl" />
-                <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-none-br-xl" />
+                <div className="absolute top-[-2px] left-[-2px] w-5 h-5 border-t-4 border-l-4 border-tenant-primary rounded-none" />
+                <div className="absolute top-[-2px] right-[-2px] w-5 h-5 border-t-4 border-r-4 border-tenant-primary rounded-none" />
+                <div className="absolute bottom-[-2px] left-[-2px] w-5 h-5 border-b-4 border-l-4 border-tenant-primary rounded-none" />
+                <div className="absolute bottom-[-2px] right-[-2px] w-5 h-5 border-b-4 border-r-4 border-tenant-primary rounded-none" />
               </div>
             </div>
           )}
@@ -577,14 +577,14 @@ export default function MobileCheckinScanner({
           />
           
           <div 
-            className="relative w-full max-h-[70vh] border-t rounded-none-t-[2.5rem] p-8 pb-10 space-y-6 flex flex-col items-center text-center shadow-2xl transform translate-y-0 transition-transform duration-300"
+            className="relative w-full max-h-[70vh] border-t rounded-none p-8 pb-10 space-y-6 flex flex-col items-center text-center shadow-2xl transform translate-y-0 transition-transform duration-300"
             style={{
               backgroundColor: scanResult.status === "granted" ? "#047857" : "#be123c",
               borderColor: scanResult.status === "granted" ? "#10b981" : "#f43f5e",
               color: "#ffffff"
             }}
           >
-            <div className="w-12 h-1 bg-white/30 rounded-full mb-1" />
+            <div className="w-12 h-1 bg-white/30 rounded-none mb-1" />
 
             <div className="flex flex-col items-center space-y-3">
               <div className="relative">

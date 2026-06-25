@@ -3,6 +3,7 @@
 /* Enable class-based dark mode selector in Tailwind CSS v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+
 :root {
   /* --- LIGHT MODE --- */
   /* Neutral scale - clean, crisp zinc/slate tones */
@@ -15,8 +16,8 @@
   --popover: oklch(1.0 0.0 0);
   --popover-foreground: oklch(0.18 0.01 270);
   
-  /* Brand Color - High-End SaaS Indigo */
-  --primary: oklch(0.48 0.18 270);
+  /* Brand Color - High-End SaaS Purple */
+  --primary: oklch(0.45 0.29 292.5);
   --primary-foreground: oklch(1.0 0.0 0);
   
   --secondary: oklch(0.97 0.005 270);
@@ -30,12 +31,12 @@
   
   --border: oklch(0.92 0.005 270);
   --input: oklch(1.0 0.0 0);
-  --ring: oklch(0.48 0.18 270);
+  --ring: oklch(0.45 0.29 292.5);
   
   /* Tenant variable placeholders - mapped to solid colors instead of gradients */
-  --tenant-primary: oklch(0.52 0.22 292);
-  --tenant-primary-hover: oklch(0.44 0.22 292);
-  --tenant-accent: oklch(0.52 0.22 292);
+  --tenant-primary: oklch(0.45 0.29 292.5);
+  --tenant-primary-hover: oklch(0.40 0.29 292.5);
+  --tenant-accent: oklch(0.45 0.29 292.5);
   --tenant-gradient: var(--tenant-primary);
 }
 
@@ -52,7 +53,7 @@
   --popover: oklch(0.15 0.01 270);
   --popover-foreground: oklch(0.98 0.003 270);
   
-  --primary: oklch(0.64 0.17 270);
+  --primary: oklch(0.45 0.29 292.5);
   --primary-foreground: oklch(0.12 0.01 270);
   
   --secondary: oklch(0.18 0.01 270);
@@ -66,7 +67,7 @@
   
   --border: oklch(0.22 0.01 270);
   --input: oklch(0.14 0.01 270);
-  --ring: oklch(0.64 0.17 270);
+  --ring: oklch(0.45 0.29 292.5);
 }
 
 @theme {
@@ -162,12 +163,15 @@ body {
 }
 
 .heading-sm {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 600;
+  font-size: 0.6875rem; /* ~11px */
+  line-height: 1;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted-foreground);
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  border-left: 2px solid var(--primary);
+  padding-left: 0.5rem;
+  display: inline-block;
 }
 
 /* 2. Buttons (Base Layout) */
@@ -176,19 +180,23 @@ body {
 .btn-secondary,
 .btn-outline,
 .btn-danger,
-.btn-tenant {
+.btn-tenant,
+.btn-danger-filled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  font-size: 0.8125rem; /* ~13px */
-  font-weight: 600;
-  border-radius: 0.5rem;
-  padding: 0.4375rem 0.875rem;
-  transition: all 0.12s ease;
+  font-size: 0.75rem; /* ~12px */
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 0px !important;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
   cursor: pointer;
   user-select: none;
   border: 1px solid transparent;
+  border-left-width: 3px !important;
   outline: none;
 }
 .btn:disabled,
@@ -196,36 +204,42 @@ body {
 .btn-secondary:disabled,
 .btn-outline:disabled,
 .btn-danger:disabled,
-.btn-tenant:disabled {
+.btn-tenant:disabled,
+.btn-danger-filled:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Buttons (Color Variants) */
 .btn-primary {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-left-color: var(--primary) !important;
 }
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.05);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 .btn-primary:active:not(:disabled) {
   filter: brightness(0.95);
 }
 
 .btn-secondary {
-  background-color: var(--secondary);
-  color: var(--secondary-foreground);
+  background-color: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--foreground);
   border-color: var(--border);
+  border-left-color: var(--foreground) !important;
 }
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--muted);
+  background-color: var(--foreground);
+  color: var(--background);
 }
 
 .btn-outline {
   background-color: transparent;
   border-color: var(--border);
+  border-left-color: var(--foreground) !important;
   color: var(--foreground);
 }
 .btn-outline:hover:not(:disabled) {
@@ -234,22 +248,26 @@ body {
 }
 
 .btn-danger {
-  background-color: oklch(0.20 0.05 15 / 0.08);
+  background-color: oklch(0.60 0.18 15 / 0.08);
   color: oklch(0.60 0.18 15);
   border-color: oklch(0.60 0.18 15 / 0.15);
+  border-left-color: oklch(0.60 0.18 15) !important;
 }
 .btn-danger:hover:not(:disabled) {
-  background-color: oklch(0.60 0.18 15 / 0.12);
-  color: oklch(0.68 0.18 15);
+  background-color: oklch(0.60 0.18 15);
+  color: #ffffff;
 }
 
 /* Tenant custom button */
 .btn-tenant {
-  background-color: var(--tenant-primary);
-  color: var(--primary-foreground);
+  background-color: color-mix(in srgb, var(--tenant-primary) 10%, transparent);
+  color: var(--tenant-primary);
+  border-color: color-mix(in srgb, var(--tenant-primary) 20%, transparent);
+  border-left-color: var(--tenant-primary) !important;
 }
 .btn-tenant:hover:not(:disabled) {
-  background-color: var(--tenant-primary-hover);
+  background-color: var(--tenant-primary);
+  color: var(--primary-foreground);
 }
 .btn-tenant:active:not(:disabled) {
   filter: brightness(0.95);
@@ -260,7 +278,7 @@ body {
   background-color: var(--card);
   color: var(--card-foreground);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 0px !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -288,7 +306,7 @@ body {
   background-color: var(--input);
   color: var(--foreground);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: 0px !important;
   padding: 0.4375rem 0.75rem;
   font-size: 0.8125rem;
   outline: none;
@@ -328,25 +346,54 @@ body {
 }
 
 .btn-danger-filled {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
-  padding: 0.4375rem 0.875rem;
-  transition: all 0.12s ease;
-  cursor: pointer;
-  user-select: none;
-  border: 1px solid transparent;
-  outline: none;
   background-color: oklch(0.60 0.18 15);
   color: #ffffff !important;
+  border-left-color: oklch(0.50 0.18 15) !important;
 }
 .btn-danger-filled:hover:not(:disabled) {
   background-color: oklch(0.55 0.18 15);
 }
+
+/* 5. Range Sliders override */
+input[type="range"] {
+  border-radius: 0px !important;
+  accent-color: var(--primary);
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  border-radius: 0px !important;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background-color: var(--primary);
+  border: 1px solid var(--foreground);
+  border-radius: 0px !important;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  background-color: var(--primary);
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background-color: var(--primary);
+  border: 1px solid var(--foreground);
+  border-radius: 0px !important;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+input[type="range"]::-moz-range-thumb:hover {
+  background-color: var(--primary);
+  transform: scale(1.15);
+}
+input[type="range"]::-ms-thumb {
+  border-radius: 0px !important;
+}
+
 
 
 
@@ -386,7 +433,7 @@ body {
 
 /* Google AI Stitch animated border path & glassmorphism */
 .animated-glowing-border {
-  border-radius: 28px;
+  border-radius: 0px !important;
   background: rgba(15, 15, 24, 0.82); /* Dark glass background for contrast in light mode */
   backdrop-filter: blur(40px) saturate(220%);
   -webkit-backdrop-filter: blur(40px) saturate(220%);
@@ -410,7 +457,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 28px;
+  border-radius: 0px !important;
   padding: 1.5px; /* Premium crisp border width */
   background: linear-gradient(90deg, #7000FF, #3B82F6, #00F5FF, #8B5CF6, #7000FF);
   background-size: 200% 200%;
@@ -428,7 +475,7 @@ body {
   content: "";
   position: absolute;
   inset: -2px;
-  border-radius: 30px;
+  border-radius: 0px !important;
   background: linear-gradient(90deg, #7000FF, #3B82F6, #00F5FF, #8B5CF6, #7000FF);
   background-size: 200% 200%;
   z-index: -1;

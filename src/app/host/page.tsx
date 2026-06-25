@@ -651,7 +651,7 @@ export default function HostConsole() {
                 <span className="font-bold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#7000FF] to-[#3B82F6]">
                   ReSys
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#7000FF]/10 border border-[#7000FF]/25 text-[#7000FF] dark:text-[#A78BFA] uppercase tracking-widest leading-none select-none">
+                <span className="px-2 py-0.5 rounded-none text-[9px] font-semibold bg-[#7000FF]/10 border border-[#7000FF]/25 text-[#7000FF] dark:text-[#A78BFA] uppercase tracking-widest leading-none select-none">
                   Host Console
                 </span>
               </div>
@@ -814,7 +814,7 @@ export default function HostConsole() {
                               {tenant.name}
                             </h3>
                             {editingTenant?.id === tenant.id && (
-                              <span className="text-[9.5px] px-2 py-0.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-650 dark:text-violet-400 font-semibold animate-pulse tracking-wide uppercase shrink-0">
+                              <span className="text-[9.5px] px-2 py-0.5 rounded-none border border-violet-500/30 bg-violet-500/10 text-violet-650 dark:text-violet-400 font-semibold animate-pulse tracking-wide uppercase shrink-0">
                                 Editing
                               </span>
                             )}
@@ -892,9 +892,9 @@ export default function HostConsole() {
                                       <span className="text-slate-400 dark:text-zinc-500 w-12 text-right">({pct}%)</span>
                                     </div>
                                   </div>
-                                  <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-full h-1 overflow-hidden border border-slate-300/10 dark:border-white/5 relative">
+                                  <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-none h-1 overflow-hidden border border-slate-300/10 dark:border-white/5 relative">
                                     <div 
-                                      className={`h-full rounded-full ${getVerticalSolidColor(tenant.vertical)} relative transition-all duration-500`}
+                                      className={`h-full rounded-none ${getVerticalSolidColor(tenant.vertical)} relative transition-all duration-500`}
                                       style={{ width: `${pct}%` }}
                                     />
                                   </div>
@@ -914,9 +914,9 @@ export default function HostConsole() {
                                       <span className="text-slate-400 dark:text-zinc-500 w-12 text-right">({pct}%)</span>
                                     </div>
                                   </div>
-                                  <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-full h-1 overflow-hidden border border-slate-300/10 dark:border-white/5 relative">
+                                  <div className="w-full bg-slate-200/50 dark:bg-black/40 rounded-none h-1 overflow-hidden border border-slate-300/10 dark:border-white/5 relative">
                                     <div 
-                                      className={`h-full rounded-full ${getVerticalSolidColor(tenant.vertical)} relative transition-all duration-500`}
+                                      className={`h-full rounded-none ${getVerticalSolidColor(tenant.vertical)} relative transition-all duration-500`}
                                       style={{ width: `${pct}%` }}
                                     />
                                   </div>

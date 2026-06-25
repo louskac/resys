@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 import { sendSSEUpdate } from "@/lib/sse";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // Helper to convert date to Europe/Prague timezone relative UTC
 const getLocalAsUtcDate = (d: Date): Date => {
