@@ -162,6 +162,15 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           resource: true,
         },
       },
+      exceptions: {
+        where: {
+          dateFrom: { lt: nextMonday },
+          dateTo: { gte: monday }
+        },
+        include: {
+          resource: true
+        }
+      }
     },
   });
 
@@ -344,6 +353,56 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           resourceName: resource.name,
         });
       });
+    }
+  });
+
+  // C. Add schedule exceptions (closures) as locked virtual events
+  tenant.exceptions.forEach((exc) => {
+    const overlapStart = new Date(Math.max(exc.dateFrom.getTime(), monday.getTime()));
+    const overlapEnd = new Date(Math.min(exc.dateTo.getTime(), nextMonday.getTime()));
+
+    if (overlapStart < overlapEnd) {
+      for (let day = 0; day < 7; day++) {
+        const dayStart = new Date(monday);
+        dayStart.setUTCDate(monday.getUTCDate() + day);
+        dayStart.setUTCHours(0, 0, 0, 0);
+
+        const dayEnd = new Date(dayStart);
+        dayEnd.setUTCDate(dayStart.getUTCDate() + 1);
+
+        const clampStart = new Date(Math.max(overlapStart.getTime(), dayStart.getTime()));
+        const clampEnd = new Date(Math.min(overlapEnd.getTime(), dayEnd.getTime()));
+
+        if (clampStart < clampEnd) {
+          const startHour = clampStart.getUTCHours() + clampStart.getUTCMinutes() / 60;
+          const endHour = clampEnd.getUTCHours() + clampEnd.getUTCMinutes() / 60;
+          const durationHours = endHour - startHour;
+
+          const targetResourceIds = exc.resourceId 
+            ? [exc.resourceId]
+            : tenant.resources.map(r => r.id);
+
+          targetResourceIds.forEach((resId) => {
+            const res = tenant.resources.find(r => r.id === resId);
+            if (!res) return;
+            const resAttrs = (res.attributes as unknown as ResourceAttributes) || {};
+
+            calendarEvents.push({
+              id: `${exc.id}-${day}-${resId}`,
+              name: `Uzavřeno: ${exc.name}`,
+              room: resAttrs.surface || "Mimořádná uzavírka",
+              instructor: "Systém",
+              dayIndex: day,
+              startHour,
+              durationHours,
+              resourceId: resId,
+              isOccupied: true,
+              resourceName: res.name,
+              status: "CLOSURE"
+            });
+          });
+        }
+      }
     }
   });
 

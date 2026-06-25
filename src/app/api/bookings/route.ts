@@ -421,6 +421,35 @@ export async function POST(request: NextRequest) {
             }
           }
 
+          // Check for schedule exceptions (closures) overlapping this booking slot
+          const exceptionConflictFilter = !scheduleRuleId
+            ? {
+                OR: [
+                  { resourceId: null },
+                  { resourceId: { in: conflictingResourceIds } }
+                ]
+              }
+            : {
+                OR: [
+                  { resourceId: null },
+                  { resourceId: finalResourceId }
+                ]
+              };
+
+          const conflictingExceptions = await tx.scheduleException.findMany({
+            where: {
+              tenantId,
+              ...exceptionConflictFilter,
+              dateFrom: { lt: reservedTo },
+              dateTo: { gt: reservedFrom }
+            }
+          });
+
+          if (conflictingExceptions.length > 0) {
+            const exc = conflictingExceptions[0];
+            throw new Error(`CLOSURE_EXCEPTION:${exc.name}`);
+          }
+
           // --- Validate that the booking is not in the past ---
           if (reservedFrom < getLocalAsUtcDate(new Date())) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
@@ -737,6 +766,11 @@ export async function POST(request: NextRequest) {
         const parts = msg.split(":");
         const dateStr = parts[1] ? `dne ${parts[1]}` : "v danou dobu";
         return makeErrorResponse("TECHNICAL_BREAK_CONFLICT", `Vybraný sportovní areál / sektor je ${dateStr} již obsazen (probíhá technická přestávka).`);
+      }
+      if (msg.startsWith("CLOSURE_EXCEPTION:")) {
+        const parts = msg.split(":");
+        const name = parts[1] || "Mimořádná uzavírka";
+        return makeErrorResponse("CLOSURE_EXCEPTION", `V tomto termínu nelze rezervovat. Probíhá mimořádná uzavírka: ${name}.`);
       }
       if (msg.startsWith("OVERLAP_CONFLICT") || error.code === "P2034") {
         const parts = msg.split(":");

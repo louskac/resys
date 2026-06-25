@@ -121,7 +121,9 @@ export async function POST(request: NextRequest) {
       "generate_onboarding_suggestions",
       "device_generate_pairing_code",
       "audit_logs_list",
-      "tenant_subscription_update"
+      "tenant_subscription_update",
+      "exception_upsert",
+      "exception_delete"
     ];
     let targetTenantId: string | undefined = undefined;
     if (tenantAdminActions.includes(action)) {
@@ -164,6 +166,9 @@ export async function POST(request: NextRequest) {
         } else if (action === "device_delete" && data?.id) {
           const dev = await prisma.checkinDevice.findUnique({ where: { id: data.id } });
           targetTenantId = dev?.tenantId;
+        } else if (action === "exception_delete" && data?.id) {
+          const exc = await prisma.scheduleException.findUnique({ where: { id: data.id } });
+          targetTenantId = exc?.tenantId;
         }
       }
 
@@ -949,6 +954,113 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
         }
         await prisma.scheduleRule.delete({ where: { id } });
         return NextResponse.json({ status: "success", message: "Schedule rule deleted." });
+      }
+
+      case "exception_upsert": {
+        const { id, tenantId, resourceId, name, dateFrom, dateTo } = data;
+        
+        let exception;
+        if (id) {
+          const existing = await prisma.scheduleException.findUnique({
+            where: { id }
+          });
+          if (!existing) {
+            return NextResponse.json({ error: "Exception not found" }, { status: 404 });
+          }
+          if (existing.tenantId !== targetTenantId) {
+            return NextResponse.json({ error: "Forbidden: Exception does not belong to this tenant" }, { status: 403 });
+          }
+          
+          exception = await prisma.scheduleException.update({
+            where: { id },
+            data: {
+              resourceId: resourceId || null,
+              name,
+              dateFrom: new Date(dateFrom),
+              dateTo: new Date(dateTo),
+            },
+          });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "EXCEPTION_UPDATE",
+                entity: "ScheduleException",
+                entityId: exception.id,
+                payload: { name, resourceId, dateFrom, dateTo }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log exception update failed", auditErr);
+          }
+        } else {
+          exception = await prisma.scheduleException.create({
+            data: {
+              tenantId: targetTenantId!,
+              resourceId: resourceId || null,
+              name,
+              dateFrom: new Date(dateFrom),
+              dateTo: new Date(dateTo),
+            },
+          });
+
+          // Record audit log
+          try {
+            await prisma.auditLog.create({
+              data: {
+                tenantId: targetTenantId!,
+                userId: session?.user?.id || null,
+                userName: session?.user?.name || "System",
+                action: "EXCEPTION_CREATE",
+                entity: "ScheduleException",
+                entityId: exception.id,
+                payload: { name, resourceId, dateFrom, dateTo }
+              }
+            });
+          } catch (auditErr) {
+            console.error("Audit log exception creation failed", auditErr);
+          }
+        }
+
+        return NextResponse.json({ status: "success", exception });
+      }
+
+      case "exception_delete": {
+        const { id } = data;
+        const existing = await prisma.scheduleException.findUnique({
+          where: { id }
+        });
+        if (!existing) {
+          return NextResponse.json({ error: "Exception not found" }, { status: 404 });
+        }
+        if (existing.tenantId !== targetTenantId) {
+          return NextResponse.json({ error: "Forbidden: Exception does not belong to this tenant" }, { status: 403 });
+        }
+
+        await prisma.scheduleException.delete({ where: { id } });
+
+        // Record audit log
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId: targetTenantId!,
+              userId: session?.user?.id || null,
+              userName: session?.user?.name || "System",
+              action: "EXCEPTION_DELETE",
+              entity: "ScheduleException",
+              entityId: id,
+              payload: { name: existing.name }
+            }
+          });
+        } catch (auditErr) {
+          console.error("Audit log exception deletion failed", auditErr);
+        }
+
+        return NextResponse.json({ status: "success", message: "Schedule exception deleted." });
       }
 
       case "device_upsert": {

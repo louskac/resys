@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: implement schedule exceptions and extraordinary closures with calendar overlays":
+      "Mimořádné uzavírky: Možnost naplánovat uzavření celého areálu nebo jednotlivých sportovišť s přehlednou vizualizací v kalendáři.",
     "feat: enforce sharp-edged design on scheduler, customize Siri core and refine UI details":
       "Sjednocení vzhledu: Úprava tlačítek rozvrhu a Siri energy core asistenta do ostrých tvarů a sjednocení drobných detailů.",
     "Restore B2B landing page design, implement automatic sunset pricing, and refine billing layouts":

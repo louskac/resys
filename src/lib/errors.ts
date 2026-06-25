@@ -19,7 +19,8 @@ export type ErrorCode =
   | "INVALID_EQUIPMENT"
   | "SCHEDULE_RULE_NOT_FOUND"
   | "SUBSCRIPTION_INACTIVE"
-  | "CREDIT_LIMIT_EXCEEDED";
+  | "CREDIT_LIMIT_EXCEEDED"
+  | "CLOSURE_EXCEPTION";
 
 
 export interface ApiErrorResponse {

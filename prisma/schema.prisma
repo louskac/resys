@@ -64,6 +64,7 @@ model Tenant {
   maxResourcesLimit  Int       @default(10)           // Limit resource counts based on tier
   maxDevicesLimit    Int       @default(3)            // Limit checkin device counts based on tier
   auditLogs          AuditLog[]
+  exceptions         ScheduleException[]
 }
 
 enum Role {
@@ -107,6 +108,7 @@ model Resource {
   attributes   Json?          // Dynamic metadata (e.g. equipment list, custom rules)
   scheduleRules ScheduleRule[]
   bookings     Booking[]
+  exceptions   ScheduleException[]
 }
 
 // Availability/Scheduling rules
@@ -256,3 +258,18 @@ model AuditLog {
 
   @@index([tenantId])
 }
+
+model ScheduleException {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  resourceId  String?   // Nullable: if null, applies to all resources of this tenant (global closure)
+  resource    Resource? @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  name        String    // e.g., "Státní svátek", "Odstávka sítě", "Sanitární den"
+  dateFrom    DateTime  // Start range of exception
+  dateTo      DateTime  // End range of exception
+  createdAt   DateTime  @default(now())
+
+  @@index([tenantId])
+}
+

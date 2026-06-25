@@ -188,6 +188,7 @@ interface AdminDashboardClientProps {
   partners?: Partner[];
   invoices?: Invoice[];
   users?: any[];
+  exceptions?: any[];
   activeDate?: string;
   weekStart?: string;
 }
@@ -301,12 +302,113 @@ export default function AdminDashboardClient({
   partners = [],
   invoices = [],
   users = [],
+  exceptions = [],
   activeDate,
   weekStart
 }: AdminDashboardClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const theme = getTenantTheme(tenant.id, tenant.vertical, tenant.name);
+
+  // Schedule exceptions states
+  const [exceptionsList, setExceptionsList] = useState<any[]>(exceptions);
+  const [newExceptionName, setNewExceptionName] = useState("");
+  const [newExceptionResourceId, setNewExceptionResourceId] = useState("global");
+  const [newExceptionDateFrom, setNewExceptionDateFrom] = useState("");
+  const [newExceptionTimeFrom, setNewExceptionTimeFrom] = useState("00:00");
+  const [newExceptionDateTo, setNewExceptionDateTo] = useState("");
+  const [newExceptionTimeTo, setNewExceptionTimeTo] = useState("23:59");
+  const [isSavingException, setIsSavingException] = useState(false);
+
+  const handleExceptionUpsert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newExceptionName.trim() || !newExceptionDateFrom || !newExceptionDateTo) {
+      setNotification({
+        type: "error",
+        title: "Chyba",
+        message: "Vyplňte prosím název a termín výjimky.",
+      });
+      return;
+    }
+    setIsSavingException(true);
+    try {
+      const dateFromVal = new Date(`${newExceptionDateFrom}T${newExceptionTimeFrom}:00.000Z`).toISOString();
+      const dateToVal = new Date(`${newExceptionDateTo}T${newExceptionTimeTo}:00.000Z`).toISOString();
+
+      const dataToSend = {
+        tenantId: tenant.id,
+        resourceId: newExceptionResourceId === "global" ? null : newExceptionResourceId,
+        name: newExceptionName,
+        dateFrom: dateFromVal,
+        dateTo: dateToVal,
+      };
+
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "exception_upsert", data: dataToSend })
+      });
+      if (!res.ok) throw new Error("Chyba při ukládání výjimky.");
+
+      const data = await res.json();
+      const newExc = {
+        id: data.exception.id,
+        name: data.exception.name,
+        resourceId: data.exception.resourceId,
+        resourceName: resources.find(r => r.id === data.exception.resourceId)?.name || "Celý areál",
+        dateFrom: data.exception.dateFrom,
+        dateTo: data.exception.dateTo,
+      };
+
+      setExceptionsList(prev => [...prev, newExc]);
+      setNewExceptionName("");
+      setNewExceptionResourceId("global");
+      setNewExceptionDateFrom("");
+      setNewExceptionTimeFrom("00:00");
+      setNewExceptionDateTo("");
+      setNewExceptionTimeTo("23:59");
+
+      setNotification({
+        type: "success",
+        title: "Výjimka uložena",
+        message: "Mimořádná uzavírka byla úspěšně uložena!",
+      });
+    } catch (err: any) {
+      console.error(err);
+      setNotification({
+        type: "error",
+        title: "Chyba",
+        message: err.message || "Nepodařilo se uložit výjimku.",
+      });
+    } finally {
+      setIsSavingException(false);
+    }
+  };
+
+  const handleExceptionDelete = async (id: string) => {
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "exception_delete", data: { id } })
+      });
+      if (!res.ok) throw new Error("Chyba při mazání výjimky.");
+
+      setExceptionsList(prev => prev.filter(exc => exc.id !== id));
+      setNotification({
+        type: "success",
+        title: "Výjimka smazána",
+        message: "Mimořádná uzavírka byla úspěšně odstraněna.",
+      });
+    } catch (err: any) {
+      console.error(err);
+      setNotification({
+        type: "error",
+        title: "Chyba",
+        message: err.message || "Nepodařilo se smazat výjimku.",
+      });
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<"overview" | "resources" | "rules" | "bookings" | "devices" | "settings" | "operating" | "billing" | "subscription" | "updates">("overview");
   const [bookingsSubTab, setBookingsSubTab] = useState<"calendar" | "list">("calendar");
@@ -3597,6 +3699,155 @@ export default function AdminDashboardClient({
                   )}
                 </div>
               </form>
+
+              {/* CARD 3: Mimořádné uzavírky */}
+              <div className="mt-8 p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-6">
+                <div>
+                  <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
+                    <ShieldAlert size={14} />
+                    Mimořádné uzavírky a svátky
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Definujte jednorázové uzavírky, údržbu nebo svátky, kdy bude rezervační systém zablokován.</p>
+                </div>
+
+                {/* Form to Create Exception */}
+                {!isReceptionist && (
+                  <form onSubmit={handleExceptionUpsert} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-50/50 dark:bg-black/10 p-4 border border-slate-100 dark:border-slate-800/40">
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Název uzavírky</label>
+                      <input
+                        type="text"
+                        required
+                        value={newExceptionName}
+                        onChange={(e) => setNewExceptionName(e.target.value)}
+                        placeholder="Např. Státní svátek, Sanitární den"
+                        className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-3 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Rozsah (Zdroj)</label>
+                      <select
+                        value={newExceptionResourceId}
+                        onChange={(e) => setNewExceptionResourceId(e.target.value)}
+                        className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-3 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs cursor-pointer"
+                      >
+                        <option value="global">Celý areál (Všechny zdroje)</option>
+                        {resources.map(res => (
+                          <option key={res.id} value={res.id}>{res.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Od (Datum & Čas)</label>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="date"
+                          required
+                          value={newExceptionDateFrom}
+                          onChange={(e) => setNewExceptionDateFrom(e.target.value)}
+                          className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-2 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                        />
+                        <input
+                          type="time"
+                          required
+                          value={newExceptionTimeFrom}
+                          onChange={(e) => setNewExceptionTimeFrom(e.target.value)}
+                          className="bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-1 text-center font-mono text-xs w-16"
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">Do (Datum & Čas)</label>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="date"
+                          required
+                          value={newExceptionDateTo}
+                          onChange={(e) => setNewExceptionDateTo(e.target.value)}
+                          className="w-full bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-2 font-semibold text-foreground focus:outline-none focus:border-tenant-primary text-xs"
+                        />
+                        <input
+                          type="time"
+                          required
+                          value={newExceptionTimeTo}
+                          onChange={(e) => setNewExceptionTimeTo(e.target.value)}
+                          className="bg-white dark:bg-[#0E0E17] border border-slate-200 dark:border-[#2A2A40] rounded-none py-1.5 px-1 text-center font-mono text-xs w-16"
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <button
+                        type="submit"
+                        disabled={isSavingException}
+                        className="w-full bg-tenant-gradient hover:opacity-95 text-white font-bold text-xs py-2 px-4 rounded-none shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Plus size={13} />
+                        Přidat výjimku
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* List of Exceptions */}
+                <div className="space-y-3.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Naplánované uzavírky</span>
+                  {exceptionsList.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-muted-foreground border border-dashed border-slate-200 dark:border-slate-800">
+                      Nebyly naplánovány žádné mimořádné uzavírky.
+                    </div>
+                  ) : (
+                    <div className="border border-slate-200/50 dark:border-[#1F1F35] bg-white/30 dark:bg-black/10 overflow-hidden">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-100/50 dark:bg-slate-900/50 text-slate-500 dark:text-zinc-400 font-bold border-b border-slate-200/40 dark:border-[#1F1F35]/40 uppercase tracking-wider text-[9px]">
+                            <th className="py-2.5 px-4 font-bold">Název</th>
+                            <th className="py-2.5 px-4 font-bold">Rozsah</th>
+                            <th className="py-2.5 px-4 font-bold">Časové období (UTC)</th>
+                            <th className="py-2.5 px-4 font-bold text-right">Akce</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {exceptionsList.map((exc) => (
+                            <tr key={exc.id} className="border-b border-slate-150/40 dark:border-white/[0.02] hover:bg-slate-50/5 dark:hover:bg-white/[0.02]">
+                              <td className="py-3 px-4 font-bold text-foreground">{exc.name}</td>
+                              <td className="py-3 px-4 font-medium text-slate-650 dark:text-slate-350">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold ${exc.resourceId ? "bg-purple-500/10 text-purple-400 border border-purple-500/15" : "bg-blue-500/10 text-blue-400 border border-blue-500/15"}`}>
+                                  {exc.resourceName}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 font-mono text-slate-650 dark:text-slate-350">
+                                {formatUTCDate(exc.dateFrom)} {new Date(exc.dateFrom).getUTCHours().toString().padStart(2, '0')}:{new Date(exc.dateFrom).getUTCMinutes().toString().padStart(2, '0')}
+                                {" – "}
+                                {formatUTCDate(exc.dateTo)} {new Date(exc.dateTo).getUTCHours().toString().padStart(2, '0')}:{new Date(exc.dateTo).getUTCMinutes().toString().padStart(2, '0')}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {!isReceptionist ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setConfirmModal({
+                                        title: "Odstranit výjimku?",
+                                        message: `Opravdu chcete smazat mimořádnou uzavírku "${exc.name}"?`,
+                                        onConfirm: () => handleExceptionDelete(exc.id)
+                                      });
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                                    title="Odstranit"
+                                  >
+                                    <Trash size={14} />
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-rose-500 font-semibold uppercase tracking-wider">Bez oprávnění</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

@@ -100,6 +100,10 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
           partner: true,
           bookings: true
         }
+      },
+      exceptions: {
+        orderBy: { dateFrom: "asc" },
+        include: { resource: true }
       }
     },
   });
@@ -257,6 +261,15 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     createdAt: u.createdAt.toISOString(),
   }));
 
+  const serializedExceptions = tenant.exceptions.map(exc => ({
+    id: exc.id,
+    name: exc.name,
+    resourceId: exc.resourceId,
+    resourceName: exc.resource?.name || "Celý areál",
+    dateFrom: exc.dateFrom.toISOString(),
+    dateTo: exc.dateTo.toISOString(),
+  }));
+
   return (
     <AdminDashboardClient
       tenant={serializedTenant}
@@ -266,6 +279,7 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
       partners={serializedPartners}
       invoices={serializedInvoices}
       users={serializedUsers}
+      exceptions={serializedExceptions}
       checkinLogs={allLogs}
       activeDate={date || formatUTCDate(targetDate)}
       weekStart={formatUTCDate(monday)}
