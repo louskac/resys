@@ -227,7 +227,7 @@ interface UnifiedSwitcherProps<T> {
 
 function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherProps<T>) {
   return (
-    <div className="flex flex-wrap gap-2 p-1 bg-slate-200/40 dark:bg-[#0F0F1A]/60 backdrop-blur-md rounded-none border border-[#CBD5E1]/20 dark:border-[#1F1F2E] w-fit shadow-inner">
+    <div className="flex items-center bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none w-fit max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shadow-sm">
       {options.map((option) => {
         const isActive = activeValue === option.value;
         return (
@@ -235,10 +235,10 @@ function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherP
             key={String(option.value)}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all duration-200 cursor-pointer ${
+            className={`px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 cursor-pointer whitespace-nowrap rounded-none ${
               isActive
-                ? "bg-white dark:bg-[#1B1B2E] border border-[#E2E2ED] dark:border-[#2A2A3E]/60 text-tenant-primary dark:text-white shadow-sm scale-[1.02]"
-                : "border border-transparent bg-white/40 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-450 hover:text-tenant-primary dark:hover:text-white"
+                ? "bg-tenant-primary/15 text-tenant-primary font-black shadow-[inset_0_-2px_0_0_var(--tenant-primary)]"
+                : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-200/5 dark:hover:bg-white/5"
             }`}
           >
             {option.label}
@@ -1551,13 +1551,13 @@ export default function CalendarView({
           <div className="flex items-center gap-1">
             <button 
               onClick={handlePrevWeek}
-              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-tenant-primary dark:hover:text-white border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-tenant-primary/30 dark:hover:border-tenant-primary/30 hover:scale-105 shadow-sm shadow-tenant-primary/5 transition-all flex items-center justify-center cursor-pointer"
+              className="p-2.5 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={handleNextWeek}
-              className="p-2 rounded-none bg-white/60 dark:bg-[#131322]/40 backdrop-blur-md hover:bg-white dark:hover:bg-[#1A1A2E]/60 text-slate-700 dark:text-slate-355 hover:text-tenant-primary dark:hover:text-white border border-[#E2E2ED] dark:border-[#1F1F2E] hover:border-tenant-primary/30 dark:hover:border-tenant-primary/30 hover:scale-105 shadow-sm shadow-tenant-primary/5 transition-all flex items-center justify-center cursor-pointer"
+              className="p-2.5 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
             >
               <ChevronRight size={16} />
             </button>
@@ -1566,12 +1566,12 @@ export default function CalendarView({
           {!isCurrent && (
             <button 
               onClick={handleToday}
-              className="px-4 py-1.5 rounded-none bg-tenant-primary/10 dark:bg-tenant-primary/15 text-tenant-primary dark:text-white border border-tenant-primary/30 dark:border-tenant-primary/40 hover:bg-tenant-primary/20 dark:hover:bg-tenant-primary/25 hover:scale-105 shadow-sm transition-all text-xs font-bold cursor-pointer backdrop-blur-sm"
+              className="border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary dark:text-white hover:text-white transition-all text-[10px] font-extrabold py-2 px-4 rounded-none cursor-pointer uppercase tracking-widest"
             >
               Dnes
             </button>
           )}
-
+ 
           {/* Day/Week/Month Switcher */}
           {!isHorizontal && (
             <UnifiedSwitcher<"day" | "week" | "month">
@@ -1584,10 +1584,10 @@ export default function CalendarView({
               onChange={setViewMode}
             />
           )}
-
+ 
           {/* Simple Toggle Switch for Horizontal View */}
-          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-200/40 dark:bg-[#0F0F1A]/60 border border-[#CBD5E1]/20 dark:border-[#1F1F2E] rounded-none shadow-inner select-none">
-            <span className="text-[11.5px] font-bold text-slate-600 dark:text-zinc-400">
+          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 rounded-none shadow-sm select-none">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550 dark:text-zinc-400">
               Horizontální rozvrh
             </span>
             <button
@@ -1600,7 +1600,7 @@ export default function CalendarView({
                 }
               }}
               className={`w-9 h-5 flex items-center rounded-none p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${
-                isHorizontal ? "bg-[#7000FF] dark:bg-[#A78BFA]" : "bg-slate-300 dark:bg-slate-700"
+                isHorizontal ? "bg-tenant-primary" : "bg-slate-300 dark:bg-zinc-700"
               }`}
               title="Zobrazit plochy/kurzy vedle sebe pro aktuální den"
             >
@@ -1611,8 +1611,8 @@ export default function CalendarView({
               />
             </button>
           </div>
-
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-none bg-[#7000FF]/8 dark:bg-[#7000FF]/15 text-[#7000FF] dark:text-[#C084FC] border border-[#7000FF]/25 dark:border-[#8B5CF6]/30 backdrop-blur-sm select-none shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]">
+ 
+          <span className="text-[9px] px-2.5 py-2 border border-slate-300 dark:border-zinc-700 bg-slate-200/30 dark:bg-black/40 text-slate-600 dark:text-white/90 font-extrabold uppercase tracking-widest select-none rounded-none shrink-0 shadow-xs">
             {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
           </span>
         </div>
@@ -1783,7 +1783,7 @@ export default function CalendarView({
                                     className="absolute left-0 right-0 border-t-2 border-rose-500 z-30 pointer-events-none flex items-center"
                                     style={{ top: `${nowLineTop}px` }}
                                   >
-                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
+                                    <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
                                   </div>
                                 )}
             
@@ -1985,7 +1985,7 @@ export default function CalendarView({
                                                       ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
                                                       : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                                 }`}>
-                                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                                  <span className={`w-1.5 h-1.5 rounded-none shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
                                                   {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                                 </h4>
                                               </div>
@@ -2049,7 +2049,7 @@ export default function CalendarView({
                                               <div className={`absolute ${tooltipAlignmentClass} w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans ${tooltipPositionClass}`}>
                                                 <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
                                                   <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
-                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${styles.barColor}`} />
+                                                    <span className={`w-2 h-2 rounded-none shrink-0 ${styles.barColor}`} />
                                                     {event.resourceName || "Sport field"}
                                                   </span>
                                                   <span className="text-[9px] font-mono text-zinc-500 dark:text-slate-400">
@@ -2191,7 +2191,7 @@ export default function CalendarView({
                         className="absolute left-0 right-0 border-t-2 border-rose-500 z-30 pointer-events-none flex items-center"
                         style={{ top: `${nowLineTop}px` }}
                       >
-                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
+                        <div className="w-2.5 h-2.5 rounded-none bg-rose-500 shadow shadow-rose-500/50" style={{ marginLeft: "-5px" }} />
                       </div>
                     )}
 
@@ -2393,7 +2393,7 @@ export default function CalendarView({
                                           ? "font-extrabold text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400"
                                           : `font-extrabold text-[10px] md:text-[11px] ${styles.textHex}`
                                     }`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
+                                      <span className={`w-1.5 h-1.5 rounded-none shrink-0 ${isDraftEvent ? "bg-tenant-primary shadow-[0_0_8px_var(--tenant-primary)]" : isPastEvent && event.status !== "TECHNICAL_BREAK" ? "bg-slate-400 dark:bg-slate-600" : styles.barColor}`} />
                                       {event.isOccupied ? (event.status === "TECHNICAL_BREAK" ? event.name : isDraftEvent ? `${event.name}` : (isAdmin ? `${event.name}${event.status === "PENDING_PAYMENT" ? " [Platba]" : event.status === "ATTENDED" ? " [✓]" : ""}` : (isMyBooking ? `Moje rezervace${event.status === "PENDING_PAYMENT" ? " (neuhrazeno)" : event.status === "ATTENDED" ? " (odbaveno)" : ""}` : "Obsazeno"))) : event.name}
                                     </h4>
                                   </div>
@@ -2477,7 +2477,7 @@ export default function CalendarView({
                                   <div className={tooltipClass}>
                                     <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
                                       <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${styles.barColor}`} />
+                                        <span className={`w-2 h-2 rounded-none shrink-0 ${styles.barColor}`} />
                                         {event.resourceName || "Sport field"}
                                       </span>
                                       <span className="text-[9px] font-mono text-zinc-500 dark:text-slate-400">
@@ -2581,7 +2581,7 @@ export default function CalendarView({
                       <span className="text-[10px]">{d.getDate()}</span>
                       {dayEventsCount > 0 && (
                         <div className="flex gap-1 items-center">
-                          <span className="h-1 w-1 rounded-full bg-tenant-primary dark:bg-tenant-primary shadow-[0_0_4px_#7000FF]" />
+                          <span className="h-1 w-1 rounded-none bg-tenant-primary dark:bg-tenant-primary shadow-[0_0_4px_#7000FF]" />
                           <span className="text-[8px] font-bold text-tenant-primary dark:text-zinc-200">
                             {dayEventsCount} {dayEventsCount === 1 ? "rezervace" : dayEventsCount >= 2 && dayEventsCount <= 4 ? "rezervace" : "rezervací"}
                           </span>
@@ -3289,7 +3289,7 @@ export default function CalendarView({
                 <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary dark:text-white">
                   Rezervační portál
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider animate-pulse">
+                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
                   Aktivní vstup
                 </span>
               </div>
@@ -3321,8 +3321,7 @@ export default function CalendarView({
               {/* Metallic Sheen Overlay */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
               
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider animate-pulse relative z-20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider relative z-20">
                 Aktivní zabezpečený kód
               </div>
               

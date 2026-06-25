@@ -822,7 +822,7 @@ export default function HostConsole() {
                               {tenant.vertical.replace("_", " ")}
                             </span>
                             <span className={`text-[9.5px] border-l-2 font-medium tracking-wide shrink-0 flex items-center gap-1.5 pl-1.5 select-none ${getSubscriptionBadgeStyles(tenant.subscriptionStatus || "TRIALING")}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${
+                              <span className={`w-1.5 h-1.5 rounded-none ${
                                 tenant.subscriptionStatus === "ACTIVE" || tenant.subscriptionStatus === "TRIALING" ? "bg-emerald-500" : "bg-rose-500"
                               }`} />
                               {tenant.subscriptionPlan || "FREE_TRIAL"} • {tenant.subscriptionStatus || "TRIALING"}

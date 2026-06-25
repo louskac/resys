@@ -23,18 +23,18 @@ export default function AILiquidCore({
   return (
     <button
       onClick={onClick}
-      className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-auto md:h-12 rounded-none bg-slate-950/90 dark:bg-[#07070C]/95 backdrop-blur-xl border border-white/10 hover:border-tenant-primary/40 text-white flex items-center justify-center md:justify-between gap-0 md:gap-5 shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_20px_rgba(112,0,255,0.2)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_25px_rgba(112,0,255,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 z-50 cursor-pointer group select-none py-0 px-0 md:!pl-16 md:!pr-6 ${className}`}
+      className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-auto md:h-12 rounded-full bg-slate-950/90 dark:bg-[#07070C]/95 backdrop-blur-xl border border-white/10 hover:border-tenant-primary/40 text-white flex items-center justify-center md:justify-between gap-0 md:gap-5 shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_20px_rgba(112,0,255,0.2)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_25px_rgba(112,0,255,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 z-50 cursor-pointer group select-none py-0 px-0 md:!pl-16 md:!pr-6 ${className}`}
       title={title}
     >
       {/* Futuristic Siri/Gemini-style Liquid Energy Core docked on the left */}
       <div className="absolute left-0 md:-left-3 top-1/2 -translate-y-1/2 h-14 w-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
         {/* Ambient background glow bleeding outside the border */}
-        <div className="absolute -inset-1.5 rounded-none bg-gradient-to-tr from-[#7000FF] via-[#EC4899] to-[#00F5FF] opacity-35 blur-[8px] group-hover:opacity-65 transition-opacity duration-300" />
+        <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#7000FF] via-[#EC4899] to-[#00F5FF] opacity-35 blur-[8px] group-hover:opacity-65 transition-opacity duration-300" />
         
         {/* The main core sphere */}
-        <div className="absolute inset-0 rounded-none border border-white/15 bg-slate-950/90 backdrop-blur-lg shadow-[0_0_20px_rgba(112,0,255,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)] overflow-hidden flex items-center justify-center transition-colors duration-300 group-hover:border-tenant-primary/30">
+        <div className="absolute inset-0 rounded-full border border-white/15 bg-slate-950/90 backdrop-blur-lg shadow-[0_0_20px_rgba(112,0,255,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)] overflow-hidden flex items-center justify-center transition-colors duration-300 group-hover:border-tenant-primary/30">
           {/* Pulsing base glow */}
-          <div className="absolute inset-0 rounded-none bg-tenant-primary/10 animate-pulse" />
+          <div className="absolute inset-0 rounded-full bg-tenant-primary/10 animate-pulse" />
           
           {/* Layer 1: Deep Purple Blob */}
           <div className="absolute h-[34px] w-[34px] rounded-full bg-[#7000FF] blur-[7px] opacity-85 animate-blob-orbit-1" />
@@ -52,7 +52,7 @@ export default function AILiquidCore({
           <div className="absolute h-[14px] w-[14px] rounded-full bg-cyan-100 blur-[3px] opacity-60 animate-pulse" style={{ animationDuration: '1.5s' }} />
           
           {/* Glass reflection overlay */}
-          <div className="absolute inset-0 rounded-none bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
         </div>
       </div>
 

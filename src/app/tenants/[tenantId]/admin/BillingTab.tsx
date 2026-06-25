@@ -6,7 +6,7 @@ import {
   DollarSign, ArrowRight, Eye, Check, X, ShieldAlert, 
   BadgePercent, Search, UserPlus, Building, Trash2, 
   Mail, Phone, ShieldCheck, MapPin, Sparkles, Ban,
-  Loader2, CheckCircle2, XCircle
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -552,9 +552,9 @@ export default function BillingTab({
             {emailSendingStatus.status === "sending" ? (
               <Loader2 className="animate-spin text-sky-400 shrink-0" size={16} />
             ) : emailSendingStatus.status === "success" ? (
-              <CheckCircle2 className="text-emerald-400 shrink-0" size={16} />
+              <Check className="text-emerald-400 shrink-0" size={16} />
             ) : (
-              <XCircle className="text-rose-500 shrink-0" size={16} />
+              <X className="text-rose-500 shrink-0" size={16} />
             )}
             <div className="flex-1 text-[11px] leading-tight font-medium">
               {emailSendingStatus.message}

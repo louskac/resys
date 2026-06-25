@@ -311,29 +311,37 @@ export default function UserDashboardClient({
     .sort((a, b) => new Date(b.reservedFrom).getTime() - new Date(a.reservedFrom).getTime());
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150 relative overflow-hidden">
       
+      {/* Background ambient glow blobs */}
+      <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] pointer-events-none select-none -z-10 bg-parallax-blob-1">
+        <div className="w-full h-full rounded-full bg-tenant-primary/10 dark:bg-tenant-primary/5 blur-[100px]" />
+      </div>
+      <div className="absolute bottom-[15%] right-[-5%] w-[55%] h-[55%] pointer-events-none select-none -z-10 bg-parallax-blob-2">
+        <div className="w-full h-full rounded-full bg-[#7000FF]/10 dark:bg-[#7000FF]/5 blur-[120px]" />
+      </div>
+      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] pointer-events-none select-none -z-10 bg-parallax-blob-3">
+        <div className="w-full h-full rounded-full bg-[#7000FF]/8 dark:bg-[#7000FF]/4 blur-[110px]" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
+      <header className="border-b border-slate-200/50 dark:border-[#1F1F35]/30 bg-white/45 dark:bg-[#07070C]/35 backdrop-blur-xl sticky top-0 z-40 transition-all shadow-md shadow-slate-100/5 dark:shadow-black/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={`/tenants/${tenant.id}`}
-              className="btn-outline py-1.5 px-3 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground hover:border-tenant-primary/30"
-              style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+              className="py-1.5 px-3 rounded-none text-[11px] font-bold border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm uppercase tracking-widest"
             >
               <ArrowLeft size={13} />
               Zpět na rezervace
             </Link>
-            <span className="h-4 w-px bg-border hidden sm:inline" />
-            <span className="font-extrabold text-sm text-foreground select-none">
+            <span className="h-4 w-px bg-slate-200 dark:bg-white/10 hidden sm:inline" />
+            <span className="text-[9px] px-2 py-0.5 border border-slate-200/40 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-700 dark:text-zinc-300 font-extrabold uppercase tracking-widest select-none rounded-none shrink-0">
               Můj Profil / Dashboard
             </span>
           </div>
 
-          <div className="flex items-center bg-white/45 dark:bg-[#0E0E1B]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none p-1 shadow-sm">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle className="p-2.5 rounded-none bg-white/10 dark:bg-white/5 text-slate-750 dark:text-zinc-400 hover:bg-white/20 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white border border-slate-200/40 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center" />
         </div>
       </header>
 
@@ -441,7 +449,6 @@ export default function UserDashboardClient({
               {/* Upcoming Reservations */}
               <div className="space-y-3">
                 <h2 className="text-sm font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse" />
                   Nadcházející rezervace
                 </h2>
                 
@@ -467,8 +474,7 @@ export default function UserDashboardClient({
                                 Čeká na platbu
                               </span>
                             ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
-                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping" />
+                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                                 Právě probíhá
                               </span>
                             ) : b.status === "ATTENDED" ? (
@@ -615,7 +621,6 @@ export default function UserDashboardClient({
           {activeTab === "history" && (
             <div className="space-y-3">
               <h2 className="text-sm font-extrabold uppercase tracking-widest text-tenant-primary flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-pulse" />
                 Historie fyzických příchodů a skenů
               </h2>
 
@@ -903,7 +908,7 @@ export default function UserDashboardClient({
                     <button
                       type="submit"
                       disabled={savingProfile}
-                      className="btn-tenant py-3 px-6 text-white font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-75"
+                      className="border border-white/10 border-l-[3px] border-l-white/30 py-3 px-6 text-white text-[11px] font-extrabold uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-75 rounded-none"
                       style={{ 
                         background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
                         boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
@@ -971,8 +976,7 @@ export default function UserDashboardClient({
 
             {/* Ticket Bottom Part (QR Code) */}
             <div className="p-6 flex flex-col items-center bg-slate-50/50 dark:bg-slate-900/20 text-center gap-4">
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider animate-pulse">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider">
                 Aktivní zabezpečený kód
               </div>
               

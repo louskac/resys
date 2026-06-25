@@ -251,7 +251,7 @@ export default function IoTSimulator() {
                   : "bg-rose-500/10 border-rose-500/20 text-rose-400"
               }`}>
                 <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${simulationResult.granted ? "bg-tenant-primary animate-pulse" : "bg-rose-500"}`} />
+                  <div className={`h-2 w-2 rounded-none ${simulationResult.granted ? "bg-tenant-primary" : "bg-rose-500"}`} />
                   <span className="text-[10px] font-extrabold uppercase tracking-wider font-sans">
                     {simulationResult.granted ? "Vstup: Uvolněn" : "Vstup: Blokován"}
                   </span>

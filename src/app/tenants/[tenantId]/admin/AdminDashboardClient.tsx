@@ -1940,7 +1940,6 @@ export default function AdminDashboardClient({
 
             {/* Status Pill (Open/Closed) */}
             <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/35 dark:bg-[#0E0E1B]/35 backdrop-blur-xl border border-slate-200/40 dark:border-[#1F1F35]/40 rounded-none text-[10.5px] font-semibold select-none shadow-sm shadow-slate-100/5 dark:shadow-black/5 hover:border-slate-300 dark:hover:border-zinc-800 transition-colors">
-              <span className={`h-1.5 w-1.5 rounded-full shadow-lg shrink-0 animate-pulse ${isOpenNow ? "bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-amber-500 shadow-[0_0_8px_#F59E0B]"}`} />
               <span className={isOpenNow ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
                 {isOpenNow ? "Nyní otevřeno" : "Zavřeno"}
               </span>
@@ -2237,7 +2236,6 @@ export default function AdminDashboardClient({
 
                 <div className="border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
                   <div className="flex items-center gap-2 text-[9px] text-slate-400 dark:text-zinc-500 font-mono tracking-[0.2em] uppercase">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                     <span>System active</span>
                   </div>
                 </div>
@@ -3394,7 +3392,6 @@ export default function AdminDashboardClient({
                             <tr key={day.dayOfWeek} className={`border-b border-slate-100/50 dark:border-[#1F1F35]/10 transition-all ${day.closed ? "opacity-45 bg-slate-50/5 dark:bg-black/5" : "hover:bg-tenant-primary/5 dark:hover:bg-tenant-primary/10"}`}>
                               <td className="py-4 px-5 font-bold text-foreground">
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-[10px] font-bold bg-slate-100 dark:bg-[#131322]/80 border border-slate-200/40 dark:border-[#1F1F35] text-slate-700 dark:text-zinc-300 select-none">
-                                  <span className={`h-1.5 w-1.5 rounded-full ${day.closed ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
                                   {day.name}
                                 </span>
                               </td>
@@ -3489,7 +3486,6 @@ export default function AdminDashboardClient({
                         <div key={day.dayOfWeek} className={`p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5 transition-all ${day.closed ? "opacity-55" : ""}`}>
                           <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/[0.04] pb-2">
                             <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-                              <span className={`h-1.5 w-1.5 rounded-full ${day.closed ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
                               {day.name}
                             </span>
                             
@@ -3870,7 +3866,6 @@ export default function AdminDashboardClient({
             <span className="font-extrabold tracking-tight text-slate-800 dark:text-slate-200 text-sm">
               Re<span className="text-tenant-primary">Sys</span>
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" title="Všechny systémy funkční" />
             <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Administrace</span>
           </div>
           

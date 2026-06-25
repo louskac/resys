@@ -20,6 +20,10 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: enforce sharp-edged design on scheduler, customize Siri core and refine UI details":
+      "Sjednocení vzhledu: Úprava tlačítek rozvrhu a Siri energy core asistenta do ostrých tvarů a sjednocení drobných detailů.",
+    "Restore B2B landing page design, implement automatic sunset pricing, and refine billing layouts":
+      "Ceník a tarify: Optimalizace struktury cenových plánů, automatické nastavení sunset tarifů a přehlednější uspořádání.",
     "feat: integrate scroll animations, parallax effects and hover transitions on landing page":
       "Interaktivní prvky: Přidány paralaxní efekty, plynulé přechody tabů a jemné animace pro modernější vzhled.",
     "feat: redesign B2B ecosystem visualizer into interactive growth timeline and tech stack data flow simulator":
@@ -251,14 +255,8 @@ export async function GET(req: NextRequest) {
         });
         const pkg = JSON.parse(pkgContent);
         version = pkg.version || "0.1.0";
-        if (version === "0.2.4") {
-          version = "0.2.3";
-        }
       } catch (err) {
         version = lastSeenVersion || "0.1.0";
-        if (version === "0.2.4") {
-          version = "0.2.3";
-        }
       }
 
       lastSeenVersion = version;
@@ -275,11 +273,19 @@ export async function GET(req: NextRequest) {
         files = [];
       }
 
+      // Group all 0.2.x commits under version 0.2.0 and date 2026-06-23
+      let commitVersion = version;
+      let commitDate = date;
+      if (version.startsWith("0.2.")) {
+        commitVersion = "0.2.0";
+        commitDate = "2026-06-23";
+      }
+
       rawCommits.push({
         hash,
-        date,
+        date: commitDate,
         message: trimmedMessage,
-        version,
+        version: commitVersion,
         files
       });
     }
@@ -339,7 +345,10 @@ export async function GET(req: NextRequest) {
 
     // Transform into final payload format
     const finalGroups = groups.map((g) => {
-      const displayVersion = groupVersions[`${g.version}|${g.date}`] || `v${g.version}`;
+      let displayVersion = groupVersions[`${g.version}|${g.date}`] || `v${g.version}`;
+      if (g.version === "0.2.0") {
+        displayVersion = "v0.2.0 - Design overhaul";
+      }
       
       const benefits = Array.from(new Set(
         g.rawCommits.map(c => getCommitUserBenefit(c.message))

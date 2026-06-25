@@ -346,7 +346,6 @@ export default async function Home() {
           <p>© {new Date().getFullYear()} ReSys SaaS. Všechna práva vyhrazena. Navrženo pro integrátory.</p>
           <div className="flex gap-4 font-semibold text-[10px] tracking-wide select-none">
             <span className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               SaaS Engine v provozu
             </span>
           </div>

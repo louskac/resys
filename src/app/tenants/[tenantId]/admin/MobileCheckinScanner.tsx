@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { 
-  Camera, X, CheckCircle2, AlertCircle, XCircle, 
+  Camera, X, Check, AlertTriangle, 
   Loader2, Volume2, VolumeX, Keyboard, Upload, Smartphone, ArrowRight
 } from "lucide-react";
 import jsQR from "jsqr";
@@ -389,7 +389,6 @@ export default function MobileCheckinScanner({
       {/* Header Action Bar */}
       <header className="p-4 bg-white dark:bg-[#0D0D18] border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between z-10">
         <div className="flex items-center gap-2.5">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
           <div className="text-left">
             <div className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-white truncate max-w-[180px]">
               {activeDevice?.name || "Odbavování"}
@@ -448,7 +447,7 @@ export default function MobileCheckinScanner({
           {/* Camera access error */}
           {cameraError && (
             <div className="absolute inset-0 bg-white dark:bg-[#0D0D15] flex flex-col items-center justify-center text-center p-6 space-y-3 z-10">
-              <AlertCircle className="text-amber-500" size={32} />
+               <AlertTriangle className="text-amber-500" size={32} />
               <h3 className="text-xs font-bold text-slate-950 dark:text-white uppercase">Chyba kamery</h3>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[220px]">{cameraError}</p>
               <button
@@ -588,15 +587,15 @@ export default function MobileCheckinScanner({
 
             <div className="flex flex-col items-center space-y-3">
               <div className="relative">
-                {scanResult.status === "granted" ? (
+                 {scanResult.status === "granted" ? (
                   <>
-                    <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
-                    <CheckCircle2 className="text-white relative z-10 animate-[scaleIn_0.35s_cubic-bezier(0.16,1,0.3,1)]" size={56} />
+                    <div className="absolute inset-0 bg-white/20 rounded-none blur-xl animate-pulse" />
+                    <Check className="text-white relative z-10 animate-[scaleIn_0.35s_cubic-bezier(0.16,1,0.3,1)]" size={56} />
                   </>
                 ) : (
                   <>
-                    <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
-                    <XCircle className="text-white relative z-10 animate-[scaleIn_0.35s_cubic-bezier(0.16,1,0.3,1)]" size={56} />
+                    <div className="absolute inset-0 bg-white/20 rounded-none blur-xl animate-pulse" />
+                    <X className="text-white relative z-10 animate-[scaleIn_0.35s_cubic-bezier(0.16,1,0.3,1)]" size={56} />
                   </>
                 )}
               </div>

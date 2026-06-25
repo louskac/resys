@@ -86,7 +86,7 @@ function UpdateCard({
                 <ul className="space-y-1.5">
                   {upg.files.map((file, idx) => (
                     <li key={idx} className="flex items-center gap-2 text-[10.5px] text-slate-500 dark:text-zinc-400 font-mono select-all">
-                      <span className="w-1.5 h-1.5 bg-slate-300 dark:bg-zinc-600 rounded-full shrink-0" />
+                      <span className="w-1.5 h-1.5 bg-slate-300 dark:bg-zinc-600 rounded-none shrink-0" />
                       <span>{file}</span>
                     </li>
                   ))}

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { 
   Calendar, ShieldCheck, CreditCard, ArrowRight, 
-  CheckCircle2, Lock, Unlock, Loader2, RefreshCw, Smartphone
+  Check, Lock, Unlock, Loader2, RefreshCw, Smartphone
 } from "lucide-react";
 
 interface Step {
@@ -112,7 +112,7 @@ export default function BookingJourneyVisualizer() {
                       : "bg-slate-50 dark:bg-[#07070C] border-slate-200 dark:border-[#1F1F35] text-slate-400"
                   }`}
                 >
-                  {isCompleted ? <CheckCircle2 size={16} /> : s.icon}
+                  {isCompleted ? <Check size={16} /> : s.icon}
                 </div>
                 <span 
                   className={`text-[9.5px] font-bold uppercase tracking-wider hidden sm:block ${
@@ -261,7 +261,7 @@ export default function BookingJourneyVisualizer() {
 
                 {ssoCompleted ? (
                   <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-500 font-bold flex items-center justify-center gap-2">
-                    <CheckCircle2 size={16} />
+                    <Check size={16} />
                     Uživatel úspěšně ověřen
                   </div>
                 ) : (
@@ -383,7 +383,7 @@ export default function BookingJourneyVisualizer() {
                   <div className="space-y-5 py-4">
                     <div className="mx-auto h-12 w-12 rounded-none bg-slate-200 dark:bg-zinc-800 text-slate-500 flex items-center justify-center border border-slate-300 dark:border-zinc-700 relative">
                       <Lock size={20} />
-                      <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500" />
+                      <span className="absolute top-0 right-0 h-2 w-2 rounded-none bg-red-500" />
                     </div>
                     <div className="space-y-1 text-center">
                       <h4 className="text-xs font-bold text-slate-400">Naskenujte kód ze svého telefonu</h4>

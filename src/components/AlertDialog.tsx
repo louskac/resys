@@ -52,7 +52,7 @@ export default function AlertDialog({
     <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
       <style>{`
         @keyframes draw-circle {
-          0% { stroke-dashoffset: 158; }
+          0% { stroke-dashoffset: 188; }
           100% { stroke-dashoffset: 0; }
         }
         @keyframes draw-check {
@@ -84,8 +84,8 @@ export default function AlertDialog({
           }
         }
         .animate-checkmark-circle {
-          stroke-dasharray: 158;
-          stroke-dashoffset: 158;
+          stroke-dasharray: 188;
+          stroke-dashoffset: 188;
           animation: draw-circle 0.65s cubic-bezier(0.65, 0, 0.45, 1) forwards;
           stroke: #10b981;
         }
@@ -108,7 +108,7 @@ export default function AlertDialog({
           stroke: #10b981;
         }
       `}</style>
-
+ 
       <div className="bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl border border-slate-200/60 dark:border-[#1F1F35] max-w-sm w-full p-7 rounded-none shadow-[0_20px_50px_rgba(112,0,255,0.15)] relative transition-all duration-300 text-center flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
         
         {/* Animated Icon Circle */}
@@ -116,12 +116,12 @@ export default function AlertDialog({
           {type === "success" ? (
             <div className="h-16 w-16 rounded-none flex items-center justify-center border border-transparent animate-success-glow relative overflow-visible">
               <svg className="w-16 h-16" viewBox="0 0 52 52">
-                <circle 
-                  className="animate-checkmark-circle fill-none stroke-[2.5] -rotate-90 origin-[26px_26px]" 
-                  cx="26" 
-                  cy="26" 
-                  r="25" 
-                  strokeLinecap="round"
+                <rect 
+                  className="animate-checkmark-circle fill-none stroke-[2.5]" 
+                  x="2.5" 
+                  y="2.5" 
+                  width="47" 
+                  height="47" 
                 />
                 <path 
                   className="animate-checkmark-check fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" 

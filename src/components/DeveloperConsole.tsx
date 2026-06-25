@@ -235,7 +235,6 @@ ${Object.entries(endpoint.requestHeaders).map(([k, v]) => `  -H "${k}: ${v}"`).j
                 <div className="p-4 rounded-none bg-black border border-slate-900 font-mono text-[11px] min-h-[80px] flex items-start overflow-x-auto">
                   {isRunning ? (
                     <div className="flex items-center gap-2 text-slate-500 text-xs font-sans">
-                      <span className="h-1.5 w-1.5 rounded-full bg-tenant-primary animate-ping" />
                       Odesílání požadavku na universal reservation core...
                     </div>
                   ) : (

@@ -217,7 +217,6 @@ export default function EcosystemMap() {
                   {/* Icon with purple border wrapper */}
                   <div className="h-9 w-9 flex items-center justify-center rounded-none bg-white dark:bg-[#0A0A14] border border-tenant-primary/45 text-tenant-primary shrink-0 relative shadow-sm">
                     <Icon size={16} className="animate-pulse" />
-                    <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 bg-tenant-primary rounded-full animate-ping" />
                   </div>
                   
                   {/* Text */}
