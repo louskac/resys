@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import DatePicker from "@/components/DatePicker";
+import { UnifiedSwitcher } from "@/components/CalendarView";
+import { formatCurrency } from "@/lib/translations";
 
 interface Partner {
   id: string;
@@ -84,6 +86,9 @@ interface BillingTabProps {
     id: string;
     name: string;
     vertical: string;
+    locale?: string;
+    timezone?: string;
+    currency?: string;
   };
   partners: Partner[];
   invoices: Invoice[];
@@ -573,51 +578,17 @@ export default function BillingTab({
       )}
       
       {/* SubTab Navigation header */}
-      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none bg-white/40 dark:bg-[#0F0F1A]/60 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] p-1 rounded-none w-full md:w-fit select-none gap-1 shadow-sm">
-        <button
-          onClick={() => setSubTab("users")}
-          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
-            subTab === "users" 
-              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
-          }`}
-        >
-          <Users size={12} />
-          Uživatelé a Registrovaní
-        </button>
-        <button
-          onClick={() => setSubTab("partners")}
-          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
-            subTab === "partners" 
-              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
-          }`}
-        >
-          <Building size={12} />
-          Partneři a Slevy ({activePartners.length})
-        </button>
-        <button
-          onClick={() => setSubTab("transactions")}
-          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
-            subTab === "transactions" 
-              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
-          }`}
-        >
-          <CreditCard size={12} />
-          Kniha transakcí ({bookings.length})
-        </button>
-        <button
-          onClick={() => setSubTab("invoices")}
-          className={`px-4 py-2 rounded-none font-extrabold uppercase tracking-widest text-[9.5px] cursor-pointer transition-all shrink-0 flex items-center gap-1.5 ${
-            subTab === "invoices" 
-              ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-black scale-105" 
-              : "bg-transparent text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400 hover:bg-slate-100/30 dark:hover:bg-white/[0.02]"
-          }`}
-        >
-          <FileText size={12} />
-          Faktury a Vyúčtování ({invoices.length})
-        </button>
+      <div className="mb-4">
+        <UnifiedSwitcher<"users" | "partners" | "transactions" | "invoices">
+          options={[
+            { value: "users", label: "Uživatelé a Registrovaní" },
+            { value: "partners", label: `Partneři a Slevy (${activePartners.length})` },
+            { value: "transactions", label: `Kniha transakcí (${bookings.length})` },
+            { value: "invoices", label: `Faktury a Vyúčtování (${invoices.length})` }
+          ]}
+          activeValue={subTab}
+          onChange={(val) => setSubTab(val)}
+        />
       </div>
 
       {/* SUBTAB 1: USERS & DIRECTORY (With Drag & Drop Promotion) */}
@@ -692,7 +663,7 @@ export default function BillingTab({
                               <span>{user.organization}</span>
                             </p>
                           )}
-                          <p className="text-[9px] text-slate-400 mt-1">Registrace: {new Date(user.createdAt).toLocaleDateString("cs-CZ")}</p>
+                          <p className="text-[9px] text-slate-400 mt-1">Registrace: {new Date(user.createdAt).toLocaleDateString(tenant.locale || "cs-CZ")}</p>
                         </div>
                       </div>
 
@@ -885,13 +856,13 @@ export default function BillingTab({
                         <div className="flex justify-between items-center text-[10.5px]">
                           <span className="text-slate-500 dark:text-zinc-450">Prepaid Kredit:</span>
                           <strong className={`font-bold ${parseFloat(String(partner.creditBalance || 0)) <= 0 ? "text-rose-500" : "text-emerald-500"}`}>
-                            {parseFloat(String(partner.creditBalance || 0)).toLocaleString("cs-CZ", { minimumFractionDigits: 2 })} Kč
+                            {formatCurrency(partner.creditBalance || 0, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
                           </strong>
                         </div>
                         <div className="flex justify-between items-center text-[10.5px]">
                           <span className="text-slate-500 dark:text-zinc-450">Kontokorent (Overdraft):</span>
                           <strong className="text-foreground">
-                            {parseFloat(String(partner.creditLimit || 0)).toLocaleString("cs-CZ", { minimumFractionDigits: 2 })} Kč
+                            {formatCurrency(partner.creditLimit || 0, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
                           </strong>
                         </div>
                         <div className="flex justify-between items-center text-[10.5px] border-t border-slate-200/40 dark:border-white/5 pt-1 mt-1 text-[9.5px]">
@@ -1034,7 +1005,7 @@ export default function BillingTab({
                     return (
                       <tr key={txn.id} className="hover:bg-white/10 dark:hover:bg-white/5 transition-colors">
                         <td className="p-4 text-slate-500 dark:text-zinc-400 font-mono">
-                          {new Date(txn.createdAt).toLocaleDateString("cs-CZ")} {new Date(txn.createdAt).toLocaleTimeString("cs-CZ", {hour: '2-digit', minute:'2-digit'})}
+                          {new Date(txn.createdAt).toLocaleDateString(tenant.locale || "cs-CZ")} {new Date(txn.createdAt).toLocaleTimeString(tenant.locale || "cs-CZ", {hour: '2-digit', minute:'2-digit'})}
                         </td>
                         <td className="p-4 font-semibold text-foreground">
                           <div>{txn.userName}</div>
@@ -1042,10 +1013,10 @@ export default function BillingTab({
                         </td>
                         <td className="p-4 font-medium text-foreground">{txn.resourceName}</td>
                         <td className="p-4 text-slate-700 dark:text-slate-350">
-                          {fromDate.toLocaleDateString("cs-CZ")} | {fromDate.getUTCHours().toString().padStart(2, "0")}:{fromDate.getUTCMinutes().toString().padStart(2, "0")} – {toDate.getUTCHours().toString().padStart(2, "0")}:{toDate.getUTCMinutes().toString().padStart(2, "0")} (UTC)
+                          {fromDate.toLocaleDateString(tenant.locale || "cs-CZ")} | {fromDate.getUTCHours().toString().padStart(2, "0")}:{fromDate.getUTCMinutes().toString().padStart(2, "0")} – {toDate.getUTCHours().toString().padStart(2, "0")}:{toDate.getUTCMinutes().toString().padStart(2, "0")} (UTC)
                         </td>
                         <td className="p-4 font-black text-right text-foreground">
-                          {parseFloat(txn.price).toLocaleString("cs-CZ")} Kč
+                          {formatCurrency(txn.price, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
                         </td>
                         <td className="p-4">
                           {isPartner ? (
@@ -1113,10 +1084,10 @@ export default function BillingTab({
                       <tr key={inv.id} className="hover:bg-white/10 dark:hover:bg-white/5 transition-colors">
                         <td className="p-4 font-mono font-bold text-foreground">{inv.number}</td>
                         <td className="p-4 font-semibold text-foreground">{inv.partnerName}</td>
-                        <td className="p-4 text-slate-500 dark:text-zinc-400">{new Date(inv.issueDate).toLocaleDateString("cs-CZ")}</td>
-                        <td className="p-4 text-slate-500 dark:text-zinc-400">{new Date(inv.dueDate).toLocaleDateString("cs-CZ")}</td>
+                        <td className="p-4 text-slate-500 dark:text-zinc-400">{new Date(inv.issueDate).toLocaleDateString(tenant.locale || "cs-CZ")}</td>
+                        <td className="p-4 text-slate-500 dark:text-zinc-400">{new Date(inv.dueDate).toLocaleDateString(tenant.locale || "cs-CZ")}</td>
                         <td className="p-4 font-semibold text-slate-800 dark:text-slate-300">{inv.bookingsCount}</td>
-                        <td className="p-4 font-black text-foreground">{parseFloat(inv.amount).toLocaleString("cs-CZ")} Kč</td>
+                        <td className="p-4 font-black text-foreground">{formatCurrency(inv.amount, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</td>
                         <td className="p-4">
                           <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold border border-l-2 uppercase tracking-wider ${
                             inv.status === "PAID" 
@@ -1215,11 +1186,11 @@ export default function BillingTab({
                     <div className="grid grid-cols-3 gap-2 text-[10px] border-t border-slate-100 dark:border-white/[0.04] pt-2.5">
                       <div>
                         <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Vystaveno</span>
-                        <span className="text-slate-700 dark:text-zinc-300 font-medium">{new Date(inv.issueDate).toLocaleDateString("cs-CZ")}</span>
+                        <span className="text-slate-700 dark:text-zinc-300 font-medium">{new Date(inv.issueDate).toLocaleDateString(tenant.locale || "cs-CZ")}</span>
                       </div>
                       <div>
                         <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Splatnost</span>
-                        <span className="text-slate-700 dark:text-zinc-300 font-medium">{new Date(inv.dueDate).toLocaleDateString("cs-CZ")}</span>
+                        <span className="text-slate-700 dark:text-zinc-300 font-medium">{new Date(inv.dueDate).toLocaleDateString(tenant.locale || "cs-CZ")}</span>
                       </div>
                       <div>
                         <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Lekce</span>
@@ -1230,7 +1201,7 @@ export default function BillingTab({
                     <div className="flex justify-between items-center border-t border-slate-100 dark:border-white/[0.04] pt-2.5 mt-1 select-none">
                       <div>
                         <span className="text-[8px] uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-extrabold block">Celkem</span>
-                        <span className="text-xs font-black text-slate-900 dark:text-white">{parseFloat(inv.amount).toLocaleString("cs-CZ")} Kč</span>
+                        <span className="text-xs font-black text-slate-900 dark:text-white">{formatCurrency(inv.amount, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Link
@@ -1689,10 +1660,10 @@ export default function BillingTab({
                         <div className="space-y-0.5">
                           <span className="font-bold text-slate-850 dark:text-white">{b.resourceName}</span>
                           <span className="text-slate-400 dark:text-slate-500 block text-[9px]">
-                            {new Date(b.reservedFrom).toLocaleDateString("cs-CZ")} | {new Date(b.reservedFrom).toLocaleTimeString("cs-CZ", {hour: '2-digit', minute:'2-digit'})} (UTC)
+                            {new Date(b.reservedFrom).toLocaleDateString(tenant.locale || "cs-CZ")} | {new Date(b.reservedFrom).toLocaleTimeString(tenant.locale || "cs-CZ", {hour: '2-digit', minute:'2-digit'})} (UTC)
                           </span>
                         </div>
-                        <span className="font-mono font-bold text-slate-800 dark:text-white">{parseFloat(b.price).toLocaleString("cs-CZ")} Kč</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-white">{formatCurrency(b.price, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</span>
                       </div>
                     ))}
                   </div>
@@ -1706,7 +1677,7 @@ export default function BillingTab({
                     </span>
                   </div>
                   <span className="text-lg font-black text-slate-850 dark:text-white">
-                    {invoiceWizard.calculatedTotal.toLocaleString("cs-CZ")} Kč
+                    {formatCurrency(invoiceWizard.calculatedTotal, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
                   </span>
                 </div>
 

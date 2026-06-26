@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/auth";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
+import { formatCurrency } from "@/lib/translations";
 
 interface InvoicePageProps {
   params: Promise<{
@@ -58,26 +59,37 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     );
   }
 
-  // Enforce administrator authorization
+  // Enforce administrator or associated B2B partner authorization
   const attributes = (tenant.attributes as Record<string, any>) || {};
   const adminEmails = attributes.adminEmails || [];
   const userEmail = session.user.email || "";
   const userRole = (session.user as any).role;
   const userTenantId = (session.user as any).tenantId;
 
+  // Check if target user belongs to the B2B partner connected to this invoice
+  const dbUser = await prisma.user.findUnique({
+    where: { email: userEmail },
+    select: { partnerId: true, role: true }
+  });
+
+  const isPartnerAuthorized = dbUser && dbUser.partnerId && dbUser.partnerId === invoice.partnerId;
+
   const isAuthorized =
     (userRole === "ADMIN" && userTenantId === tenantId) ||
-    adminEmails.includes(userEmail);
+    adminEmails.includes(userEmail) ||
+    isPartnerAuthorized;
 
   if (!isAuthorized) {
+    const fallbackUrl = dbUser?.role === "USER" ? `/tenants/${tenantId}/dashboard` : `/tenants/${tenantId}/admin`;
+    const fallbackLabel = dbUser?.role === "USER" ? "Zpět na profil/dashboard" : "Zpět do administrace";
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50 text-slate-800 font-sans">
         <p className="mb-4 font-semibold text-sm">Nemáte oprávnění k zobrazení této stránky.</p>
         <Link
-          href={`/tenants/${tenantId}/admin`}
+          href={fallbackUrl}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-none text-xs font-bold transition"
         >
-          Zpět do administrace
+          {fallbackLabel}
         </Link>
       </div>
     );
@@ -85,9 +97,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
   const partner = invoice.partner;
 
-  // Czech date formatting helper
+  // Dynamic date formatting helper based on tenant locale
   const formatCzechDate = (date: Date) => {
-    return new Intl.DateTimeFormat("cs-CZ", {
+    return new Intl.DateTimeFormat(tenant.locale || "cs-CZ", {
       year: "numeric",
       month: "numeric",
       day: "numeric",
@@ -96,7 +108,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
   const formatCzechTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleTimeString("cs-CZ", {
+    return d.toLocaleTimeString(tenant.locale || "cs-CZ", {
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "UTC",
@@ -120,16 +132,19 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   const supplierVatId = attributes.supplierVatId || "CZ12345678"; // DIČ
   const supplierBankAccount = attributes.supplierBankAccount || "19-1234567890/0100";
 
+  const backUrl = dbUser?.role === "USER" ? `/tenants/${tenantId}/dashboard` : `/tenants/${tenantId}/admin`;
+  const backLabel = dbUser?.role === "USER" ? "Zpět na profil/dashboard" : "Zpět do administrace";
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-zinc-900 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:py-0 print:px-0 text-slate-800 dark:text-slate-100 print:text-black">
       {/* Print Hide Actions Header */}
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
         <Link
-          href={`/tenants/${tenantId}/admin`}
+          href={backUrl}
           className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white transition-colors"
         >
           <ArrowLeft size={16} />
-          Zpět do administrace
+          {backLabel}
         </Link>
         <button
           onClick={() => {
@@ -287,7 +302,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                       {formatCzechTime(booking.reservedTo.toISOString())}
                     </td>
                     <td className="py-3 text-right font-semibold font-mono">
-                      {parseFloat(booking.price.toString()).toLocaleString("cs-CZ")} Kč
+                      {formatCurrency(booking.price.toString(), tenant.currency || "CZK", tenant.locale || "cs-CZ")}
                     </td>
                   </tr>
                 ))}
@@ -301,7 +316,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           <div className="w-full sm:w-72 space-y-2.5 text-xs text-right">
             <div className="flex justify-between text-slate-500 dark:text-zinc-400 print:text-slate-600">
               <span>Základ daně (bez DPH):</span>
-              <span className="font-semibold font-mono">{subtotal.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kč</span>
+              <span className="font-semibold font-mono">{formatCurrency(subtotal, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</span>
             </div>
             <div className="flex justify-between text-slate-500 dark:text-zinc-400 print:text-slate-600">
               <span>Sazba DPH:</span>
@@ -309,7 +324,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             </div>
             <div className="flex justify-between text-slate-500 dark:text-zinc-400 print:text-slate-600">
               <span>Výše DPH (21%):</span>
-              <span className="font-semibold font-mono">{vatAmount.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kč</span>
+              <span className="font-semibold font-mono">{formatCurrency(vatAmount, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</span>
             </div>
             
             {partner.discount > 0 && (
@@ -322,7 +337,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             <div className="flex justify-between text-base font-extrabold text-slate-800 dark:text-white print:text-black border-t border-slate-200 dark:border-zinc-800 pt-3 mt-1 select-none">
               <span>Celkem k úhradě:</span>
               <span className="text-indigo-600 dark:text-indigo-400 print:text-black font-mono">
-                {amountToPay.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kč
+                {formatCurrency(amountToPay, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
               </span>
             </div>
           </div>

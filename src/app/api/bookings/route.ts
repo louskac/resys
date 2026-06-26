@@ -8,10 +8,10 @@ import { sendSSEUpdate } from "@/lib/sse";
 import crypto from "crypto";
 import { calculateLightingSurcharge } from "@/lib/pricing";
 
-const getLocalAsUtcDate = (d: Date): Date => {
+const getLocalAsUtcDate = (d: Date, timeZone: string = "Europe/Prague"): Date => {
   try {
     const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Europe/Prague",
+      timeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -35,8 +35,8 @@ const getLocalAsUtcDate = (d: Date): Date => {
     if (hour === 24) hour = 0;
     return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
   } catch (e) {
-    console.error("Failed to parse Europe/Prague timezone offset, falling back to Prague UTC+2 offset", e);
-    return new Date(d.getTime() + 2 * 60 * 60 * 1000);
+    console.error(`Failed to parse ${timeZone} timezone offset, falling back to UTC+1/2 offset`, e);
+    return new Date(d.getTime() + (timeZone === "Europe/Prague" || timeZone === "Europe/London" ? 2 : 0) * 60 * 60 * 1000);
   }
 };
 
@@ -451,7 +451,7 @@ export async function POST(request: NextRequest) {
           }
 
           // --- Validate that the booking is not in the past ---
-          if (reservedFrom < getLocalAsUtcDate(new Date())) {
+          if (reservedFrom < getLocalAsUtcDate(new Date(), dbTenant.timezone)) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
           }
 
@@ -1014,7 +1014,7 @@ export async function PATCH(request: NextRequest) {
       return makeErrorResponse("INVALID_TIME_RANGE", "Čas začátku musí předcházet času konce.");
     }
 
-    if (reservedFrom < getLocalAsUtcDate(new Date())) {
+    if (reservedFrom < getLocalAsUtcDate(new Date(), booking.tenant.timezone)) {
       return makeErrorResponse("PAST_BOOKING_NOT_ALLOWED", "Rezervaci nelze přesunout do minulosti.");
     }
 

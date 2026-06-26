@@ -99,11 +99,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: "denied", reason: "invalid_status", bookingStatus: booking.status });
       }
 
-      // Convert server UTC time to Europe/Prague local time represented as UTC to match database structure
-      const getLocalAsUtcDate = (d: Date): Date => {
+      // Fetch tenant to get the correct timezone
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: booking.tenantId },
+        select: { timezone: true }
+      });
+      const timezone = tenant?.timezone || "Europe/Prague";
+
+      // Convert server UTC time to tenant local time represented as UTC to match database structure
+      const getLocalAsUtcDate = (d: Date, timeZone: string): Date => {
         try {
           const formatter = new Intl.DateTimeFormat("en-US", {
-            timeZone: "Europe/Prague",
+            timeZone,
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
@@ -127,12 +134,12 @@ export async function POST(request: NextRequest) {
           if (hour === 24) hour = 0;
           return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
         } catch (e) {
-          console.error("Failed to parse Europe/Prague timezone offset, falling back to Prague UTC+2 offset", e);
+          console.error(`Failed to parse ${timeZone} timezone offset, falling back to Prague UTC+2 offset`, e);
           return new Date(d.getTime() + 2 * 60 * 60 * 1000);
         }
       };
 
-      const now = getLocalAsUtcDate(new Date());
+      const now = getLocalAsUtcDate(new Date(), timezone);
       const startWindow = new Date(booking.reservedFrom.getTime() - 15 * 60 * 1000); // 15 min early
       const endWindow = new Date(booking.reservedTo.getTime() + 15 * 60 * 1000);    // 15 min late
 

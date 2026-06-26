@@ -69,6 +69,8 @@ export default async function TenantCheckoutPage({ params, searchParams }: Check
         tenantName={booking.tenant.name}
         booking={serializedBooking}
         theme={theme}
+        locale={booking.tenant.locale}
+        currency={booking.tenant.currency}
       />
     </div>
   );

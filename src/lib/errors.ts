@@ -20,7 +20,10 @@ export type ErrorCode =
   | "SCHEDULE_RULE_NOT_FOUND"
   | "SUBSCRIPTION_INACTIVE"
   | "CREDIT_LIMIT_EXCEEDED"
-  | "CLOSURE_EXCEPTION";
+  | "CLOSURE_EXCEPTION"
+  | "ALREADY_EXISTS"
+  | "FORBIDDEN"
+  | "INVALID_PARAMETER";
 
 
 export interface ApiErrorResponse {

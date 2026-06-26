@@ -992,7 +992,7 @@ export default function AIAssistant({
           {/* Inline header details showing parameter summary */}
           <div className="flex items-center justify-between border-b border-white/5 pb-2.5 z-10 mt-1 select-none">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
+              <span className="h-2 w-2 rounded-none bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
               <span className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400">
                 {isListening ? "ReKeeper poslouchá..." : isLoading ? "Zpracovávám..." : "ReKeeper: Timekeeper"}
               </span>

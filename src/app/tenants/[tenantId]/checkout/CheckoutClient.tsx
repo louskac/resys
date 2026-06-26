@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CreditCard, Calendar, Clock, User, Mail, ShieldCheck, ArrowLeft, Check, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/translations";
 
 interface SerializedBooking {
   id: string;
@@ -21,9 +22,11 @@ interface CheckoutClientProps {
   tenantName: string;
   booking: SerializedBooking;
   theme: any;
+  locale?: string;
+  currency?: string;
 }
 
-export default function CheckoutClient({ tenantId, tenantName, booking, theme }: CheckoutClientProps) {
+export default function CheckoutClient({ tenantId, tenantName, booking, theme, locale = "cs-CZ", currency = "CZK" }: CheckoutClientProps) {
   const [cardName, setCardName] = useState(booking.userName || "");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -156,7 +159,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
   const fromDate = new Date(booking.reservedFrom);
   const toDate = new Date(booking.reservedTo);
 
-  const formattedDate = fromDate.toLocaleDateString("cs-CZ", {
+  const formattedDate = fromDate.toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -249,13 +252,13 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
             </div>
             {booking.rentedEquipment && Array.isArray(booking.rentedEquipment) && booking.rentedEquipment.length > 0 && (
               <div className="border-t border-slate-150 dark:border-white/5 pt-4 space-y-2">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Zapůjčené vybavení</span>
+                <span className="text-[10px] text-slate-550 dark:text-slate-400 block uppercase font-medium">Zapůjčené vybavení</span>
                 <div className="space-y-1.5 pl-1">
                   {booking.rentedEquipment.map((eq: any) => (
                     <div key={eq.id} className="flex justify-between items-center text-xs">
                       <span className="text-slate-700 dark:text-slate-350">{eq.name} <span className="text-slate-400">({eq.quantity} ks)</span></span>
                       <span className="font-semibold text-slate-800 dark:text-white">
-                        {eq.category === "default" ? "V ceně" : `+${eq.price * eq.quantity} Kč`}
+                        {eq.category === "default" ? "V ceně" : `+${formatCurrency(eq.price * eq.quantity, currency, locale)}`}
                       </span>
                     </div>
                   ))}
@@ -267,7 +270,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
           {/* Pricing Row */}
           <div className="border-t border-slate-150 dark:border-white/5 pt-4 flex justify-between items-center">
             <span className="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider">Celkem k úhradě</span>
-            <span className="text-xl font-black text-slate-900 dark:text-white">{parseFloat(booking.price).toLocaleString("cs-CZ")} Kč</span>
+            <span className="text-xl font-black text-slate-900 dark:text-white">{formatCurrency(booking.price, currency, locale)}</span>
           </div>
         </div>
       </div>
@@ -382,7 +385,7 @@ export default function CheckoutClient({ tenantId, tenantName, booking, theme }:
               </>
             ) : (
               <>
-                Zaplatit {parseFloat(booking.price).toLocaleString("cs-CZ")} Kč
+                 Zaplatit {formatCurrency(booking.price, currency, locale)}
               </>
             )}
           </button>

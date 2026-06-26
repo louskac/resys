@@ -15,6 +15,7 @@ interface AIInputBarProps {
   isReadyToConfirm: boolean;
   placeholder?: string;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export default function AIInputBar({
@@ -28,18 +29,19 @@ export default function AIInputBar({
   isSpeechSupported,
   isReadyToConfirm,
   placeholder,
-  disabled = false
+  disabled = false,
+  autoFocus = true
 }: AIInputBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isLoading && !isListening && !disabled) {
+    if (autoFocus && !isLoading && !isListening && !disabled) {
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isListening, disabled]);
+  }, [autoFocus, isLoading, isListening, disabled]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

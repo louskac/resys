@@ -6,16 +6,21 @@ import { useSession } from "next-auth/react";
 import { 
   Calendar, Clock, User as UserIcon, CheckCircle, AlertTriangle, 
   MapPin, Shield, Phone, Mail, FileText, ArrowLeft, Loader2, 
-  KeyRound, CreditCard, LogOut, Check, Building, QrCode, Ticket
+  KeyRound, CreditCard, LogOut, Check, Building, QrCode, Ticket,
+  Users, Percent, TrendingUp, UserMinus, UserPlus, Receipt, DollarSign
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import AlertDialog from "@/components/AlertDialog";
+import { formatCurrency } from "@/lib/translations";
 
 interface UserDashboardClientProps {
   tenant: {
     id: string;
     name: string;
     vertical: string;
+    locale?: string;
+    timezone?: string;
+    currency?: string;
   };
   user: {
     id: string;
@@ -59,6 +64,51 @@ interface UserDashboardClientProps {
     gradientStart: string;
     gradientEnd: string;
   };
+  partner?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+    companyId: string | null;
+    vatId: string | null;
+    addressStreet: string | null;
+    addressCity: string | null;
+    addressZip: string | null;
+    addressCountry: string | null;
+    discount: number;
+    creditBalance: string;
+    creditLimit: string;
+    billingCycle: string;
+    paymentTermsDays: number;
+    autoBillingEnabled: boolean;
+    users: {
+      id: string;
+      name: string;
+      email: string;
+      phone: string | null;
+      role: string;
+      createdAt: string;
+    }[];
+    bookings: {
+      id: string;
+      resourceName: string;
+      userName: string;
+      userEmail: string;
+      reservedFrom: string;
+      reservedTo: string;
+      status: string;
+      price: string;
+    }[];
+    invoices: {
+      id: string;
+      number: string;
+      status: string;
+      issueDate: string;
+      dueDate: string;
+      amount: string;
+      bookingsCount: number;
+    }[];
+  } | null;
 }
 
 const PRESET_AVATARS = [
@@ -75,10 +125,11 @@ export default function UserDashboardClient({
   user: initialUser,
   bookings: initialBookings,
   checkinLogs,
+  partner: initialPartner,
   theme,
 }: UserDashboardClientProps) {
   const { update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState<"bookings" | "history" | "profile">("bookings");
+  const [activeTab, setActiveTab] = useState<"bookings" | "history" | "profile" | "partner">("bookings");
   const [bookings, setBookings] = useState(initialBookings);
   const [user, setUser] = useState(initialUser);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -191,7 +242,7 @@ export default function UserDashboardClient({
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("cs-CZ", {
+    return d.toLocaleDateString(tenant.locale || "cs-CZ", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -301,6 +352,111 @@ export default function UserDashboardClient({
     } finally {
       setSavingProfile(false);
     }
+  };
+
+  const [partner, setPartner] = useState(initialPartner);
+  const [employeeEmail, setEmployeeEmail] = useState("");
+  const [addingEmployee, setAddingEmployee] = useState(false);
+  const [removingEmployeeEmail, setRemovingEmployeeEmail] = useState<string | null>(null);
+
+  const handleAddEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employeeEmail) return;
+    setAddingEmployee(true);
+    try {
+      const res = await fetch("/api/partner/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: employeeEmail, action: "add" }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showModalAlert("Uživatel přidán", data.message || "Uživatel byl úspěšně přidán.", "success");
+        setEmployeeEmail("");
+        if (partner && data.user) {
+          setPartner({
+            ...partner,
+            users: [
+              ...partner.users,
+              {
+                id: data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+                phone: null,
+                role: data.user.role,
+                createdAt: new Date().toISOString()
+              }
+            ]
+          });
+        }
+      } else {
+        showModalAlert("Chyba", data.error || "Uživatele se nepodařilo přidat.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showModalAlert("Chyba", "Došlo k neočekávané chybě.", "error");
+    } finally {
+      setAddingEmployee(false);
+    }
+  };
+
+  const handleRemoveEmployee = (email: string) => {
+    showModalAlert(
+      "Odebrat uživatele?",
+      `Opravdu chcete odebrat uživatele ${email} z vaší firmy?`,
+      "confirm",
+      async () => {
+        setRemovingEmployeeEmail(email);
+        try {
+          const res = await fetch("/api/partner/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, action: "remove" }),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showModalAlert("Uživatel odebrán", data.message || "Uživatel byl úspěšně odebrán.", "success");
+            if (partner) {
+              setPartner({
+                ...partner,
+                users: partner.users.filter(u => u.email !== email)
+              });
+            }
+          } else {
+            showModalAlert("Chyba", data.error || "Uživatele se nepodařilo odebrat.", "error");
+          }
+        } catch (err) {
+          console.error(err);
+          showModalAlert("Chyba", "Došlo k neočekávané chybě.", "error");
+        } finally {
+          setRemovingEmployeeEmail(null);
+        }
+      },
+      "Odebrat",
+      "Zpět"
+    );
+  };
+
+  const formatPartnerDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(tenant.locale || "cs-CZ", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatPartnerTimeRange = (fromStr: string, toStr: string) => {
+    const from = new Date(fromStr);
+    const to = new Date(toStr);
+    const format = (date: Date) => {
+      const h = String(date.getUTCHours()).padStart(2, "0");
+      const m = String(date.getUTCMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    };
+    return `${format(from)} - ${format(to)}`;
   };
 
   const upcomingBookings = bookings
@@ -439,6 +595,20 @@ export default function UserDashboardClient({
             <UserIcon size={14} />
             Nastavení profilu
           </button>
+          {partner && (
+            <button
+              onClick={() => setActiveTab("partner")}
+              className={`px-4 py-3 border-b-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                activeTab === "partner"
+                  ? "border-tenant-primary text-tenant-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              style={{ "--tenant-primary": theme.primary } as React.CSSProperties}
+            >
+              <Building size={14} />
+              Firemní portál ({partner.name})
+            </button>
+          )}
         </div>
 
         {/* Tab content area */}
@@ -530,7 +700,7 @@ export default function UserDashboardClient({
                               }}
                             >
                               <CreditCard size={14} />
-                              Zaplatit nyní ({parseFloat(b.price || "0").toLocaleString("cs-CZ")} Kč)
+                              Zaplatit nyní ({formatCurrency(b.price || "0", tenant.currency || "CZK", tenant.locale || "cs-CZ")})
                             </Link>
                           ) : (
                             <button
@@ -585,7 +755,7 @@ export default function UserDashboardClient({
                               <td className="p-4 font-bold text-foreground">{b.tenantName}</td>
                               <td className="p-4 font-medium text-foreground">{b.resourceName}</td>
                               <td className="p-4 space-y-0.5">
-                                <p className="font-semibold text-foreground">{new Date(b.reservedFrom).toLocaleDateString("cs-CZ")}</p>
+                                <p className="font-semibold text-foreground">{new Date(b.reservedFrom).toLocaleDateString(tenant.locale || "cs-CZ")}</p>
                                 <p className="text-[11px]">{formatTimeRange(b.reservedFrom, b.reservedTo)}</p>
                               </td>
                               <td className="p-4 text-right">
@@ -645,7 +815,7 @@ export default function UserDashboardClient({
                         {checkinLogs.map((log) => (
                           <tr key={log.id} className="hover:bg-secondary/10 transition-colors">
                             <td className="p-4 font-semibold">
-                              {new Date(log.scannedAt).toLocaleString("cs-CZ")}
+                              {new Date(log.scannedAt).toLocaleString(tenant.locale || "cs-CZ")}
                             </td>
                             <td className="p-4 text-muted-foreground">{log.deviceName}</td>
                             <td className="p-4 font-bold">{log.resourceName}</td>
@@ -923,6 +1093,291 @@ export default function UserDashboardClient({
 
             </div>
           )}
+
+          {/* TAB 4: PARTNER PORTAL */}
+          {activeTab === "partner" && partner && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Summary Cards */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Credit Overview */}
+                <div className="card p-6 border-slate-200 dark:border-[#1F1F35] relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-tenant-gradient opacity-10 blur-2xl rounded-full" />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Kredit a limit</span>
+                      <DollarSign size={16} className="text-tenant-primary" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-extrabold text-foreground">
+                        {formatCurrency(partner.creditBalance, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Zůstatek kreditu k vyúčtování
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Limit:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(partner.creditLimit, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Partnership Details */}
+                <div className="card p-6 border-slate-200 dark:border-[#1F1F35] relative overflow-hidden flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Partnerské údaje</span>
+                      <Percent size={16} className="text-tenant-primary" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-extrabold text-foreground">
+                        {partner.discount}%
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Exkluzivní sleva na rezervace
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">IČO / DIČ:</span>
+                    <span className="font-semibold font-mono">
+                      {partner.companyId || "-"} / {partner.vatId || "-"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Invoicing Settings */}
+                <div className="card p-6 border-slate-200 dark:border-[#1F1F35] relative overflow-hidden flex flex-col justify-between sm:col-span-2 lg:col-span-1">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Fakturační cyklus</span>
+                      <TrendingUp size={16} className="text-tenant-primary" />
+                    </div>
+                    <div>
+                      <span className="text-xl font-extrabold text-foreground uppercase tracking-wide">
+                        {partner.billingCycle === "MONTHLY" ? "Měsíční" : partner.billingCycle === "WEEKLY" ? "Týdenní" : partner.billingCycle}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Automatické generování faktur
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Splatnost:</span>
+                    <span className="font-semibold">{partner.paymentTermsDays} dní</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Roster & Add employee */}
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Add Employee Form */}
+                <div className="card p-6 border-slate-200 dark:border-[#1F1F35] h-fit">
+                  <h3 className="font-extrabold text-xs text-foreground uppercase tracking-wider mb-4 pb-2 border-b border-border flex items-center gap-1.5">
+                    <UserPlus size={14} className="text-tenant-primary" />
+                    Přidat zaměstnance
+                  </h3>
+                  <form onSubmit={handleAddEmployee} className="space-y-4">
+                    <div className="space-y-1">
+                      <label htmlFor="employee-email" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        E-mailová adresa
+                      </label>
+                      <input
+                        id="employee-email"
+                        type="email"
+                        required
+                        placeholder="zamestnanec@firma.cz"
+                        value={employeeEmail}
+                        onChange={(e) => setEmployeeEmail(e.target.value)}
+                        className="input-field py-2 text-xs"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={addingEmployee}
+                      className="w-full py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-white border border-white/10 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 rounded-none"
+                      style={{ 
+                        background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
+                        boxShadow: `0 4px 12px rgba(112,0,255,0.1)`
+                      }}
+                    >
+                      {addingEmployee ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                      {addingEmployee ? "Přidávání..." : "Přiřadit k firmě"}
+                    </button>
+                  </form>
+                  <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                    Uživatel se musí nejprve zaregistrovat v platformě se svým e-mailem, aby ho bylo možné přidat pod vaši firmu.
+                  </p>
+                </div>
+
+                {/* Employees List */}
+                <div className="lg:col-span-2 card p-6 border-slate-200 dark:border-[#1F1F35]">
+                  <h3 className="font-extrabold text-xs text-foreground uppercase tracking-wider mb-4 pb-2 border-b border-border flex items-center gap-1.5">
+                    <Users size={14} className="text-tenant-primary" />
+                    Seznam zaměstnanců ({partner.users.length})
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[9px] pb-2">
+                          <th className="pb-2">Jméno</th>
+                          <th className="pb-2">E-mail</th>
+                          <th className="pb-2">Přiřazen dne</th>
+                          <th className="pb-2 text-right">Akce</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border text-foreground">
+                        {partner.users.map((emp) => (
+                          <tr key={emp.id} className="hover:bg-secondary/5 transition-colors">
+                            <td className="py-2.5 font-bold flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-none bg-tenant-primary/10 border border-tenant-primary/20 flex items-center justify-center font-extrabold text-[10px] text-tenant-primary">
+                                {emp.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                              </div>
+                              {emp.name}
+                            </td>
+                            <td className="py-2.5 text-muted-foreground font-mono">{emp.email}</td>
+                            <td className="py-2.5 text-muted-foreground">{formatPartnerDate(emp.createdAt)}</td>
+                            <td className="py-2.5 text-right">
+                              {emp.email === user.email ? (
+                                <span className="text-[10px] text-muted-foreground font-semibold italic bg-secondary/35 py-0.5 px-2">
+                                  Vy (Správce)
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleRemoveEmployee(emp.email)}
+                                  disabled={removingEmployeeEmail === emp.email}
+                                  className="text-rose-500 hover:text-rose-600 disabled:opacity-50 transition cursor-pointer font-bold uppercase tracking-wider text-[9px] flex items-center gap-0.5 ml-auto border border-rose-500/20 hover:border-rose-500 bg-rose-500/5 hover:bg-rose-500/10 px-2 py-1"
+                                >
+                                  {removingEmployeeEmail === emp.email ? "Odebírání..." : "Odebrat"}
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Corporate Bookings overview */}
+              <div className="card p-6 border-slate-200 dark:border-[#1F1F35]">
+                <h3 className="font-extrabold text-xs text-foreground uppercase tracking-wider mb-4 pb-2 border-b border-border flex items-center gap-1.5">
+                  <Calendar size={14} className="text-tenant-primary" />
+                  Rezervace zaměstnanců
+                </h3>
+                {partner.bookings.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">Žádné firemní rezervace nebyly nalezeny.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[9px] pb-2">
+                          <th className="pb-2">Datum a čas</th>
+                          <th className="pb-2">Zaměstnanec</th>
+                          <th className="pb-2">Rezervovaný zdroj</th>
+                          <th className="pb-2">Cena</th>
+                          <th className="pb-2 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border text-foreground">
+                        {partner.bookings.map((bk) => (
+                          <tr key={bk.id} className="hover:bg-secondary/5 transition-colors">
+                            <td className="py-2.5 font-semibold">
+                              <p>{formatPartnerDate(bk.reservedFrom)}</p>
+                              <p className="text-[10px] text-muted-foreground font-normal">{formatPartnerTimeRange(bk.reservedFrom, bk.reservedTo)}</p>
+                            </td>
+                            <td className="py-2.5 space-y-0.5">
+                              <p className="font-semibold text-foreground">{bk.userName}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{bk.userEmail}</p>
+                            </td>
+                            <td className="py-2.5 font-medium">{bk.resourceName}</td>
+                            <td className="py-2.5 font-mono">{formatCurrency(bk.price, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</td>
+                            <td className="py-2.5 text-right">
+                              <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold uppercase tracking-wider border ${
+                                bk.status === "ATTENDED"
+                                  ? "bg-slate-100 dark:bg-[#131322]/40 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-[#1F1F35]"
+                                  : bk.status === "CONFIRMED"
+                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-650 dark:text-emerald-400"
+                                  : bk.status === "PENDING_PAYMENT"
+                                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                                  : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                              }`}>
+                                {bk.status === "ATTENDED" ? "Odbaveno" : bk.status === "CONFIRMED" ? "Potvrzeno" : bk.status === "PENDING_PAYMENT" ? "Čeká na platbu" : "Zrušeno"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Corporate Invoices list */}
+              <div className="card p-6 border-slate-200 dark:border-[#1F1F35]">
+                <h3 className="font-extrabold text-xs text-foreground uppercase tracking-wider mb-4 pb-2 border-b border-border flex items-center gap-1.5">
+                  <Receipt size={14} className="text-tenant-primary" />
+                  Přehled firemních faktur
+                </h3>
+                {partner.invoices.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">Žádné faktury nebyly nalezeny.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[9px] pb-2">
+                          <th className="pb-2">Číslo faktury</th>
+                          <th className="pb-2">Datum vystavení</th>
+                          <th className="pb-2">Splatnost</th>
+                          <th className="pb-2">Počet rezervací</th>
+                          <th className="pb-2 font-mono">Částka celkem</th>
+                          <th className="pb-2">Status</th>
+                          <th className="pb-2 text-right">Akce</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border text-foreground">
+                        {partner.invoices.map((inv) => (
+                          <tr key={inv.id} className="hover:bg-secondary/5 transition-colors">
+                            <td className="py-2.5 font-bold font-mono text-tenant-primary">{inv.number}</td>
+                            <td className="py-2.5 text-muted-foreground">{formatPartnerDate(inv.issueDate)}</td>
+                            <td className="py-2.5 text-muted-foreground">{formatPartnerDate(inv.dueDate)}</td>
+                            <td className="py-2.5 text-muted-foreground">{inv.bookingsCount} x</td>
+                            <td className="py-2.5 font-bold font-mono">{formatCurrency(inv.amount, tenant.currency || "CZK", tenant.locale || "cs-CZ")}</td>
+                            <td className="py-2.5">
+                              <span className={`px-2 py-0.5 rounded-none text-[9px] font-extrabold uppercase tracking-wider border ${
+                                inv.status === "PAID"
+                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                  : inv.status === "SENT"
+                                  ? "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400"
+                                  : inv.status === "CANCELLED"
+                                  ? "bg-red-500/10 border-red-500/20 text-red-500"
+                                  : "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                              }`}>
+                                {inv.status === "PAID" ? "Zaplaceno" : inv.status === "SENT" ? "Odesláno" : inv.status === "CANCELLED" ? "Stornováno" : "Návrh"}
+                              </span>
+                            </td>
+                            <td className="py-2.5 text-right">
+                              <Link
+                                href={`/tenants/${tenant.id}/admin/invoices/${inv.id}`}
+                                target="_blank"
+                                className="text-tenant-primary hover:underline font-bold uppercase tracking-wider text-[9px] border border-tenant-primary/20 hover:border-tenant-primary bg-tenant-primary/5 hover:bg-tenant-primary/10 px-2.5 py-1.5 inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <FileText size={10} />
+                                Zobrazit / Tisk
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
       </main>
@@ -958,7 +1413,7 @@ export default function UserDashboardClient({
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-dashed border-border mt-2">
                 <div>
                   <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Datum vstupu</span>
-                  <p className="font-bold text-foreground mt-0.5">{new Date(activeTicket.reservedFrom).toLocaleDateString("cs-CZ")}</p>
+                  <p className="font-bold text-foreground mt-0.5">{new Date(activeTicket.reservedFrom).toLocaleDateString(tenant.locale || "cs-CZ")}</p>
                 </div>
                 <div>
                   <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Časový úsek</span>

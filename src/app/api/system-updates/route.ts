@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: unify settings design system, fix calendar month view range, and facelift portal settings":
+      "Sjednocení nastavení: Unifikace tlačítek, přepínačů a záložek administrace, oprava načítání měsíčního kalendáře a modernizace nastavení portálu.",
     "feat: enhance calendar tooltip mouse positioning and expand ReKeeper AI button transition":
       "Uživatelský komfort: Plovoucí detail rezervace sledující kurzor myši a vylepšená plynulá animace AI tlačítka ReKeeper.",
     "feat: implement schedule exceptions and extraordinary closures with calendar overlays":
@@ -360,7 +362,7 @@ export async function GET(req: NextRequest) {
       if (g.version === "0.2.0") {
         displayVersion = "v0.2.0 - Design overhaul";
       } else if (g.version === "0.2.1") {
-        displayVersion = "v0.2.1 - QoL features";
+        displayVersion = "v0.2.1 - Unified Settings & QoL";
       }
       
       const benefits = Array.from(new Set(

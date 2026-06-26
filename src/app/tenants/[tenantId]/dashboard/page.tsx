@@ -40,6 +40,75 @@ export default async function UserDashboardPage({ params }: DashboardPageProps) 
     redirect(`/tenants/${tenantId}`);
   }
 
+  // Fetch partner details if user is linked to a partner
+  let partnerData = null;
+  if (user.partnerId) {
+    const dbPartner = await prisma.partner.findUnique({
+      where: { id: user.partnerId },
+      include: {
+        users: {
+          orderBy: { name: "asc" }
+        },
+        invoices: {
+          orderBy: { createdAt: "desc" },
+          include: { bookings: true }
+        },
+        bookings: {
+          orderBy: { reservedFrom: "desc" },
+          include: { resource: true }
+        }
+      }
+    });
+
+    if (dbPartner && dbPartner.tenantId === tenantId) {
+      partnerData = {
+        id: dbPartner.id,
+        name: dbPartner.name,
+        email: dbPartner.email,
+        phone: dbPartner.phone,
+        companyId: dbPartner.companyId,
+        vatId: dbPartner.vatId,
+        addressStreet: dbPartner.addressStreet,
+        addressCity: dbPartner.addressCity,
+        addressZip: dbPartner.addressZip,
+        addressCountry: dbPartner.addressCountry,
+        discount: dbPartner.discount,
+        creditBalance: dbPartner.creditBalance.toString(),
+        creditLimit: dbPartner.creditLimit.toString(),
+        billingCycle: dbPartner.billingCycle,
+        paymentTermsDays: dbPartner.paymentTermsDays,
+        autoBillingEnabled: dbPartner.autoBillingEnabled,
+        users: dbPartner.users.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+          createdAt: u.createdAt.toISOString()
+        })),
+        bookings: dbPartner.bookings.map(b => ({
+          id: b.id,
+          resourceName: b.resource.name,
+          userName: b.userName,
+          userEmail: b.userEmail,
+          reservedFrom: b.reservedFrom.toISOString(),
+          reservedTo: b.reservedTo.toISOString(),
+          status: b.status,
+          price: b.price.toString()
+        })),
+        invoices: dbPartner.invoices.map(inv => ({
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          issueDate: inv.issueDate.toISOString(),
+          dueDate: inv.dueDate.toISOString(),
+          amount: inv.amount.toString(),
+          bookingsCount: inv.bookings.length
+        }))
+      };
+    }
+  }
+
   // 4. Fetch Bookings for this user (could be across all tenants, but let's load all of them)
   const bookings = await prisma.booking.findMany({
     where: {
@@ -117,10 +186,18 @@ export default async function UserDashboardPage({ params }: DashboardPageProps) 
 
   return (
     <UserDashboardClient
-      tenant={{ id: tenant.id, name: tenant.name, vertical: tenant.vertical }}
+      tenant={{ 
+        id: tenant.id, 
+        name: tenant.name, 
+        vertical: tenant.vertical,
+        locale: tenant.locale,
+        timezone: tenant.timezone,
+        currency: tenant.currency
+      }}
       user={serializedUser}
       bookings={serializedBookings}
       checkinLogs={serializedLogs}
+      partner={partnerData}
       theme={theme}
     />
   );

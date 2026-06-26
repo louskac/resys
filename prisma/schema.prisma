@@ -47,6 +47,9 @@ model Tenant {
   ssoClientSec       String    // Client secret for OneiD SSO
   paymentCut         Int       @default(3) // Platform cut percentage: 0, 1, 2, or 3 %
   attributes         Json?
+  timezone           String    @default("Europe/Prague")
+  locale             String    @default("cs-CZ")
+  currency           String    @default("CZK")
   createdAt          DateTime  @default(now())
   resources          Resource[]
   bookings           Booking[]

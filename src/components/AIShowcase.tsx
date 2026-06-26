@@ -330,7 +330,7 @@ export default function AIShowcase() {
                   {/* Step 1: Sportoviště */}
                   <div 
                     onClick={() => { if (!isTypingText && !isListening && simStep === 0) stepToArea(); }}
-                    className={`flex items-start gap-3.5 p-2.5 rounded-xl border transition-all select-none ${
+                    className={`flex items-start gap-3.5 p-2.5 rounded-none border transition-all select-none ${
                       simStep === 0 
                         ? "border-[#00F5FF]/30 bg-[#00F5FF]/5 cursor-pointer hover:bg-[#00F5FF]/10 hover:border-[#00F5FF]/50" 
                         : simStep > 0
@@ -338,7 +338,7 @@ export default function AIShowcase() {
                           : "border-transparent bg-transparent opacity-40 pointer-events-none"
                     }`}
                   >
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                    <div className={`h-9 w-9 rounded-none flex items-center justify-center shrink-0 border transition-all ${
                       simStep === 0
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 0
@@ -361,7 +361,7 @@ export default function AIShowcase() {
                   {/* Step 2: Datum */}
                   <div 
                     onClick={() => { if (!isTypingText && !isListening && simStep === 1) stepToDate(); }}
-                    className={`flex items-start gap-3.5 p-2.5 rounded-xl border transition-all select-none ${
+                    className={`flex items-start gap-3.5 p-2.5 rounded-none border transition-all select-none ${
                       simStep === 1 
                         ? "border-[#00F5FF]/30 bg-[#00F5FF]/5 cursor-pointer hover:bg-[#00F5FF]/10 hover:border-[#00F5FF]/50" 
                         : simStep > 1
@@ -369,7 +369,7 @@ export default function AIShowcase() {
                           : "border-transparent bg-transparent opacity-40 pointer-events-none"
                     }`}
                   >
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                    <div className={`h-9 w-9 rounded-none flex items-center justify-center shrink-0 border transition-all ${
                       simStep === 1
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 1
@@ -392,7 +392,7 @@ export default function AIShowcase() {
                   {/* Step 3: Čas */}
                   <div 
                     onClick={() => { if (!isTypingText && !isListening && simStep === 2) stepToTime(); }}
-                    className={`flex items-start gap-3.5 p-2.5 rounded-xl border transition-all select-none ${
+                    className={`flex items-start gap-3.5 p-2.5 rounded-none border transition-all select-none ${
                       simStep === 2 
                         ? "border-[#00F5FF]/30 bg-[#00F5FF]/5 cursor-pointer hover:bg-[#00F5FF]/10 hover:border-[#00F5FF]/50" 
                         : simStep > 2
@@ -400,7 +400,7 @@ export default function AIShowcase() {
                           : "border-transparent bg-transparent opacity-40 pointer-events-none"
                     }`}
                   >
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                    <div className={`h-9 w-9 rounded-none flex items-center justify-center shrink-0 border transition-all ${
                       simStep === 2
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 2
@@ -423,7 +423,7 @@ export default function AIShowcase() {
                   {/* Step 4: Klient */}
                   <div 
                     onClick={() => { if (!isTypingText && !isListening && simStep === 3) stepToClient(); }}
-                    className={`flex items-start gap-3.5 p-2.5 rounded-xl border transition-all select-none ${
+                    className={`flex items-start gap-3.5 p-2.5 rounded-none border transition-all select-none ${
                       simStep === 3 
                         ? "border-[#00F5FF]/30 bg-[#00F5FF]/5 cursor-pointer hover:bg-[#00F5FF]/10 hover:border-[#00F5FF]/50" 
                         : simStep > 3
@@ -431,7 +431,7 @@ export default function AIShowcase() {
                           : "border-transparent bg-transparent opacity-40 pointer-events-none"
                     }`}
                   >
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                    <div className={`h-9 w-9 rounded-none flex items-center justify-center shrink-0 border transition-all ${
                       simStep === 3
                         ? "border-[#00F5FF] bg-[#00F5FF]/15 text-[#00F5FF] shadow-[0_0_10px_rgba(0,245,255,0.3)] animate-pulse"
                         : simStep > 3
@@ -460,7 +460,7 @@ export default function AIShowcase() {
         <div className="lg:col-span-7 flex justify-center relative">
           
           {/* Calendar grid mock backdrop */}
-          <div className="w-full max-w-lg aspect-[4/3.1] bg-[#07070F] rounded-[32px] border border-zinc-800/80 p-5 flex flex-col justify-between shadow-2xl relative overflow-hidden select-none">
+          <div className="w-full max-w-lg aspect-[4/3.1] bg-[#07070F] rounded-none border border-zinc-800/80 p-5 flex flex-col justify-between shadow-2xl relative overflow-hidden select-none">
             
             <div 
               className="absolute inset-0 opacity-10 pointer-events-none text-zinc-800" 
@@ -497,15 +497,15 @@ export default function AIShowcase() {
                 {/* Kurt 1 Column */}
                 <div className="flex flex-col border-r border-zinc-900/60 pr-1">
                   <span className="text-[9px] font-bold text-zinc-400 text-center mb-2 block truncate">Badminton 1</span>
-                  <div className="flex-1 bg-white/[0.01] rounded-lg border border-dashed border-zinc-800/40" />
+                  <div className="flex-1 bg-white/[0.01] rounded-none border border-dashed border-zinc-800/40" />
                 </div>
  
                 {/* Kurt 2 Column */}
                 <div className="flex flex-col border-r border-zinc-900/60 pr-1">
                   <span className="text-[9px] font-bold text-zinc-400 text-center mb-2 block truncate">Badminton 2</span>
-                  <div className="flex-1 bg-white/[0.01] rounded-lg border border-dashed border-zinc-800/40 relative">
+                  <div className="flex-1 bg-white/[0.01] rounded-none border border-dashed border-zinc-800/40 relative">
                     {/* Fixed occupied block */}
-                    <div className="absolute top-[10%] left-0 right-0 h-[35%] bg-zinc-800/40 border border-zinc-700/30 rounded-md p-1 flex flex-col justify-between">
+                    <div className="absolute top-[10%] left-0 right-0 h-[35%] bg-zinc-800/40 border border-zinc-700/30 rounded-none p-1 flex flex-col justify-between">
                       <span className="text-[7.5px] font-bold text-zinc-400 leading-none">Obsazeno</span>
                     </div>
                   </div>
@@ -517,11 +517,11 @@ export default function AIShowcase() {
                     Kurt 3 (Tenis)
                   </span>
                   
-                  <div className={`flex-1 rounded-lg border border-dashed transition-all duration-300 relative ${simStep >= 1 ? "bg-purple-950/5 border-[#7000FF]/25" : "bg-white/[0.01] border-zinc-800/40"}`}>
+                  <div className={`flex-1 rounded-none border border-dashed transition-all duration-300 relative ${simStep >= 1 ? "bg-purple-950/5 border-[#7000FF]/25" : "bg-white/[0.01] border-zinc-800/40"}`}>
                     
                     {/* Simulated live drawing of reservation block on scheduler */}
                     {simStep >= 3 && (
-                      <div className={`absolute top-[45%] left-0 right-0 h-[25%] rounded-md p-1.5 flex flex-col justify-between transition-all duration-500 ${
+                      <div className={`absolute top-[45%] left-0 right-0 h-[25%] rounded-none p-1.5 flex flex-col justify-between transition-all duration-500 ${
                         simStep === 6 
                           ? "bg-gradient-to-r from-[#7000FF]/35 to-[#7000FF]/45 border-[#7000FF]/70 shadow-[0_0_15px_rgba(112,0,255,0.25)] animate-pulse" 
                           : "border-dashed border-[#00F5FF] bg-[#00F5FF]/10"
@@ -533,7 +533,7 @@ export default function AIShowcase() {
                           {simStep === 6 ? (
                             <Lock size={8} className="text-tenant-primary" />
                           ) : (
-                            <span className="h-1 w-1 rounded-full bg-[#00F5FF] animate-ping" />
+                            <span className="h-1 w-1 rounded-none bg-[#00F5FF] animate-ping" />
                           )}
                         </div>
                         <span className="text-[8px] text-zinc-200 font-extrabold truncate">
@@ -552,7 +552,7 @@ export default function AIShowcase() {
             <div className="flex justify-between items-center text-[8.5px] text-zinc-550 border-t border-zinc-900 pt-2.5 font-sans">
               <span>Status: Synchronizováno</span>
               <span className="flex items-center gap-1">
-                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                <span className="h-1 w-1 rounded-none bg-emerald-500" />
                 IoT API Hub Online
               </span>
             </div>
@@ -560,7 +560,7 @@ export default function AIShowcase() {
             {/* Nova Rezervace Confirmation Modal Popup */}
             {simStep === 5 && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-40 animate-fadeIn select-none">
-                <div className="bg-white text-black rounded-3xl w-full max-w-[360px] p-5 shadow-2xl border border-zinc-200 animate-scaleUp">
+                <div className="bg-white text-black rounded-none w-full max-w-[360px] p-5 shadow-2xl border border-zinc-200 animate-scaleUp">
                   
                   <div className="flex justify-between items-start">
                     <div>
@@ -578,7 +578,7 @@ export default function AIShowcase() {
                   <div className="mt-4 space-y-3.5 text-left">
                     <div className="space-y-1">
                       <span className="text-[8px] font-extrabold text-[#7000FF] tracking-wider uppercase block">VYBERTE PLOCHU/SEKTOR</span>
-                      <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50">
+                      <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-none p-2.5 bg-slate-50">
                         {parsedParams.area}
                       </div>
                     </div>
@@ -586,13 +586,13 @@ export default function AIShowcase() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <span className="text-[8px] font-extrabold text-slate-400 tracking-wider uppercase block">DEN</span>
-                        <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50">
+                        <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-none p-2.5 bg-slate-50">
                           {parsedParams.date}
                         </div>
                       </div>
                       <div className="space-y-1">
                         <span className="text-[8px] font-extrabold text-slate-400 tracking-wider uppercase block">ZAČÁTEK</span>
-                        <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50">
+                        <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-none p-2.5 bg-slate-50">
                           15:00
                         </div>
                       </div>
@@ -600,13 +600,13 @@ export default function AIShowcase() {
  
                     <div className="space-y-1">
                       <span className="text-[8px] font-extrabold text-slate-400 tracking-wider uppercase block">DOBA TRVÁNÍ</span>
-                      <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50">
+                      <div className="text-[11px] font-bold text-slate-800 border border-slate-200 rounded-none p-2.5 bg-slate-50">
                         1 hodina
                       </div>
                     </div>
  
                     {/* Price banner */}
-                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-150 flex justify-between items-center text-xs">
+                    <div className="p-3 bg-emerald-50 rounded-none border border-emerald-150 flex justify-between items-center text-xs">
                       <span className="font-semibold text-emerald-800">Cena pronájmu:</span>
                       <span className="font-extrabold text-emerald-700">250 Kč</span>
                     </div>
@@ -614,13 +614,13 @@ export default function AIShowcase() {
                     <div className="grid grid-cols-2 gap-2.5 pt-2">
                       <button 
                         onClick={() => setSimStep(4)} 
-                        className="py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all cursor-pointer text-center"
+                        className="py-2.5 rounded-none text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all cursor-pointer text-center"
                       >
                         Zrušit
                       </button>
                       <button 
                         onClick={() => setSimStep(6)} 
-                        className="py-2.5 rounded-xl text-xs font-bold text-white bg-tenant-primary hover:opacity-95 active:scale-95 transition-all cursor-pointer text-center shadow-md shadow-tenant-primary/20"
+                        className="py-2.5 rounded-none text-xs font-bold text-white bg-tenant-primary hover:opacity-95 active:scale-95 transition-all cursor-pointer text-center shadow-md shadow-tenant-primary/20"
                       >
                         Potvrdit rezervaci
                       </button>
@@ -635,7 +635,7 @@ export default function AIShowcase() {
             {simStep === 6 && (
               <div className="absolute inset-0 bg-[#07070F]/90 backdrop-blur-md flex items-center justify-center p-5 z-40 animate-fadeIn">
                 <div className="text-center space-y-4 max-w-sm">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(16,185,129,0.35)] scale-110">
+                  <div className="h-12 w-12 rounded-none bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(16,185,129,0.35)] scale-110">
                     <Check size={24} />
                   </div>
                   <div className="space-y-1">
@@ -643,7 +643,7 @@ export default function AIShowcase() {
                     <p className="text-[10px] text-zinc-400">ReKeeper dokončil automatické workflow na pozadí:</p>
                   </div>
  
-                  <div className="bg-black/40 border border-zinc-800/80 rounded-2xl p-3.5 text-[10px] text-left space-y-1.5 text-zinc-300 font-mono">
+                  <div className="bg-black/40 border border-zinc-800/80 rounded-none p-3.5 text-[10px] text-left space-y-1.5 text-zinc-300 font-mono">
                     <div className="flex items-center gap-2"><Check size={10} className="text-emerald-450" /> Vytvořeno v PostgreSQL (locks OK)</div>
                     <div className="flex items-center gap-2"><Check size={10} className="text-emerald-455" /> Odeslána SMS + Mail klientovi</div>
                     <div className="flex items-center gap-2"><Check size={10} className="text-emerald-450" /> Vygenerován PIN pro IoT turniket</div>
@@ -652,7 +652,7 @@ export default function AIShowcase() {
  
                   <button 
                     onClick={resetSimulation} 
-                    className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 text-white rounded-none text-xs font-bold transition-all cursor-pointer"
                   >
                     Vyzkoušet znovu
                   </button>
@@ -667,7 +667,7 @@ export default function AIShowcase() {
             className="absolute bottom-6 right-6 w-[88%] max-w-[390px] animated-glowing-border p-5 pt-14 pb-5 flex flex-col gap-4 z-30 transition-all duration-300 shadow-2xl font-sans"
           >
             {/* Ambient Breathing Blurs Inside Widget */}
-            <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none z-0">
+            <div className="absolute inset-0 rounded-none overflow-hidden pointer-events-none z-0">
               <div className="absolute top-[-80px] left-[-60px] w-[200px] h-[200px] rounded-full bg-[#7000FF] opacity-[0.05] dark:opacity-[0.08] blur-[60px] animate-blob-orbit-1" />
               <div className="absolute bottom-[-100px] right-[-50px] w-[180px] h-[180px] rounded-full bg-[#00F5FF] opacity-[0.04] dark:opacity-[0.07] blur-[55px] animate-blob-orbit-2" />
               <div className="absolute top-[30%] left-[35%] w-[160px] h-[160px] rounded-full bg-[#EC4899] opacity-[0.03] dark:opacity-[0.05] blur-[50px] animate-blob-orbit-3" />
@@ -721,7 +721,7 @@ export default function AIShowcase() {
             {/* Header info bar */}
             <div className="flex items-center justify-between border-b border-white/5 pb-2.5 z-10 select-none">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
+                <span className="h-2 w-2 rounded-none bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-450 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.7)]" />
                 <span className="text-[10px] tracking-widest uppercase font-extrabold text-purple-400">
                   {isListening ? "ReKeeper poslouchá..." : isTypingText ? "Zpracovávám..." : "ReKeeper: Timekeeper"}
                 </span>
@@ -737,7 +737,7 @@ export default function AIShowcase() {
               <div className="flex items-center gap-1.5 z-10">
                 <button 
                   onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
-                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  className={`p-1.5 rounded-none border transition-colors cursor-pointer ${
                     isVoiceEnabled ? "border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10" : "border-white/5 text-zinc-550 hover:text-white"
                   }`}
                   title={isVoiceEnabled ? "Mluvení zapnuto" : "Mluvení vypnuto"}
@@ -746,7 +746,7 @@ export default function AIShowcase() {
                 </button>
                 <button 
                   onClick={resetSimulation}
-                  className="p-1.5 rounded-lg border border-white/5 text-zinc-500 hover:text-rose-400 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
+                  className="p-1.5 rounded-none border border-white/5 text-zinc-500 hover:text-rose-400 hover:border-rose-500/35 hover:bg-rose-500/5 transition-all cursor-pointer"
                   title="Restartovat ReKeepera"
                 >
                   <RotateCcw size={13} />
@@ -758,7 +758,7 @@ export default function AIShowcase() {
             {isListening ? (
               <AIWaveform label="ReKeeper poslouchá..." className="py-2.5 min-h-[46px]" />
             ) : (
-              <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/40 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10 text-left">
+              <div className="text-[11.5px] text-zinc-200 italic min-h-[38px] flex items-center bg-slate-950/40 backdrop-blur-md px-3.5 py-2.5 rounded-none border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] select-none leading-relaxed break-words z-10 text-left">
                 {getAiResponseText()}
               </div>
             )}
@@ -779,6 +779,7 @@ export default function AIShowcase() {
               isSpeechSupported={true}
               isReadyToConfirm={simStep === 4}
               disabled={simStep >= 5}
+              autoFocus={false}
             />
 
             {/* Cartoony handwritten pointer arrow to try the assistant */}

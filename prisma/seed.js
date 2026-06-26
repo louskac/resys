@@ -32,6 +32,9 @@ async function main() {
       vertical: "EDUCATIONAL_COURSE",
       ssoClientId: "sfera-sso-client",
       ssoClientSec: "sfera-client-secret-12345",
+      timezone: "Europe/Prague",
+      locale: "cs-CZ",
+      currency: "CZK",
       attributes: {
         tagline: "Vědecko-technologické centrum a laboratoře",
         openTime: "08:00",
@@ -49,6 +52,9 @@ async function main() {
       vertical: "SPORTS_GROUND", // Sport pitch vertical
       ssoClientId: "umelka-sso-client",
       ssoClientSec: "umelka-client-secret-abcde",
+      timezone: "Europe/Prague",
+      locale: "cs-CZ",
+      currency: "CZK",
       attributes: {
         tagline: "Zažijte nefalšovanou fotbalovou zábavu i bez přírodní trávy. Pronájem hřiště s umělým trávníkem 3. generace s certifikací FIFA.",
         openTime: "08:00",
@@ -67,6 +73,9 @@ async function main() {
       vertical: "SPORTS_GROUND",
       ssoClientId: "zskomenskeho-sso-client",
       ssoClientSec: "zskomenskeho-client-secret-xyz",
+      timezone: "Europe/Prague",
+      locale: "cs-CZ",
+      currency: "CZK",
       attributes: {
         tagline: "Rezervační portál sportovišť a tělocvičen ZŠ Komenského",
         openTime: "08:00",
@@ -77,7 +86,27 @@ async function main() {
     },
   });
 
-  console.log("Seeded Tenants: Sféra, Umělka and ZŠ Komenského.");
+  const londonfit = await prisma.tenant.create({
+    data: {
+      id: "londonfit",
+      name: "London Fitness Hub",
+      domain: "londonfit.localhost:3000",
+      vertical: "CAPACITY_CLASS",
+      ssoClientId: "londonfit-sso-client",
+      ssoClientSec: "londonfit-client-secret-xyz",
+      timezone: "Europe/London",
+      locale: "en-GB",
+      currency: "GBP",
+      attributes: {
+        tagline: "Premium boutique fitness classes in the heart of London.",
+        openTime: "06:00",
+        closeTime: "21:00",
+        adminEmails: ["josef.novak@deepvision.cz"],
+      }
+    },
+  });
+
+  console.log("Seeded Tenants: Sféra, Umělka, ZŠ Komenského and London Fitness Hub.");
 
   // Seed Users
   await prisma.user.create({
@@ -121,6 +150,37 @@ async function main() {
 
   await prisma.user.create({
     data: {
+      email: "admin@londonfit.co.uk",
+      passwordHash: hashPassword("londonfit"),
+      name: "London Fitness Administrator",
+      role: "ADMIN",
+      tenantId: londonfit.id,
+    }
+  });
+
+  const partner = await prisma.partner.create({
+    data: {
+      id: "mock-partner-uuid",
+      tenantId: sfera.id,
+      name: "DeepVision Corporate",
+      email: "billing@deepvision.cz",
+      companyId: "28812345",
+      vatId: "CZ28812345",
+      addressStreet: "17. listopadu 237",
+      addressCity: "Pardubice",
+      addressZip: "53002",
+      addressCountry: "Česká republika",
+      discount: 15,
+      creditBalance: 25000,
+      creditLimit: 50000,
+      billingCycle: "MONTHLY",
+      paymentTermsDays: 14,
+      autoBillingEnabled: true,
+    }
+  });
+
+  await prisma.user.create({
+    data: {
       id: "9999", // Match mock_dev_session_secret
       email: "josef.novak@deepvision.cz",
       passwordHash: hashPassword("josef"),
@@ -133,6 +193,17 @@ async function main() {
       addressZip: "53002",
       addressCountry: "Česká republika",
       organization: "DeepVision s.r.o.",
+      partnerId: partner.id,
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "employee@deepvision.cz",
+      passwordHash: hashPassword("employee"),
+      name: "Jan Svoboda (Employee)",
+      role: "USER",
+      partnerId: partner.id,
     }
   });
 
@@ -322,6 +393,34 @@ async function main() {
     },
   });
 
+  const spinStudio = await prisma.resource.create({
+    data: {
+      tenantId: londonfit.id,
+      name: "Spin Studio",
+      type: "SEAT",
+      maxCapacity: 20,
+      attributes: {
+        instructor: "Sarah Jenkins",
+        room: "Studio 2",
+        equipment: "Peloton Stage Bike",
+      },
+    },
+  });
+
+  const yogaStudio = await prisma.resource.create({
+    data: {
+      tenantId: londonfit.id,
+      name: "Yoga & Pilates Space",
+      type: "SEAT",
+      maxCapacity: 15,
+      attributes: {
+        instructor: "Michael Chang",
+        room: "Studio 4",
+        equipment: "Yoga Mats, Blocks, Straps",
+      },
+    },
+  });
+
   console.log("Seeded bookable resources.");
 
   // 5. Seed Schedule Rules (Slots)
@@ -423,6 +522,45 @@ async function main() {
         endTime: "21:00",
         price: 400.00,
         maxCapacity: 1,
+      }
+    });
+  }
+
+  // Seed schedule rules for London Fitness Hub
+  for (let day = 1; day <= 5; day++) {
+    await prisma.scheduleRule.create({
+      data: {
+        resourceId: spinStudio.id,
+        name: "Morning Spin Session",
+        dayOfWeek: day,
+        startTime: "08:00",
+        endTime: "09:00",
+        price: 15.00,
+        maxCapacity: 20,
+      }
+    });
+
+    await prisma.scheduleRule.create({
+      data: {
+        resourceId: spinStudio.id,
+        name: "Evening Power Spin",
+        dayOfWeek: day,
+        startTime: "17:00",
+        endTime: "18:00",
+        price: 20.00,
+        maxCapacity: 20,
+      }
+    });
+
+    await prisma.scheduleRule.create({
+      data: {
+        resourceId: yogaStudio.id,
+        name: "Vinyasa Flow Yoga",
+        dayOfWeek: day,
+        startTime: "10:00",
+        endTime: "11:30",
+        price: 18.00,
+        maxCapacity: 15,
       }
     });
   }
@@ -635,7 +773,7 @@ async function main() {
   const sferaBookingTo = new Date();
   sferaBookingTo.setHours(sferaBookingTo.getHours() + 1);
 
-  await prisma.booking.create({
+  const booking1 = await prisma.booking.create({
     data: {
       id: "mock_dev_ticket_uuid",
       tenantId: sfera.id,
@@ -647,7 +785,53 @@ async function main() {
       reservedFrom: sferaBookingFrom,
       reservedTo: sferaBookingTo,
       status: "CONFIRMED",
+      partnerId: partner.id,
+      price: 150.00,
     },
+  });
+
+  const empBookingFrom = new Date();
+  empBookingFrom.setDate(empBookingFrom.getDate() - 1);
+  empBookingFrom.setHours(10, 0, 0, 0);
+  const empBookingTo = new Date();
+  empBookingTo.setDate(empBookingTo.getDate() - 1);
+  empBookingTo.setHours(12, 0, 0, 0);
+
+  await prisma.booking.create({
+    data: {
+      tenantId: sfera.id,
+      resourceId: chemLab.id,
+      scheduleRuleId: sfRule1.id,
+      oneidUserId: "8888",
+      userName: "Jan Svoboda (Employee)",
+      userEmail: "employee@deepvision.cz",
+      reservedFrom: empBookingFrom,
+      reservedTo: empBookingTo,
+      status: "ATTENDED",
+      partnerId: partner.id,
+      price: 300.00,
+    }
+  });
+
+  const invoiceDueDate = new Date();
+  invoiceDueDate.setDate(invoiceDueDate.getDate() + 14);
+
+  await prisma.invoice.create({
+    data: {
+      id: "mock-invoice-uuid-1",
+      tenantId: sfera.id,
+      partnerId: partner.id,
+      number: "INV-2026-0001",
+      status: "SENT",
+      issueDate: new Date(),
+      dueDate: invoiceDueDate,
+      amount: 450.00,
+      bookings: {
+        connect: [
+          { id: booking1.id }
+        ]
+      }
+    }
   });
 
   console.log("Seeded confirmed bookings.");

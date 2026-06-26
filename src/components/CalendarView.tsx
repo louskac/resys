@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
 import Pusher from "pusher-js";
+import { getTranslations, formatCurrency, translateError } from "@/lib/translations";
 
 export interface CalendarEvent {
   id: string;
@@ -22,6 +23,8 @@ export interface CalendarEvent {
   totalLanes?: number;
   recurrenceGroup?: string | null;
   status?: string;
+  dateStr?: string;
+  isDraft?: boolean;
 }
 
 export interface Partner {
@@ -71,6 +74,9 @@ interface CalendarViewProps {
     closed: boolean;
   }[];
   partners?: Partner[];
+  locale?: string;
+  timezone?: string;
+  currency?: string;
 }
 
 const SLOT_HEIGHT = 60;
@@ -214,20 +220,20 @@ const sapphireV2StylesMap: Record<string, {
 };
 
 
-interface SwitcherOption<T> {
+export interface SwitcherOption<T> {
   value: T;
   label: string;
 }
 
-interface UnifiedSwitcherProps<T> {
+export interface UnifiedSwitcherProps<T> {
   options: SwitcherOption<T>[];
   activeValue: T;
   onChange: (value: T) => void;
 }
 
-function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherProps<T>) {
+export function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherProps<T>) {
   return (
-    <div className="flex items-center bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none w-fit max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shadow-sm">
+    <div className="flex items-center h-9 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none w-fit max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shadow-sm">
       {options.map((option) => {
         const isActive = activeValue === option.value;
         return (
@@ -235,7 +241,7 @@ function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherP
             key={String(option.value)}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 cursor-pointer whitespace-nowrap rounded-none ${
+            className={`h-full px-5 py-0 text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 cursor-pointer whitespace-nowrap rounded-none flex items-center justify-center ${
               isActive
                 ? "bg-tenant-primary/15 text-tenant-primary font-black shadow-[inset_0_-2px_0_0_var(--tenant-primary)]"
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-200/5 dark:hover:bg-white/5"
@@ -260,7 +266,10 @@ export default function CalendarView({
   isAdmin = false,
   openingHours = defaultOpeningHours,
   partners = [],
-  weekStart
+  weekStart,
+  locale = "cs-CZ",
+  timezone = "Europe/Prague",
+  currency = "CZK"
 }: CalendarViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -376,15 +385,23 @@ export default function CalendarView({
   const [isBooked, setIsBooked] = useState(false);
   const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+  
+  const viewParam = searchParams.get("view") as "day" | "week" | "month" | null;
+  const viewMode = viewParam || "week";
+  const setViewMode = (mode: "day" | "week" | "month") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", mode);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const [isHorizontal, setIsHorizontal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth < 768 && !viewParam) {
       setViewMode("day");
     }
-  }, []);
+  }, [viewParam]);
 
   const bookingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -457,11 +474,10 @@ export default function CalendarView({
     const monday = getMondayOfDate(baseDate);
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    const dayNamesAbbr = ["ne", "po", "út", "st", "čt", "pá", "so"];
     const dayIndex = d.getDay();
-    const label = `${dayNamesAbbr[dayIndex]} ${d.getDate()}. ${d.getMonth() + 1}.`;
+    const label = d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "numeric" });
     const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-    const fullNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
+    const fullNames = getTranslations(locale).days.long;
     return {
       label,
       key: keys[dayIndex],
@@ -532,39 +548,38 @@ export default function CalendarView({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const monthNamesCzech = [
-    "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-    "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
-  ];
-
   let headerTitle = "";
   if (isHorizontal) {
-    const dayNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
-    headerTitle = `${dayNames[baseDate.getDay()]} ${baseDate.getDate()}. ${baseDate.getMonth() + 1}. ${baseDate.getFullYear()}`;
+    const dayNames = getTranslations(locale).days.long;
+    const dateFormatted = baseDate.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+    headerTitle = `${dayNames[baseDate.getDay()]} ${dateFormatted}`;
   } else if (viewMode === "day") {
-    headerTitle = `${baseDate.getDate()}. ${baseDate.getMonth() + 1}. ${baseDate.getFullYear()}`;
+    headerTitle = baseDate.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
   } else if (viewMode === "month") {
-    headerTitle = `${monthNamesCzech[baseDate.getMonth()]} ${baseDate.getFullYear()}`;
+    const monthName = getTranslations(locale).months[baseDate.getMonth()];
+    headerTitle = `${monthName} ${baseDate.getFullYear()}`;
   } else {
     const monday = getMondayOfDate(baseDate);
-    const startDay = monday.getDate();
-    const startMonth = monday.getMonth() + 1;
-    const startYear = monday.getFullYear();
-    
     const endOfWeekDate = new Date(monday);
     endOfWeekDate.setDate(monday.getDate() + 6);
-    const endDay = endOfWeekDate.getDate();
-    const endMonth = endOfWeekDate.getMonth() + 1;
+
+    const startYear = monday.getFullYear();
     const endYear = endOfWeekDate.getFullYear();
 
     if (startYear === endYear) {
-      if (startMonth === endMonth) {
-        headerTitle = `${startDay}. – ${endDay}. ${startMonth}. ${startYear}`;
+      if (monday.getMonth() === endOfWeekDate.getMonth()) {
+        const startDayStr = monday.toLocaleDateString(locale, { day: "numeric" });
+        const endDayMonthStr = endOfWeekDate.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+        headerTitle = `${startDayStr} – ${endDayMonthStr}`;
       } else {
-        headerTitle = `${startDay}. ${startMonth}. – ${endDay}. ${endMonth}. ${startYear}`;
+        const startDayMonthStr = monday.toLocaleDateString(locale, { day: "numeric", month: "numeric" });
+        const endDayMonthStr = endOfWeekDate.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+        headerTitle = `${startDayMonthStr} – ${endDayMonthStr}`;
       }
     } else {
-      headerTitle = `${startDay}. ${startMonth}. ${startYear} – ${endDay}. ${endMonth}. ${endYear}`;
+      const startFormatted = monday.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+      const endFormatted = endOfWeekDate.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+      headerTitle = `${startFormatted} – ${endFormatted}`;
     }
   }
 
@@ -1396,7 +1411,7 @@ export default function CalendarView({
 
       if (!res.ok) {
         const err = await res.json();
-        const errorMsg = err.message || "Failed to confirm reservation.";
+        const errorMsg = translateError(err.code || err.message, locale) || err.message || "Failed to confirm reservation.";
         setModalError({
           code: err.code || "UNKNOWN_ERROR",
           message: errorMsg
@@ -1554,6 +1569,51 @@ export default function CalendarView({
     }
   }, [bookingType, selectedDayIndex, selectedTimeStr, customResourceId, customDuration, isResourceAvailable]);
 
+  const visibleRealReservationsCount = React.useMemo(() => {
+    // 1. Filter out non-reservations (breaks, closures, drafts)
+    const realReservations = events.filter(e => 
+      e.isOccupied && 
+      e.status !== "TECHNICAL_BREAK" && 
+      e.status !== "CLOSURE" && 
+      !e.isDraft &&
+      e.id !== "draft-booking-id"
+    );
+
+    // 2. Filter by date/range depending on viewMode
+    if (viewMode === "day") {
+      const targetDayStr = toLocalDateString(baseDate);
+      return realReservations.filter(e => 
+        e.dateStr ? e.dateStr === targetDayStr : e.dayIndex === activeDayDbIndex
+      ).length;
+    }
+    
+    if (viewMode === "month") {
+      return realReservations.filter(e => {
+        if (e.dateStr) {
+          const parts = e.dateStr.split("-");
+          const evYear = parseInt(parts[0], 10);
+          const evMonth = parseInt(parts[1], 10) - 1;
+          return evYear === baseDate.getFullYear() && evMonth === baseDate.getMonth();
+        }
+        return true; // fallback
+      }).length;
+    }
+
+    // Default: "week" view
+    const monday = getMondayOfDate(baseDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const mondayStr = toLocalDateString(monday);
+    const sundayStr = toLocalDateString(sunday);
+
+    return realReservations.filter(e => {
+      if (e.dateStr) {
+        return e.dateStr >= mondayStr && e.dateStr <= sundayStr;
+      }
+      return true; // fallback
+    }).length;
+  }, [events, viewMode, baseDate, activeDayDbIndex]);
+
   return (
     <div className="p-6 bg-[#FAFAFD] dark:bg-[#060608] text-slate-800 dark:text-slate-100 border border-[#E2E2ED] dark:border-[#1F1F2E] rounded-none relative transition-all duration-300 font-sans shadow-2xl">
       {/* Calendar Header Control */}
@@ -1562,13 +1622,13 @@ export default function CalendarView({
           <div className="flex items-center gap-1">
             <button 
               onClick={handlePrevWeek}
-              className="p-2.5 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
+              className="w-9 h-9 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={handleNextWeek}
-              className="p-2.5 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
+              className="w-9 h-9 rounded-none bg-slate-200/50 dark:bg-black/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white border border-slate-300 dark:border-zinc-700 hover:scale-105 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center"
             >
               <ChevronRight size={16} />
             </button>
@@ -1577,9 +1637,9 @@ export default function CalendarView({
           {!isCurrent && (
             <button 
               onClick={handleToday}
-              className="border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary dark:text-white hover:text-white transition-all text-[10px] font-extrabold py-2 px-4 rounded-none cursor-pointer uppercase tracking-widest"
+              className="h-9 px-4 py-0 flex items-center justify-center border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary dark:text-white hover:text-white transition-all text-[10px] font-extrabold rounded-none cursor-pointer uppercase tracking-widest"
             >
-              Dnes
+              {getTranslations(locale).ui.today}
             </button>
           )}
  
@@ -1587,9 +1647,9 @@ export default function CalendarView({
           {!isHorizontal && (
             <UnifiedSwitcher<"day" | "week" | "month">
               options={[
-                { value: "day", label: "Den" },
-                { value: "week", label: "Týden" },
-                { value: "month", label: "Měsíc" }
+                { value: "day", label: getTranslations(locale).ui.day },
+                { value: "week", label: getTranslations(locale).ui.week },
+                { value: "month", label: getTranslations(locale).ui.month }
               ]}
               activeValue={viewMode}
               onChange={setViewMode}
@@ -1597,7 +1657,7 @@ export default function CalendarView({
           )}
  
           {/* Simple Toggle Switch for Horizontal View */}
-          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 rounded-none shadow-sm select-none">
+          <div className="flex items-center gap-2.5 px-3.5 py-0 h-9 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 rounded-none shadow-sm select-none">
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550 dark:text-zinc-400">
               Horizontální rozvrh
             </span>
@@ -1622,15 +1682,16 @@ export default function CalendarView({
               />
             </button>
           </div>
- 
-          <span className="text-[9px] px-2.5 py-2 border border-slate-300 dark:border-zinc-700 bg-slate-200/30 dark:bg-black/40 text-slate-600 dark:text-white/90 font-extrabold uppercase tracking-widest select-none rounded-none shrink-0 shadow-xs">
-            {events.length} {events.length === 1 ? "rezervace" : events.length >= 2 && events.length <= 4 ? "rezervace" : "rezervací"}
-          </span>
         </div>
         
-        <h2 className="text-xl font-extrabold tracking-tight xl:text-right text-tenant-primary dark:text-zinc-100">
-          {headerTitle}
-        </h2>
+        <div className="flex flex-col items-start xl:items-end gap-1 shrink-0">
+          <h2 className="text-xl font-extrabold tracking-tight xl:text-right text-tenant-primary dark:text-zinc-100">
+            {headerTitle}
+          </h2>
+          <div className="text-[10px] font-bold text-slate-550 dark:text-zinc-450 uppercase tracking-widest select-none">
+            {visibleRealReservationsCount} {visibleRealReservationsCount === 1 ? "rezervace" : visibleRealReservationsCount >= 2 && visibleRealReservationsCount <= 4 ? "rezervace" : "rezervací"} v tomto období
+          </div>
+        </div>
       </div>
 
       {/* Root Resource Selector (if multiple roots exist) */}
@@ -1802,7 +1863,8 @@ export default function CalendarView({
                                 {TIME_SLOTS.map((time, timeIdx) => {
                                   const isPast = isSlotInPast(activeDayDbIndex, time);
                                   const isClosed = isSlotClosed(colRes.id, activeDayDbIndex, time);
-                                  const isDisabled = isPast || isClosed;
+                                  const isOccupied = !isResourceAvailable(colRes.id, activeDayDbIndex, time, 0.5);
+                                  const isDisabled = isPast || isClosed || isOccupied;
                                   const isHighlighted = isDragging && dragStartSlot && dragCurrentSlot &&
                                     dragStartSlot.resourceId === colRes.id &&
                                     timeIdx >= Math.min(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex) &&
@@ -1898,7 +1960,9 @@ export default function CalendarView({
                                             e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
                                             const tooltipWidth = 288;
-                                            const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                            const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                            const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                            const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
                                             const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
                                             e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                                           }}
@@ -1915,7 +1979,9 @@ export default function CalendarView({
                                             e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
                                             const tooltipWidth = 288;
-                                            const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                            const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                            const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                            const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
                                             const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
                                             e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                                           }}
@@ -2169,7 +2235,7 @@ export default function CalendarView({
                     <span>{day.label}</span>
                     {isToday && (
                       <span className="text-[8px] font-extrabold uppercase tracking-wide bg-rose-500/10 text-rose-600 px-1 py-0.2 rounded-none mt-0.5">
-                        Dnes
+                        {getTranslations(locale).ui.today}
                       </span>
                     )}
                   </div>
@@ -2243,7 +2309,8 @@ export default function CalendarView({
                     {TIME_SLOTS.map((time, timeIdx) => {
                       const isPast = isSlotInPast(day.dbDayIndex, time);
                       const isClosed = isSlotClosed(selectedResourceId, day.dbDayIndex, time);
-                      const isDisabled = isPast || isClosed;
+                      const isOccupied = selectedResourceId ? !isResourceAvailable(selectedResourceId, day.dbDayIndex, time, 0.5) : false;
+                      const isDisabled = isPast || isClosed || isOccupied;
                       const isHighlighted = isDragging && dragStartSlot && dragCurrentSlot &&
                         dragStartSlot.dayIndex === day.dbDayIndex &&
                         timeIdx >= Math.min(dragStartSlot.timeIndex, dragCurrentSlot.timeIndex) &&
@@ -2339,7 +2406,9 @@ export default function CalendarView({
                                 e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
                                 const tooltipWidth = 288;
-                                const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
                                 const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
                                 e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                               }}
@@ -2356,7 +2425,9 @@ export default function CalendarView({
                                 e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
                                 const tooltipWidth = 288;
-                                const showLeft = e.clientX + tooltipWidth > window.innerWidth;
+                                const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
                                 const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
                                 e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                               }}
@@ -2625,15 +2696,20 @@ export default function CalendarView({
                   const dayOfWeekIndex = d.getDay();
                   const dbDayIndex = dayOfWeekIndex === 0 ? 6 : dayOfWeekIndex - 1;
                   
-                  // Check if this date falls within our current week range to show dots
-                  const monday = getMondayOfDate(baseDate);
-                  const sunday = new Date(monday);
-                  sunday.setDate(monday.getDate() + 6);
-                  const isInRange = d >= monday && d <= sunday;
-                  
-                  const dayEventsCount = isInRange 
-                    ? events.filter(e => e.dayIndex === dbDayIndex).length 
-                    : 0;
+                  const dayEventsCount = events.filter(e => {
+                    if (e.isDraft || e.id === "draft-booking-id" || !e.isOccupied || e.status === "TECHNICAL_BREAK" || e.status === "CLOSURE") {
+                      return false;
+                    }
+                    if (e.dateStr) {
+                      return e.dateStr === dayStr;
+                    }
+                    // Fallback to dayIndex if no dateStr and it falls in current week
+                    const monday = getMondayOfDate(baseDate);
+                    const sunday = new Date(monday);
+                    sunday.setDate(monday.getDate() + 6);
+                    const isInRange = d >= monday && d <= sunday;
+                    return isInRange && e.dayIndex === dbDayIndex;
+                  }).length;
 
                   return (
                     <button
@@ -2965,8 +3041,8 @@ export default function CalendarView({
                   {/* Price info if > 0 */}
                   {estimatedPrice > 0 && (
                     <div className="flex justify-between items-center py-2.5 px-4 bg-tenant-primary/10 dark:bg-tenant-primary/5 border border-tenant-primary/20 rounded-none text-xs font-semibold text-tenant-primary dark:text-zinc-200 select-none animate-in fade-in duration-200">
-                      <span>Cena pronájmu:</span>
-                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{estimatedPrice.toLocaleString("cs-CZ")} Kč</span>
+                      <span>{getTranslations(locale).ui.price}:</span>
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{formatCurrency(estimatedPrice, currency, locale)}</span>
                     </div>
                   )}
 
@@ -2990,7 +3066,7 @@ export default function CalendarView({
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-[#7000FF]"></div>
+                        <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-tenant-primary/25 dark:peer-checked:bg-tenant-primary/30 peer-checked:border-tenant-primary peer-checked:after:bg-tenant-primary"></div>
                       </label>
                     </div>
 

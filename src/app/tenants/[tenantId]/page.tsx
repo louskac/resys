@@ -21,6 +21,7 @@ interface PageProps {
     date?: string;
     root?: string;
     rootId?: string;
+    view?: string;
   }>;
 }
 
@@ -38,6 +39,8 @@ interface CalendarEvent {
   recurrenceGroup?: string | null;
   status?: string;
   rentedEquipment?: any;
+  dateStr?: string;
+  isDraft?: boolean;
 }
 
 interface TenantAttributes {
@@ -115,6 +118,17 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   nextMonday.setUTCDate(monday.getUTCDate() + 7);
   const session = await getServerSession(authOptions);
 
+  const view = (await searchParams).view;
+  let queryStart = monday;
+  let queryEnd = nextMonday;
+
+  if (view === "month") {
+    const startOfMonth = new Date(Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), 1));
+    queryStart = getMondayOfDate(startOfMonth);
+    queryEnd = new Date(queryStart);
+    queryEnd.setUTCDate(queryStart.getUTCDate() + 42);
+  }
+
   let userBookingsCount = 0;
   let userPartnerDiscount = 0;
   if (session && session.user?.email) {
@@ -154,8 +168,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         where: {
           status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
           reservedFrom: {
-            gte: monday,
-            lt: nextMonday,
+            gte: queryStart,
+            lt: queryEnd,
           },
         },
         include: {
@@ -164,8 +178,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       },
       exceptions: {
         where: {
-          dateFrom: { lt: nextMonday },
-          dateTo: { gte: monday }
+          dateFrom: { lt: queryEnd },
+          dateTo: { gte: queryStart }
         },
         include: {
           resource: true
@@ -189,14 +203,14 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   const openTime = attributes.openTime || "08:00";
   const closeTime = attributes.closeTime || "18:00";
 
-  const czechFormattedDate = (() => {
+  const tenantFormattedDate = (() => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
     };
-    const formatted = new Date().toLocaleDateString("cs-CZ", options);
+    const formatted = new Date().toLocaleDateString(tenant.locale || "cs-CZ", options);
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   })();
 
@@ -306,6 +320,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
       recurrenceGroup: booking.recurrenceGroup,
       status: booking.status,
       rentedEquipment: booking.rentedEquipment ? (booking.rentedEquipment as any) : undefined,
+      dateStr: formatUTCDate(booking.reservedFrom),
     });
 
     // Add a virtual event for the technical break if enabled
@@ -322,7 +337,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
         resourceId: booking.resourceId,
         isOccupied: true,
         resourceName: booking.resource.name,
-        status: "TECHNICAL_BREAK"
+        status: "TECHNICAL_BREAK",
+        dateStr: formatUTCDate(booking.reservedFrom),
       });
     }
   });
@@ -398,7 +414,8 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               resourceId: resId,
               isOccupied: true,
               resourceName: res.name,
-              status: "CLOSURE"
+              status: "CLOSURE",
+              dateStr: formatUTCDate(clampStart),
             });
           });
         }
@@ -648,6 +665,9 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               openingHours={attributes.openingHours}
               weekStart={formatUTCDate(monday)}
               activeDate={date || formatUTCDate(targetDate)}
+              locale={tenant.locale}
+              timezone={tenant.timezone}
+              currency={tenant.currency}
             />
           </div>
 

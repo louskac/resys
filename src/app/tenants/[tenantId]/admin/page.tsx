@@ -172,6 +172,9 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     maxResourcesLimit: tenant.maxResourcesLimit,
     maxDevicesLimit: tenant.maxDevicesLimit,
     trialEndsAt: tenant.trialEndsAt ? tenant.trialEndsAt.toISOString() : null,
+    locale: tenant.locale,
+    timezone: tenant.timezone,
+    currency: tenant.currency,
   };
 
   const serializedResources = tenant.resources.map(res => ({

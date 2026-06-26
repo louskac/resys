@@ -15,7 +15,7 @@ import {
 import jsQR from "jsqr";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import ThemeToggle from "@/components/ThemeToggle";
-import CalendarView, { CalendarEvent } from "@/components/CalendarView";
+import CalendarView, { CalendarEvent, UnifiedSwitcher } from "@/components/CalendarView";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import AlertDialog from "@/components/AlertDialog";
 import SystemUpdatesList from "@/components/SystemUpdatesList";
@@ -1912,14 +1912,14 @@ export default function AdminDashboardClient({
                             technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15
                           }
                         })}
-                        className="p-3 sm:p-1.5 rounded-none bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-tenant-primary border border-slate-200/50 dark:border-[#1F1F35] hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                        className="p-3 sm:p-1.5 rounded-none bg-slate-200/50 hover:bg-slate-200/80 dark:bg-black/60 dark:hover:bg-zinc-800/80 text-tenant-primary border border-slate-300 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                         title="Upravit zdroj"
                       >
                         <Edit className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                       </button>
                       <button
                         onClick={() => handleResourceDelete(res.id)}
-                        className="p-3 sm:p-1.5 rounded-none bg-white/50 hover:bg-white/85 dark:bg-[#131322]/40 dark:hover:bg-[#1F1F35]/50 text-red-500 border border-slate-200/50 dark:border-[#1F1F35] hover:bg-red-500/10 dark:hover:bg-red-500/15 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                        className="p-3 sm:p-1.5 rounded-none bg-slate-200/50 hover:bg-slate-200/80 dark:bg-black/60 dark:hover:bg-zinc-800/80 text-red-500 border border-slate-300 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                         title="Smazat zdroj"
                       >
                         <Trash className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
@@ -2625,7 +2625,7 @@ export default function AdminDashboardClient({
                          open: true, mode: "add",
                          data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
                        })}
-                       className="hidden md:flex bg-tenant-gradient hover:opacity-95 active:scale-95 transition-all text-white text-xs py-2 px-3.5 items-center gap-1.5 rounded-none font-bold shadow-sm shadow-tenant-primary/15 cursor-pointer"
+                       className="hidden md:flex border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white dark:hover:text-white text-[10px] py-2.5 px-4 rounded-none font-black uppercase tracking-widest transition-all duration-300 items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-tenant-primary/5 hover:scale-[1.02] active:scale-[0.98]"
                      >
                        <Plus size={14} />
                        Přidat zdroj
@@ -2635,7 +2635,7 @@ export default function AdminDashboardClient({
                          open: true, mode: "add",
                          data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
                        })}
-                       className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20 rounded-none active:scale-95 transition-all cursor-pointer items-center justify-center shadow-sm"
+                       className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary rounded-none active:scale-[0.95] transition-all cursor-pointer items-center justify-center shadow-sm"
                        title="Přidat zdroj"
                      >
                        <Plus size={16} />
@@ -2705,30 +2705,14 @@ export default function AdminDashboardClient({
                 </div>
                 
                 {/* Sub-tab Toggle */}
-                <div className="flex bg-white/40 dark:bg-[#0F0F1A]/60 border border-[#E2E2ED]/60 dark:border-[#1F1F2E] p-1 rounded-none text-xs select-none shadow-sm">
-                  <button
-                    onClick={() => setBookingsSubTab("calendar")}
-                    className={`px-3 py-1.5 rounded-none font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      bookingsSubTab === "calendar"
-                        ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-105"
-                        : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
-                    }`}
-                  >
-                    <Eye size={14} />
-                    Mřížka rozvrhu
-                  </button>
-                  <button
-                    onClick={() => setBookingsSubTab("list")}
-                    className={`px-3 py-1.5 rounded-none font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      bookingsSubTab === "list"
-                        ? "bg-white dark:bg-[#1D1D2C] text-tenant-primary dark:text-purple-400 shadow-sm font-bold scale-105"
-                        : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
-                    }`}
-                  >
-                    <List size={14} />
-                    Seznam detailů
-                  </button>
-                </div>
+                <UnifiedSwitcher<"calendar" | "list">
+                  options={[
+                    { value: "calendar", label: "Mřížka rozvrhu" },
+                    { value: "list", label: "Seznam detailů" }
+                  ]}
+                  activeValue={bookingsSubTab}
+                  onChange={(val) => setBookingsSubTab(val)}
+                />
               </div>
 
               {bookingsSubTab === "calendar" ? (
@@ -3020,7 +3004,7 @@ export default function AdminDashboardClient({
                           alert("Došlo k chybě při komunikaci se serverem.");
                         }
                       }}
-                      className="bg-tenant-gradient text-white text-xs font-bold py-2.5 px-4 rounded-none cursor-pointer hover:opacity-95 active:scale-95 transition-all shadow-sm shrink-0"
+                      className="border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white dark:hover:text-white text-[10px] py-2.5 px-5 rounded-none font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] shrink-0"
                     >
                       Generovat kód
                     </button>
@@ -3287,30 +3271,26 @@ export default function AdminDashboardClient({
               {(() => {
                 const firstLevelResources = resources.filter(r => !r.attributes?.parentId);
                 if (firstLevelResources.length === 0) return null;
+                const options = firstLevelResources.map(res => ({
+                  value: res.id,
+                  label: res.name
+                }));
                 return (
-                  <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-[#131322] border border-slate-200/50 dark:border-[#1F1F35] rounded-none w-fit">
-                    {firstLevelResources.map((res) => (
-                      <button
-                        key={res.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedOperatingResourceId(res.id);
-                          const params = new URLSearchParams(window.location.search);
-                          const slug = `${slugify(res.name)}-${res.id.slice(0, 8)}`;
-                          params.set("root", slug);
-                          params.delete("rootId");
-                          router.push(`${pathname}?${params.toString()}`, { scroll: false });
-                        }}
-                        className={`px-4 py-2 rounded-none text-xs font-bold transition-all cursor-pointer ${
-                          selectedOperatingResourceId === res.id
-                            ? "bg-white dark:bg-[#1d1d2c] text-tenant-primary dark:text-purple-400 shadow-sm"
-                            : "text-slate-500 dark:text-zinc-400 hover:text-tenant-primary dark:hover:text-purple-400"
-                        }`}
-                      >
-                        {res.name}
-                      </button>
-                    ))}
-                  </div>
+                  <UnifiedSwitcher<string>
+                    options={options}
+                    activeValue={selectedOperatingResourceId}
+                    onChange={(val) => {
+                      setSelectedOperatingResourceId(val);
+                      const res = firstLevelResources.find(r => r.id === val);
+                      if (res) {
+                        const params = new URLSearchParams(window.location.search);
+                        const slug = `${slugify(res.name)}-${res.id.slice(0, 8)}`;
+                        params.set("root", slug);
+                        params.delete("rootId");
+                        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+                      }
+                    }}
+                  />
                 );
               })()}
 
@@ -3452,7 +3432,7 @@ export default function AdminDashboardClient({
                               onChange={(e) => setPresetClosed(e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+                            <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 peer-checked:after:bg-red-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                             <span className={`ml-2 text-[10px] font-bold tracking-wide transition-colors ${presetClosed ? "text-red-500" : "text-slate-500 dark:text-zinc-400"}`}>
                               {presetClosed ? "HROMADNĚ ZAVŘENO" : "HROMADNĚ OTEVŘENO"}
                             </span>
@@ -3582,7 +3562,7 @@ export default function AdminDashboardClient({
                                       }}
                                       className="sr-only peer"
                                     />
-                                    <div className="w-9 h-5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+                                    <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 peer-checked:after:bg-red-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                                     <span className={`ml-2 text-[10px] font-bold tracking-wide transition-colors ${day.closed ? "text-red-500" : "text-emerald-500"}`}>
                                       {day.closed ? "ZAVŘENO" : "OTEVŘENO"}
                                     </span>
@@ -3617,7 +3597,7 @@ export default function AdminDashboardClient({
                                   }}
                                   className="sr-only peer"
                                 />
-                                <div className="w-8 h-4.5 bg-slate-200 dark:bg-[#1f1f35] rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300/40 dark:border-[#2A2A40] after:content-[''] after:absolute after:top-[2.5px] after:left-[2.5px] after:bg-slate-400 dark:after:bg-zinc-400 peer-checked:after:bg-red-500 after:rounded-none after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3.5"></div>
+                                <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer peer-checked:bg-red-500/10 peer-checked:border-red-500/20 border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 peer-checked:after:bg-red-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                                 <span className={`ml-2 text-[9px] font-bold tracking-wide transition-colors ${day.closed ? "text-red-500" : "text-emerald-500"}`}>
                                   {day.closed ? "Zavřeno" : "Otevřeno"}
                                 </span>
@@ -4593,7 +4573,7 @@ export default function AdminDashboardClient({
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                      <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-tenant-primary/25 dark:peer-checked:bg-tenant-primary/30 peer-checked:border-tenant-primary peer-checked:after:bg-tenant-primary"></div>
                     </label>
                   </div>
 
@@ -4730,7 +4710,7 @@ export default function AdminDashboardClient({
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all dark:after:border-slate-650 peer-checked:bg-tenant-primary"></div>
+                    <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-tenant-primary/25 dark:peer-checked:bg-tenant-primary/30 peer-checked:border-tenant-primary peer-checked:after:bg-tenant-primary"></div>
                   </label>
                 </div>
               </div>
