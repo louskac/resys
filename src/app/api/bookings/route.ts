@@ -1291,3 +1291,49 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const tenantId = searchParams.get("tenantId");
+    const startStr = searchParams.get("start"); // YYYY-MM-DD
+    const endStr = searchParams.get("end");     // YYYY-MM-DD
+
+    if (!tenantId || !startStr || !endStr) {
+      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+    }
+
+    const start = new Date(`${startStr}T00:00:00.000Z`);
+    const end = new Date(`${endStr}T23:59:59.999Z`);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        tenantId,
+        status: { in: ["CONFIRMED", "PENDING_PAYMENT", "ATTENDED"] },
+        reservedFrom: {
+          gte: start,
+          lt: end,
+        },
+      },
+      include: {
+        resource: true,
+      },
+    });
+
+    const exceptions = await prisma.scheduleException.findMany({
+      where: {
+        tenantId,
+        dateFrom: { lt: end },
+        dateTo: { gte: start },
+      },
+      include: {
+        resource: true,
+      },
+    });
+
+    return NextResponse.json({ bookings, exceptions });
+  } catch (error: any) {
+    console.error("[GET Bookings] Error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+  }
+}
+

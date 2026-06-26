@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: standardise calendar buttons, enforce minimum break duration, and fix exception overlays":
+      "Vylepšení kalendáře a správy: Sjednocení tlačítek kalendáře do designových tříd, minimální 30minutová délka technických přestávek a oprava zobrazení mimořádných uzavírek v měsíčním přehledu.",
     "feat: unify settings design system, fix calendar month view range, and facelift portal settings":
       "Sjednocení nastavení: Unifikace tlačítek, přepínačů a záložek administrace, oprava načítání měsíčního kalendáře a modernizace nastavení portálu.",
     "feat: enhance calendar tooltip mouse positioning and expand ReKeeper AI button transition":

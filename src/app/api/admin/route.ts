@@ -669,6 +669,9 @@ You MUST respond with a JSON object matching this schema exactly (do not output 
 
         // Auto-widen calendar view bounds to cover the active operating hours
         const adjustedAttributes = { ...(attributes || {}) };
+        if (adjustedAttributes.technicalBreak && (parseInt(adjustedAttributes.technicalBreakMinutes, 10) < 30 || !adjustedAttributes.technicalBreakMinutes)) {
+          return NextResponse.json({ error: "Minimální doba trvání technické přestávky je 30 minut." }, { status: 400 });
+        }
         const hours = adjustedAttributes.openingHours;
         if (Array.isArray(hours) && hours.length > 0) {
           const openDays = hours.filter((d: any) => !d.closed && d.openTime && d.closeTime);

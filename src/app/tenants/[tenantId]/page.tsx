@@ -193,6 +193,12 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   }
 
   const attributes = (tenant.attributes as unknown as TenantAttributes) || {};
+  if (attributes.bannerImage) {
+    const match = attributes.bannerImage.match(/^(?:\/images)?\/hero-vibe-(\d+)\.(jpg|png)$/);
+    if (match) {
+      attributes.bannerImage = `/images/hero-vibe-${match[1]}.png`;
+    }
+  }
   const adminEmails = attributes.adminEmails || [];
   const data = getTenantTheme(tenantId, tenant.vertical, tenant.name);
   
@@ -373,14 +379,15 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
   });
 
   // C. Add schedule exceptions (closures) as locked virtual events
+  const daysCount = view === "month" ? 42 : 7;
   tenant.exceptions.forEach((exc) => {
-    const overlapStart = new Date(Math.max(exc.dateFrom.getTime(), monday.getTime()));
-    const overlapEnd = new Date(Math.min(exc.dateTo.getTime(), nextMonday.getTime()));
+    const overlapStart = new Date(Math.max(exc.dateFrom.getTime(), queryStart.getTime()));
+    const overlapEnd = new Date(Math.min(exc.dateTo.getTime(), queryEnd.getTime()));
 
     if (overlapStart < overlapEnd) {
-      for (let day = 0; day < 7; day++) {
-        const dayStart = new Date(monday);
-        dayStart.setUTCDate(monday.getUTCDate() + day);
+      for (let day = 0; day < daysCount; day++) {
+        const dayStart = new Date(queryStart);
+        dayStart.setUTCDate(queryStart.getUTCDate() + day);
         dayStart.setUTCHours(0, 0, 0, 0);
 
         const dayEnd = new Date(dayStart);
@@ -393,6 +400,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
           const startHour = clampStart.getUTCHours() + clampStart.getUTCMinutes() / 60;
           const endHour = clampEnd.getUTCHours() + clampEnd.getUTCMinutes() / 60;
           const durationHours = endHour - startHour;
+          const dayIndex = day % 7;
 
           const targetResourceIds = exc.resourceId 
             ? [exc.resourceId]
@@ -408,7 +416,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               name: `Uzavřeno: ${exc.name}`,
               room: resAttrs.surface || "Mimořádná uzavírka",
               instructor: "Systém",
-              dayIndex: day,
+              dayIndex,
               startHour,
               durationHours,
               resourceId: resId,

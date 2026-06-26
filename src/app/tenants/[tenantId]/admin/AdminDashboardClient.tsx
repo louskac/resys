@@ -2466,11 +2466,16 @@ export default function AdminDashboardClient({
               </div>
 
               {/* Turnstile Access Logs Stream */}
-              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
-                <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Activity size={16} className="text-tenant-accent" />
-                  Živé logy průchodů turniketem (Historie skenování)
-                </h3>
+              <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                  <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                    <Activity size={14} />
+                    Živé logy průchodů turniketem (Historie skenování)
+                  </h4>
+                  <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                    Skenování a IoT
+                  </span>
+                </div>
 
                 {checkinLogs.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted-foreground font-mono">
@@ -2547,11 +2552,16 @@ export default function AdminDashboardClient({
               </div>
 
               {/* Záznamy auditů (Audit Logs Trail) */}
-              <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/20 transition-all duration-300">
-                <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                  <ClipboardList size={16} className="text-tenant-primary" />
-                  Záznamy auditů (Audit logs)
-                </h3>
+              <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                  <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                    <ClipboardList size={14} />
+                    Záznamy auditů (Audit logs)
+                  </h4>
+                  <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                    Systémový audit
+                  </span>
+                </div>
 
                 {auditLogsLoading ? (
                   <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
@@ -2651,11 +2661,16 @@ export default function AdminDashboardClient({
               {/* Categorization display as trees */}
               <div className="space-y-8">
                 {/* A. Facilities tree */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 select-none flex items-center gap-2 pl-1">
-                    <Building size={14} className="text-tenant-primary" />
-                    Plochy a pronajímatelné prostory (Hřiště, Sektory, Místnosti)
-                  </h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-[#1F1F35]/40 pb-3">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Building size={14} />
+                      Plochy a pronajímatelné prostory (Hřiště, Sektory, Místnosti)
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      PROSTORY
+                    </span>
+                  </div>
                   {facilities.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic mb-4">Zatím nebyly vytvořeny žádné plochy.</p>
                   ) : (
@@ -2671,12 +2686,17 @@ export default function AdminDashboardClient({
                   )}
                 </div>
 
-                {/* B. Classes/Programs tree */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 select-none flex items-center gap-2 pl-1 pt-6 border-t border-slate-200/40 dark:border-[#1F1F35]/40">
-                    <Clock size={14} className="text-tenant-primary" />
-                    Dostupné lekce, kurzy a programy
-                  </h4>
+              {/* B. Classes/Programs tree */}
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-[#1F1F35]/40 pb-3">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Clock size={14} />
+                      Dostupné lekce, kurzy a programy
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      LEKCE & KURZY
+                    </span>
+                  </div>
                   {classesAndPrograms.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic">Zatím nebyly vytvořeny žádné lekce ani programy.</p>
                   ) : (
@@ -2738,7 +2758,16 @@ export default function AdminDashboardClient({
                 />
               ) : (
                 /* List/Table View */
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300">
+                <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3 mb-5">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <ClipboardList size={14} />
+                      Seznam detailů všech rezervací
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      Rezervace
+                    </span>
+                  </div>
                   {bookings.length === 0 ? (
                     <div className="py-8 text-center text-xs text-muted-foreground font-mono">
                       Zatím nebyly provedeny žádné rezervace.
@@ -2935,10 +2964,15 @@ export default function AdminDashboardClient({
               </div>
 
               {/* IoT Gate Pairing Panel */}
-              <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5">
-                <div className="flex items-center gap-2 text-tenant-primary">
-                  <QrCode size={18} />
-                  <h4 className="font-extrabold text-sm text-foreground">Párování nové čtečky nebo brány</h4>
+              <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                  <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                    <QrCode size={14} />
+                    Párování nové čtečky nebo brány
+                  </h4>
+                  <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                    IoT Brány
+                  </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
                   Pokud instalujete fyzickou čtečku, turniket nebo tablet u vstupu, vygenerujte párovací kód a zadejte jej do zařízení. Kód je platný po dobu 10 minut.
@@ -3013,11 +3047,32 @@ export default function AdminDashboardClient({
               </div>
 
               {devices.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none">
-                  Zatím nejsou registrovány žádné čtečky. Spusťte nové zařízení s hlavičkou tenanta.
+                <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Smartphone size={14} />
+                      Registrované přístupové čtečky (0)
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      Zařízení
+                    </span>
+                  </div>
+                  <div className="py-8 text-center text-xs text-muted-foreground font-mono bg-white/10 dark:bg-black/10 border border-slate-200/20 dark:border-[#1A1A2E]/20 rounded-none">
+                    Zatím nejsou registrovány žádné čtečky. Spusťte nové zařízení s hlavičkou tenanta.
+                  </div>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3 mb-4">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Smartphone size={14} />
+                      Registrované přístupové čtečky ({devices.length})
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      Zařízení
+                    </span>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
                   {devices.map((dev) => (
                     <div key={dev.id} className="p-4 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:scale-[1.01] hover:border-tenant-primary/20 hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3 group">
                       <div className="flex items-center gap-3.5 min-w-0">
@@ -3075,9 +3130,10 @@ export default function AdminDashboardClient({
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+        )}
 
           {/* TAB: SYSTEM UPDATES */}
           {activeTab === "updates" && (
@@ -3102,11 +3158,16 @@ export default function AdminDashboardClient({
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 
                 {/* CARD 1: Vizuální styl, branding a přístupy */}
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
-                  <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
-                    <Building size={14} />
-                    Vizuální styl, branding a přístupy
-                  </h4>
+                <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Building size={14} />
+                      Vizuální styl, branding a přístupy
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      Vzhled a AI
+                    </span>
+                  </div>
                   
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Left Column: Slogan & Admin Emails */}
@@ -3145,8 +3206,17 @@ export default function AdminDashboardClient({
                         </span>
                       </div>
 
-                      <div>
-                        <label className="block text-slate-500 dark:text-zinc-400 mb-1.5 font-bold uppercase tracking-wider text-[9px]">Instrukce pro AI (ReKeepera)</label>
+                      {/* Instrukce pro AI (ReKeepera) */}
+                      <div className="border border-slate-200/50 dark:border-[#2A2A40] p-4 space-y-3 rounded-none bg-slate-50/30 dark:bg-black/10">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-2">
+                          <h5 className="text-[10px] font-black text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
+                            <Sparkles size={12} className="text-tenant-primary animate-pulse" />
+                            Instrukce pro AI (ReKeepera)
+                          </h5>
+                          <span className="text-[8px] bg-tenant-primary/10 border border-tenant-primary/20 text-tenant-primary px-1.5 py-0.5 font-bold uppercase tracking-wider select-none">
+                            ReKeeper Assistant
+                          </span>
+                        </div>
                         <div className="relative">
                           <textarea
                             rows={3}
@@ -3156,7 +3226,7 @@ export default function AdminDashboardClient({
                             placeholder="Upřesněte kontext, tón a specifická pravidla pro ReKeepera. Např. 'Jsme fotbalový areál s umělou trávou. Máme Celou plochu a dva sektory (Sektor A, Sektor B). Zaměřujeme se na fotbalové pronájmy.'"
                           />
                         </div>
-                        <span className="text-[10px] text-muted-foreground mt-1.5 block font-medium">
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 leading-normal block">
                           Pomáhá AI asistentovi přizpůsobit slovní zásobu a chování (např. zda se jedná o fotbal, tenis, masáže atd.).
                         </span>
                       </div>
@@ -3220,12 +3290,72 @@ export default function AdminDashboardClient({
                           </label>
                         </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground block font-medium">
+                      <span className="text-[10px] text-slate-500 dark:text-zinc-400 mt-1.5 block font-medium">
                         Nahrajte obrázek banneru (PNG/JPG). Kliknutím a tažením přímo na obrázku výše nastavíte jeho pozici.
                       </span>
+
+                      {/* Suggested Banners Presets Grid */}
+                      <div className="space-y-2.5 mt-5">
+                        <label className="block text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[9px] select-none">
+                          Rychlé motivy banneru
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { url: "/images/hero-vibe-1.png", label: "Tenis" },
+                            { url: "/images/hero-vibe-2.png", label: "Běh" },
+                            { url: "/images/hero-vibe-3.png", label: "Hala" },
+                            { url: "/images/hero-vibe-4.png", label: "Wellness" },
+                            { url: "/images/hero-vibe-5.png", label: "Studio" },
+                            { url: "/images/hero-vibe-6.png", label: "Kultura" }
+                          ].map((p, idx) => {
+                            const getVibeNumber = (src: string | null | undefined) => {
+                              if (!src) return null;
+                              const match = src.match(/hero-vibe-(\d+)/);
+                              return match ? match[1] : null;
+                            };
+                            const isSelected = getVibeNumber(settingsBannerImage) === getVibeNumber(p.url);
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setSettingsBannerImage(p.url);
+                                  setSettingsBannerPosition("50% 50%"); // Reset to default center position
+                                }}
+                                className="group flex flex-col items-center focus:outline-none cursor-pointer"
+                              >
+                                <div className={`relative w-full aspect-[16/10] rounded-none overflow-hidden border transition-all duration-200 ${
+                                  isSelected 
+                                    ? "border-tenant-primary ring-2 ring-tenant-primary/20 shadow-md scale-[1.02]" 
+                                    : "border-slate-200 dark:border-[#2A2A40] hover:border-slate-350 dark:hover:border-zinc-700 hover:scale-[1.01]"
+                                }`}>
+                                  <img 
+                                    src={p.url} 
+                                    alt={p.label} 
+                                    className="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover:scale-105" 
+                                  />
+                                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md py-1 px-1.5 flex items-center justify-center">
+                                    <span className={`text-[8.5px] font-extrabold uppercase tracking-widest transition-colors ${
+                                      isSelected ? "text-tenant-primary font-black" : "text-white"
+                                    }`}>
+                                      {p.label}
+                                    </span>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="absolute top-1 right-1 bg-tenant-primary text-white p-0.5 rounded-none flex items-center justify-center shadow-sm z-10">
+                                      <Check size={8} className="stroke-[3]" />
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
+
 
                 {/* Save button - Outside Card at bottom */}
                 <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-4">
@@ -3296,11 +3426,16 @@ export default function AdminDashboardClient({
 
               <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                 {/* CARD 2: Provozní doba */}
-                <div className="p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-5">
-                  <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
-                    <Clock size={14} />
-                    Provozní doba a kalendářní omezení
-                  </h4>
+                <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                    <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                      <Clock size={14} />
+                      Provozní doba a kalendářní omezení
+                    </h4>
+                    <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                      Rozvrh a kalendář
+                    </span>
+                  </div>
                   
                   {/* Top operational row: Display range next to presets bar */}
                   <div className="grid lg:grid-cols-3 gap-6">
@@ -3694,14 +3829,17 @@ export default function AdminDashboardClient({
               </form>
 
               {/* CARD 3: Mimořádné uzavírky */}
-              <div className="mt-8 p-6 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm hover:border-tenant-primary/10 transition-all duration-300 space-y-6">
-                <div>
-                  <h4 className="text-xs font-bold text-tenant-primary uppercase tracking-wider flex items-center gap-1.5 select-none">
+              <div className="mt-8 p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                  <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
                     <ShieldAlert size={14} />
                     Mimořádné uzavírky a svátky
                   </h4>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Definujte jednorázové uzavírky, údržbu nebo svátky, kdy bude rezervační systém zablokován.</p>
+                  <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                    Uzavírky
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">Definujte jednorázové uzavírky, údržbu nebo svátky, kdy bude rezervační systém zablokován.</p>
 
                 {/* Form to Create Exception */}
                 {!isReceptionist && (
@@ -3930,9 +4068,20 @@ export default function AdminDashboardClient({
           )}
 
           {activeTab === "subscription" && (
-            <div className="space-y-8 animate-fade-in select-none">
-              {/* Premium Plan Info Header */}
-              <div className="bg-gradient-to-r from-tenant-primary/10 to-transparent dark:from-tenant-primary/20 dark:to-transparent border-l-4 border-tenant-primary rounded-none p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-6 animate-fade-in select-none">
+              {/* Premium Plan Info Header - Unified Card Wrapper */}
+              <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                  <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                    <CreditCard size={14} />
+                    Předplatné a limity systému
+                  </h4>
+                  <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                    Tarifní plán
+                  </span>
+                </div>
+
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] font-bold text-tenant-primary uppercase tracking-widest bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-1 rounded-none">
@@ -3997,6 +4146,7 @@ export default function AdminDashboardClient({
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Pricing Cards Grid */}
               <div className="space-y-4">

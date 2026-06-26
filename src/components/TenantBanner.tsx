@@ -27,7 +27,15 @@ export default function TenantBanner({
     setImageError(false);
   }, [src]);
 
-  const showFallback = !src || imageError;
+  let normalizedSrc = src;
+  if (src) {
+    const match = src.match(/^(?:\/images)?\/hero-vibe-(\d+)\.(jpg|png)$/);
+    if (match) {
+      normalizedSrc = `/images/hero-vibe-${match[1]}.png`;
+    }
+  }
+
+  const showFallback = !normalizedSrc || imageError;
 
   return (
     <div className={`relative w-full overflow-hidden ${heightClass} ${className} bg-secondary flex items-center justify-center`}>
@@ -52,7 +60,7 @@ export default function TenantBanner({
       ) : (
         <>
           <img
-            src={src}
+            src={normalizedSrc}
             alt={alt}
             onError={() => setImageError(true)}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

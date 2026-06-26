@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock, ChevronDown, X, Ticket, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, Lock, ChevronDown, ChevronUp, Clock, X, Ticket, Loader2 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
@@ -385,17 +385,66 @@ export default function CalendarView({
   const [isBooked, setIsBooked] = useState(false);
   const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  
-  const viewParam = searchParams.get("view") as "day" | "week" | "month" | null;
-  const viewMode = viewParam || "week";
-  const setViewMode = (mode: "day" | "week" | "month") => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("view", mode);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+
+  const toLocalDateString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
+
+  const getMondayOfDate = (d: Date) => {
+    const temp = new Date(d);
+    const day = temp.getDay();
+    const diff = temp.getDate() - day + (day === 0 ? -6 : 1);
+    const mon = new Date(temp.setDate(diff));
+    mon.setHours(0, 0, 0, 0);
+    return mon;
+  };
+
+  const viewParam = searchParams.get("view") as "day" | "week" | "month" | null;
+  const [localViewMode, setLocalViewMode] = useState<"day" | "week" | "month">(viewParam || "week");
+  const [localDate, setLocalDate] = useState<string>(activeDate || toLocalDateString(new Date()));
+  const [loadedDays, setLoadedDays] = useState<Set<string>>(new Set());
+  const [clientEvents, setClientEvents] = useState<CalendarEvent[]>(initialEvents || []);
+
+  const viewMode = localViewMode;
 
   const [isHorizontal, setIsHorizontal] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (activeDate) {
+      setLocalDate(activeDate);
+    }
+  }, [activeDate]);
+
+  useEffect(() => {
+    setLocalViewMode(viewParam || "week");
+  }, [viewParam]);
+
+  const setViewMode = (mode: "day" | "week" | "month") => {
+    setLocalViewMode(mode);
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", mode);
+    window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+  };
+
+  const updateLocalDateAndUrl = (newDateStr: string) => {
+    setLocalDate(newDateStr);
+    const params = new URLSearchParams(window.location.search);
+    params.set("date", newDateStr);
+    window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+  };
+
+  const updateDateAndModeAndUrl = (newDateStr: string, mode: "day" | "week" | "month") => {
+    setLocalDate(newDateStr);
+    setLocalViewMode(mode);
+    const params = new URLSearchParams(window.location.search);
+    params.set("date", newDateStr);
+    params.set("view", mode);
+    window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768 && !viewParam) {
@@ -425,9 +474,229 @@ export default function CalendarView({
     router.refresh();
   };
 
-  const baseDate = activeDate 
-    ? new Date(`${activeDate}T00:00:00`) 
-    : (mounted ? new Date() : new Date("2026-06-22T00:00:00"));
+  const baseDate = React.useMemo(() => {
+    if (localDate) {
+      return new Date(`${localDate}T00:00:00`);
+    }
+    return mounted ? new Date() : new Date("2026-06-22T00:00:00");
+  }, [localDate, mounted]);
+
+  // 1. Sync initialEvents to clientEvents and populate loadedDays cache
+  useEffect(() => {
+    setClientEvents(initialEvents || []);
+    
+    const start = new Date(baseDate);
+    const days: string[] = [];
+    if (viewMode === "month") {
+      const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+      const gridStart = getMondayOfDate(startOfMonth);
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart);
+        d.setDate(gridStart.getDate() + i);
+        days.push(toLocalDateString(d));
+      }
+    } else if (viewMode === "week") {
+      const mon = getMondayOfDate(start);
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        days.push(toLocalDateString(d));
+      }
+    } else {
+      days.push(toLocalDateString(start));
+    }
+    setLoadedDays(new Set(days));
+  }, [initialEvents]);
+
+  // 2. Fetch new date ranges asynchronously client-side
+  useEffect(() => {
+    if (!mounted) return;
+
+    const rangeDays: string[] = [];
+    let fetchStart: Date;
+    let fetchEnd: Date;
+
+    if (viewMode === "month") {
+      const startOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+      const gridStart = getMondayOfDate(startOfMonth);
+      fetchStart = gridStart;
+      
+      const gridEnd = new Date(gridStart);
+      gridEnd.setDate(gridStart.getDate() + 41);
+      fetchEnd = gridEnd;
+
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart);
+        d.setDate(gridStart.getDate() + i);
+        rangeDays.push(toLocalDateString(d));
+      }
+    } else if (viewMode === "week") {
+      const mon = getMondayOfDate(baseDate);
+      fetchStart = mon;
+      
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      fetchEnd = sun;
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        rangeDays.push(toLocalDateString(d));
+      }
+    } else {
+      fetchStart = baseDate;
+      fetchEnd = baseDate;
+      rangeDays.push(toLocalDateString(baseDate));
+    }
+
+    const missingDays = rangeDays.filter(day => !loadedDays.has(day));
+
+    if (missingDays.length > 0) {
+      setLoadedDays(prev => {
+        const next = new Set(prev);
+        rangeDays.forEach(day => next.add(day));
+        return next;
+      });
+
+      const startStr = toLocalDateString(fetchStart);
+      const endStr = toLocalDateString(fetchEnd);
+
+      fetch(`/api/bookings?tenantId=${tenantId}&start=${startStr}&end=${endStr}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && (data.bookings || data.exceptions)) {
+            const fetchedEvents: CalendarEvent[] = [];
+
+            if (data.bookings) {
+              data.bookings.forEach((booking: any) => {
+                const from = new Date(booking.reservedFrom);
+                const to = new Date(booking.reservedTo);
+
+                const startHour = from.getUTCHours() + from.getUTCMinutes() / 60;
+                const endHour = to.getUTCHours() + to.getUTCMinutes() / 60;
+                const durationHours = endHour - startHour;
+
+                const dayOfWeek = from.getUTCDay();
+                const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+                const resource = resources.find(r => r.id === booking.resourceId);
+                const room = (resource?.attributes as any)?.room || (resource?.attributes as any)?.surface || "Hřiště";
+
+                const year = from.getUTCFullYear();
+                const month = String(from.getUTCMonth() + 1).padStart(2, "0");
+                const day = String(from.getUTCDate()).padStart(2, "0");
+                const dateStr = `${year}-${month}-${day}`;
+
+                fetchedEvents.push({
+                  id: booking.id,
+                  name: booking.userName || booking.resourceName || (resource?.name || "Rezervace"),
+                  room: room,
+                  instructor: booking.userEmail,
+                  dayIndex,
+                  startHour,
+                  durationHours,
+                  resourceId: booking.resourceId,
+                  isOccupied: true,
+                  resourceName: booking.resourceName || (resource?.name || "Rezervace"),
+                  status: booking.status,
+                  dateStr,
+                });
+
+                const resAttrs = (resource?.attributes as any) || {};
+                if (resAttrs.technicalBreak && resAttrs.technicalBreakMinutes) {
+                  const breakDuration = resAttrs.technicalBreakMinutes / 60;
+                  fetchedEvents.push({
+                    id: `${booking.id}-break`,
+                    name: `Technická pauza`,
+                    room: "Úklid / Příprava",
+                    instructor: "Systém",
+                    dayIndex,
+                    startHour: endHour,
+                    durationHours: breakDuration,
+                    resourceId: booking.resourceId,
+                    isOccupied: true,
+                    resourceName: booking.resourceName || (resource?.name || "Rezervace"),
+                    status: "TECHNICAL_BREAK",
+                    dateStr,
+                  });
+                }
+              });
+            }
+
+            if (data.exceptions) {
+              data.exceptions.forEach((exc: any) => {
+                const overlapStart = new Date(Math.max(new Date(exc.dateFrom).getTime(), fetchStart.getTime()));
+                const overlapEnd = new Date(Math.min(new Date(exc.dateTo).getTime(), fetchEnd.getTime()));
+
+                if (overlapStart < overlapEnd) {
+                  const durationDays = Math.ceil((fetchEnd.getTime() - fetchStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                  for (let day = 0; day < durationDays; day++) {
+                    const dayStart = new Date(fetchStart);
+                    dayStart.setDate(fetchStart.getDate() + day);
+                    dayStart.setHours(0, 0, 0, 0);
+
+                    const dayEnd = new Date(dayStart);
+                    dayEnd.setDate(dayStart.getDate() + 1);
+
+                    const clampStart = new Date(Math.max(overlapStart.getTime(), dayStart.getTime()));
+                    const clampEnd = new Date(Math.min(overlapEnd.getTime(), dayEnd.getTime()));
+
+                    if (clampStart < clampEnd) {
+                      const startHour = clampStart.getUTCHours() + clampStart.getUTCMinutes() / 60;
+                      const endHour = clampEnd.getUTCHours() + clampEnd.getUTCMinutes() / 60;
+                      const durationHours = endHour - startHour;
+
+                      const utcDay = dayStart.getUTCDay();
+                      const dayIndex = utcDay === 0 ? 6 : utcDay - 1;
+
+                      const targetResourceIds = exc.resourceId 
+                        ? [exc.resourceId]
+                        : resources.map(r => r.id);
+
+                      targetResourceIds.forEach((resId) => {
+                        const res = resources.find(r => r.id === resId);
+                        if (!res) return;
+                        const resAttrs = (res.attributes as any) || {};
+
+                        const year = dayStart.getFullYear();
+                        const month = String(dayStart.getMonth() + 1).padStart(2, "0");
+                        const dayVal = String(dayStart.getDate()).padStart(2, "0");
+                        const dateStr = `${year}-${month}-${dayVal}`;
+
+                        fetchedEvents.push({
+                          id: `${exc.id}-${day}-${resId}`,
+                          name: `Uzavřeno: ${exc.name}`,
+                          room: resAttrs.surface || "Mimořádná uzavírka",
+                          instructor: "Systém",
+                          dayIndex,
+                          startHour,
+                          durationHours,
+                          resourceId: resId,
+                          isOccupied: true,
+                          resourceName: res.name,
+                          status: "CLOSURE",
+                          dateStr,
+                        });
+                      });
+                    }
+                  }
+                }
+              });
+            }
+
+            setClientEvents(prev => {
+              const map = new Map<string, CalendarEvent>();
+              prev.forEach(e => map.set(e.id, e));
+              fetchedEvents.forEach(e => map.set(e.id, e));
+              return Array.from(map.values());
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch range bookings:", err);
+        });
+    }
+  }, [localDate, localViewMode, mounted]);
 
   const activeDayDbIndex = React.useMemo(() => {
     const dayIndex = baseDate.getDay();
@@ -448,27 +717,10 @@ export default function CalendarView({
 
     const descendants = getDescendants(activeRootId);
     if (descendants.length <= 1) {
-      // If the selected root has no children, show all root resources
       return resources.filter(r => !r.parentId);
     }
     return descendants;
   }, [resources, activeRootId]);
-
-  const toLocalDateString = (d: Date) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const getMondayOfDate = (d: Date) => {
-    const temp = new Date(d);
-    const day = temp.getDay();
-    const diff = temp.getDate() - day + (day === 0 ? -6 : 1);
-    const mon = new Date(temp.setDate(diff));
-    mon.setHours(0, 0, 0, 0);
-    return mon;
-  };
 
   const ALL_WEEK_DAYS = Array.from({ length: 7 }, (_, i) => {
     const monday = getMondayOfDate(baseDate);
@@ -505,9 +757,7 @@ export default function CalendarView({
       prev.setDate(baseDate.getDate() - 7);
     }
     const dateStr = toLocalDateString(prev);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("date", dateStr);
-    router.push(`${pathname}?${params.toString()}`);
+    updateLocalDateAndUrl(dateStr);
   };
 
   const handleNextWeek = () => {
@@ -520,9 +770,7 @@ export default function CalendarView({
       next.setDate(baseDate.getDate() + 7);
     }
     const dateStr = toLocalDateString(next);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("date", dateStr);
-    router.push(`${pathname}?${params.toString()}`);
+    updateLocalDateAndUrl(dateStr);
   };
 
   const isCurrent = (() => {
@@ -746,17 +994,24 @@ export default function CalendarView({
     ];
   }, [resources]);
 
-  const isResourceAvailable = React.useCallback((resId: string, dayIdx: number | null, startStr: string, duration: number) => {
+  const isResourceAvailable = React.useCallback((resId: string, dayIdx: number | null, startStr: string, duration: number, targetDate?: Date) => {
     if (dayIdx === null) return true;
     const [sh, sm] = startStr.split(":").map(Number);
     const startHour = sh + sm / 60;
     const endHour = startHour + duration;
     
     const conflictingIds = getConflictingResourceIds(resId);
+    const targetDateStr = targetDate ? toLocalDateString(targetDate) : null;
     
-    const hasOverlap = initialEvents.some(event => {
+    const hasOverlap = clientEvents.some(event => {
       if (!event.isOccupied) return false;
-      if (event.dayIndex !== dayIdx) return false;
+      
+      if (event.dateStr && targetDateStr) {
+        if (event.dateStr !== targetDateStr) return false;
+      } else {
+        if (event.dayIndex !== dayIdx) return false;
+      }
+      
       if (!conflictingIds.includes(event.resourceId)) return false;
       
       const eventStart = event.startHour;
@@ -766,7 +1021,7 @@ export default function CalendarView({
     });
     
     return !hasOverlap;
-  }, [initialEvents, getConflictingResourceIds]);
+  }, [clientEvents, getConflictingResourceIds]);
 
   // Dynamic style mapper based on resource name hashes for any N resources
   const getResourceStyles = (resourceName: string, isOccupied?: boolean, isAdminView: boolean = false, status?: string) => {
@@ -952,6 +1207,7 @@ export default function CalendarView({
   const isSelectedEventMyBooking = !!(selectedEvent && session?.user?.email && selectedEvent.instructor === session.user.email);
 
   const [activeTicket, setActiveTicket] = useState<CalendarEvent | null>(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   // Dynamic QR Code states
   const [dynamicQrPayload, setDynamicQrPayload] = useState<string>("");
@@ -959,7 +1215,8 @@ export default function CalendarView({
   const [qrTimeLeft, setQrTimeLeft] = useState<number>(60);
 
   useEffect(() => {
-    if (!activeTicket) {
+    const targetEvent = activeTicket || (bookingType === "admin_view" ? selectedEvent : null);
+    if (!targetEvent) {
       setDynamicQrPayload("");
       return;
     }
@@ -968,7 +1225,7 @@ export default function CalendarView({
     let currentState = 0;
     
     const updatePayload = async (ts: number, state: number) => {
-      const bookingId = activeTicket.id;
+      const bookingId = targetEvent.id;
       const secret = "resys-dynamic-qr-secret-key-2026";
       const dataStr = `${bookingId}:${ts}:${state}`;
       
@@ -1013,13 +1270,26 @@ export default function CalendarView({
       clearInterval(timestampInterval);
       clearInterval(countdownInterval);
     };
-  }, [activeTicket]);
+  }, [activeTicket, selectedEvent, bookingType]);
 
   const getSelectedEventDateString = (dayIndex: number) => {
     if (!weekStart) return "";
     const date = new Date(weekStart);
     date.setDate(date.getDate() + dayIndex);
     return date.toLocaleDateString("cs-CZ");
+  };
+
+  const getEventFormattedDate = (event: CalendarEvent) => {
+    if (event.dateStr) {
+      const d = new Date(event.dateStr);
+      if (!isNaN(d.getTime())) {
+        const dayName = ALL_WEEK_DAYS[event.dayIndex]?.name || "";
+        return `${dayName} ${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+      }
+    }
+    const dayName = ALL_WEEK_DAYS[event.dayIndex]?.name || "";
+    const calculatedDateStr = getSelectedEventDateString(event.dayIndex);
+    return `${dayName} ${calculatedDateStr}`;
   };
 
   const getSelectedEventTimeRange = (event: CalendarEvent) => {
@@ -1289,7 +1559,7 @@ export default function CalendarView({
 
   const events = [
     ...selectedResourceId
-      ? (initialEvents || []).filter((e) => {
+      ? (clientEvents || []).filter((e) => {
           if (e.resourceId === selectedResourceId) return true;
           if (e.isOccupied) {
             const conflictingIds = getConflictingResourceIds(selectedResourceId);
@@ -1297,7 +1567,7 @@ export default function CalendarView({
           }
           return false;
         })
-      : (initialEvents || []),
+      : (clientEvents || []),
     ...(draftBooking && (!selectedResourceId || draftBooking.resourceId === selectedResourceId || getConflictingResourceIds(selectedResourceId).includes(draftBooking.resourceId))
       ? [{
           id: "draft-booking-id",
@@ -1798,10 +2068,13 @@ export default function CalendarView({
                             const colConflictingIds = getConflictingResourceIds(colRes.id);
                             
                             // Get all direct bookings or conflicting bookings for this resource on this day
-                            const dayEvents = (events || []).filter((e) => 
-                              e.dayIndex === activeDayDbIndex && 
-                              colConflictingIds.includes(e.resourceId)
-                            );
+                            const targetDayStr = toLocalDateString(baseDate);
+                            const dayEvents = (events || []).filter((e) => {
+                              if (e.dateStr) {
+                                return e.dateStr === targetDayStr && colConflictingIds.includes(e.resourceId);
+                              }
+                              return e.dayIndex === activeDayDbIndex && colConflictingIds.includes(e.resourceId);
+                            });
             
                             // Add draft bookings if applicable
                             if (draftBooking && draftBooking.dayIndex === activeDayDbIndex && colConflictingIds.includes(draftBooking.resourceId)) {
@@ -2003,7 +2276,7 @@ export default function CalendarView({
                                               setCustomDuration(event.durationHours);
                                               
                                               const availableRes = resources.find(r => 
-                                                isResourceAvailable(r.id, event.dayIndex, timeStr, event.durationHours)
+                                                isResourceAvailable(r.id, event.dayIndex, timeStr, event.durationHours, baseDate)
                                               );
                                               if (availableRes) {
                                                 setCustomResourceId(availableRes.id);
@@ -2263,7 +2536,13 @@ export default function CalendarView({
 
               {/* Columns 2-8: Day columns */}
               {DAYS.map((day, dayIdx) => {
-                const dayEvents = events.filter((e) => e.dayIndex === day.dbDayIndex);
+                const dayStr = toLocalDateString(day.date);
+                const dayEvents = events.filter((e) => {
+                  if (e.dateStr) {
+                    return e.dateStr === dayStr;
+                  }
+                  return e.dayIndex === day.dbDayIndex;
+                });
                 
                 // Now line calculation
                 const showNowLine = (() => {
@@ -2309,7 +2588,7 @@ export default function CalendarView({
                     {TIME_SLOTS.map((time, timeIdx) => {
                       const isPast = isSlotInPast(day.dbDayIndex, time);
                       const isClosed = isSlotClosed(selectedResourceId, day.dbDayIndex, time);
-                      const isOccupied = selectedResourceId ? !isResourceAvailable(selectedResourceId, day.dbDayIndex, time, 0.5) : false;
+                      const isOccupied = selectedResourceId ? !isResourceAvailable(selectedResourceId, day.dbDayIndex, time, 0.5, day.date) : false;
                       const isDisabled = isPast || isClosed || isOccupied;
                       const isHighlighted = isDragging && dragStartSlot && dragCurrentSlot &&
                         dragStartSlot.dayIndex === day.dbDayIndex &&
@@ -2449,7 +2728,7 @@ export default function CalendarView({
                                   setCustomDuration(event.durationHours);
                                   
                                   const availableRes = resources.find(r => 
-                                    isResourceAvailable(r.id, event.dayIndex, timeStr, event.durationHours)
+                                    isResourceAvailable(r.id, event.dayIndex, timeStr, event.durationHours, day.date)
                                   );
                                   if (availableRes) {
                                     setCustomResourceId(availableRes.id);
@@ -2717,8 +2996,8 @@ export default function CalendarView({
                       onClick={() => {
                         const params = new URLSearchParams(searchParams.toString());
                         params.set("date", dayStr);
+                        params.set("view", "day");
                         router.push(`${pathname}?${params.toString()}`);
-                        setViewMode("day");
                       }}
                       className={`h-16 rounded-none p-2 flex flex-col justify-between transition-all hover:scale-[1.03] text-left cursor-pointer ${(() => {
                         if (isToday) {
@@ -2817,51 +3096,152 @@ export default function CalendarView({
             )}
 
             {!isBooked && bookingType === "admin_view" && selectedEvent && (
-              <div className="bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40] mb-6 space-y-3.5">
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 flex items-center gap-1.5 font-sans tracking-wider">
-                  <ShieldCheck size={14} className="text-tenant-primary dark:text-white" />
-                  Detaily rezervované lekce / plochy
-                </p>
-                <div className="text-xs space-y-2.5">
-                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
-                    <span className="text-slate-400 dark:text-slate-500">Plocha / Lekce:</span>
-                    <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.resourceName}</span>
-                  </div>
-                  {selectedEvent.status && (
-                    <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
-                      <span className="text-slate-400 dark:text-slate-500">Stav:</span>
-                      <span className={`px-2 py-0.5 rounded-none text-[10px] font-bold ${
+              <div className="bg-gradient-to-br from-slate-50/60 via-white to-slate-50/60 dark:from-[#131322]/80 dark:via-[#0D0D15]/95 dark:to-[#0D0D15]/95 rounded-none relative overflow-hidden shadow-md p-0 mb-6 flex flex-col">
+                {/* Metallic Sheen Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.01] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
+                {/* Glow badge */}
+                <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-tr from-tenant-primary to-tenant-primary opacity-[0.08] dark:opacity-12 blur-2xl rounded-full pointer-events-none z-0" />
+                
+                {/* Top Ticket Section */}
+                <div className="p-5 pb-3 relative z-10">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-widest font-sans block">Sportoviště / Plocha</span>
+                      <h4 className="text-base font-extrabold text-slate-800 dark:text-white leading-tight">
+                        {selectedEvent.resourceName || selectedEvent.name}
+                      </h4>
+                    </div>
+                    {selectedEvent.status && (
+                      <span className={`px-2 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest ${
                         selectedEvent.status === "CONFIRMED"
-                          ? "bg-tenant-primary/10 text-tenant-primary border border-tenant-primary/20"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                           : selectedEvent.status === "ATTENDED"
-                            ? "bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20"
+                            ? "bg-slate-500/10 text-slate-700 dark:text-slate-300"
                             : selectedEvent.status === "PENDING_PAYMENT"
-                              ? "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border border-zinc-500/20"
-                              : "bg-slate-500/10 text-slate-550 border border-slate-500/20"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : "bg-slate-500/10 text-slate-500"
                       }`}>
                         {selectedEvent.status === "CONFIRMED" ? "Potvrzeno" : selectedEvent.status === "PENDING_PAYMENT" ? "Čeká na platbu" : selectedEvent.status === "ATTENDED" ? "Odbaveno" : selectedEvent.status}
                       </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 py-3 bg-slate-100/10 dark:bg-white/[0.01] -mx-5 px-5 mt-4 select-none">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-[#7000FF]/10 text-[#7000FF] dark:text-[#8D33FF] shrink-0">
+                        <Calendar size={16} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-wider">Datum</span>
+                        <span className="text-xs font-bold text-slate-750 dark:text-slate-200">{getEventFormattedDate(selectedEvent)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-[#7000FF]/10 text-[#7000FF] dark:text-[#8D33FF] shrink-0">
+                        <Clock size={16} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-wider">Čas</span>
+                        <span className="text-xs font-bold text-slate-750 dark:text-slate-200">{getSelectedEventTimeRange(selectedEvent)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ticket Divider with Side Cut-out Punches */}
+                <div className="relative h-[1px] my-1 z-20 select-none">
+                  <div className="absolute left-5 right-5 border-t border-dashed border-slate-200/30 dark:border-white/[0.04] -translate-y-1/2" />
+                  {/* Left Punch */}
+                  <div className="absolute left-0 -translate-x-1/2 w-4 h-4 bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl rounded-full -translate-y-1/2" />
+                  {/* Right Punch */}
+                  <div className="absolute right-0 translate-x-1/2 w-4 h-4 bg-white/95 dark:bg-[#0D0D15]/90 backdrop-blur-2xl rounded-full -translate-y-1/2" />
+                </div>
+
+                {/* Bottom Ticket Section */}
+                <div className="p-5 pt-2 space-y-4 relative z-10">
+                  {/* Secure Entry Code Integration */}
+                  {isSelectedEventMyBooking && (
+                    <div className="flex flex-col items-center text-center gap-4 py-1 pb-2">
+                      <div className="flex items-center gap-1.5 select-none bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        Aktivní zabezpečený kód pro vstup
+                      </div>
+                      
+                      {/* Larger Scannable QR Code Graphic */}
+                      <div className="relative p-3 bg-white rounded-none flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.06)] select-none overflow-hidden hover:scale-[1.01] transition-transform duration-350">
+                        <div className="h-44 w-44 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
+                          {dynamicQrPayload ? (
+                            <img 
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(dynamicQrPayload)}`}
+                              alt={`QR Code pro rezervaci ${selectedEvent.id}`}
+                              className="h-40 w-40 object-contain transition-all duration-300"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <Loader2 className="animate-spin text-tenant-primary" size={24} />
+                              <span className="text-[10px] text-slate-400 font-bold">Generování...</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 relative w-full flex flex-col items-center">
+                        <code className="text-[9px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100/50 dark:bg-slate-900/30 py-0.5 px-2.5 rounded-none border-none">
+                          {selectedEvent.id.substring(0, 8)}...{selectedEvent.id.substring(selectedEvent.id.length - 8)}
+                        </code>
+                        
+                        <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold select-none">
+                          <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
+                            <span 
+                              className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
+                              style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
+                            />
+                          </span>
+                          <span>Obnova za {qrTimeLeft}s</span>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
-                    <span className="text-slate-400 dark:text-slate-500">Rezervoval:</span>
-                    <span className="text-slate-700 dark:text-slate-200 font-semibold">{selectedEvent.name}</span>
-                  </div>
-                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
-                    <span className="text-slate-400 dark:text-slate-500">E-mail uživatele:</span>
-                    <span className="text-slate-700 dark:text-slate-200 font-mono font-medium">{selectedEvent.instructor}</span>
-                  </div>
-                  <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-zinc-800/40">
-                    <span className="text-slate-400 dark:text-slate-500">Rezervovaný čas:</span>
-                    <span className="text-slate-700 dark:text-slate-200 font-semibold text-right">
-                      {ALL_WEEK_DAYS[selectedEvent.dayIndex]?.name || "Den"} ({formatHourString(selectedEvent.startHour)} – {formatHourString(selectedEvent.startHour + selectedEvent.durationHours)})
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-0.5">
-                    <span className="text-slate-400 dark:text-slate-500">ID rezervace:</span>
-                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[10px] select-all max-w-[180px] truncate" title={selectedEvent.id}>
-                      {selectedEvent.id}
-                    </span>
+
+                  {/* Collapsible Technical Details Accordion */}
+                  <div className="pt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+                      className="w-full flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-350 transition-colors py-1 focus:outline-none"
+                    >
+                      <span>Technické podrobnosti</span>
+                      {showTechnicalDetails ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                    </button>
+                    
+                    {showTechnicalDetails && (
+                      <div className="text-[10px] space-y-2 pt-2.5 pb-1 border-t border-slate-100/50 dark:border-white/5 mt-1.5 text-slate-600 dark:text-slate-400 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="flex justify-between py-0.5 border-b border-slate-100/40 dark:border-white/5">
+                          <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[8px]">Rezervoval:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold">{selectedEvent.name}</span>
+                        </div>
+                        <div className="flex justify-between py-0.5 border-b border-slate-100/40 dark:border-white/5">
+                          <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[8px]">E-mail uživatele:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-mono font-medium">{selectedEvent.instructor}</span>
+                        </div>
+                        <div className="flex justify-between py-0.5 border-b border-slate-100/40 dark:border-white/5">
+                          <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[8px]">Stav:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold">{selectedEvent.status || "Neznámý"}</span>
+                        </div>
+                        {selectedEvent.recurrenceGroup && (
+                          <div className="flex justify-between py-0.5 border-b border-slate-100/40 dark:border-white/5">
+                            <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[8px]">Skupinová série:</span>
+                            <span className="text-slate-800 dark:text-slate-200 font-mono select-all truncate max-w-[160px]">{selectedEvent.recurrenceGroup}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between py-0.5">
+                          <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[8px]">ID rezervace:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-mono select-all truncate max-w-[160px]" title={selectedEvent.id}>
+                            {selectedEvent.id}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3071,7 +3451,7 @@ export default function CalendarView({
                     </div>
 
                     {recurrencePattern !== "none" && (
-                      <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-dashed border-slate-150 dark:border-[#2A2A40]/40 animate-in fade-in slide-in-from-top-2 duration-250">
+                      <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-dashed border-slate-200/40 dark:border-[#2A2A40]/40 animate-in fade-in slide-in-from-top-2 duration-250">
                         <div>
                           <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Frekvence</label>
                           <div className="flex bg-slate-100/70 dark:bg-[#0D0D15]/60 p-1 rounded-none gap-1 border border-slate-200/40 dark:border-[#2A2A40]/30">
@@ -3115,7 +3495,7 @@ export default function CalendarView({
                             >
                               -
                             </button>
-                            <span className="text-xs font-bold text-slate-850 dark:text-slate-150">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-300">
                               {recurrenceCount}x
                             </span>
                             <button
@@ -3183,7 +3563,7 @@ export default function CalendarView({
                         }
                         setModalError(null);
                       }}
-                      className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-250 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all font-medium"
+                      className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-300 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all font-medium"
                     >
                       <option value="">-- Vyberte partnera (žádný) --</option>
                       {partners.filter(p => p.active).map((p) => (
@@ -3207,7 +3587,7 @@ export default function CalendarView({
                       setGuestName(e.target.value);
                       setModalError(null);
                     }}
-                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-250 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
+                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
                     placeholder={isAdmin ? "např. Jan Novák" : "např. Jan Novák"}
                   />
                 </div>
@@ -3223,7 +3603,7 @@ export default function CalendarView({
                       setGuestEmail(e.target.value);
                       setModalError(null);
                     }}
-                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-250 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
+                    className="w-full text-xs py-2 px-3.5 bg-white/50 dark:bg-[#151522]/55 border border-slate-200/80 dark:border-[#2A2A40] rounded-none text-slate-800 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:border-[#7000FF] focus:ring-1 focus:ring-[#7000FF] transition-all"
                     placeholder={isAdmin ? "např. jan.novak@email.cz" : "např. jan.novak@email.cz"}
                   />
                 </div>
@@ -3252,32 +3632,19 @@ export default function CalendarView({
                   type="button"
                   disabled={isPendingPayment}
                   onClick={closeBookingModalAndRefresh}
-                  className="w-full py-2.5 rounded-none text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-tenant w-full"
                 >
                   {isPendingPayment ? "Připravuji platbu..." : "Zavřít"}
                 </button>
               </div>
             ) : bookingType === "admin_view" && selectedEvent ? (
               <div className="flex items-center gap-3 w-full">
-                {isSelectedEventMyBooking && (
-                  <button
-                    onClick={() => {
-                      setActiveTicket(selectedEvent);
-                      setBookingType(null);
-                      setSelectedEvent(null);
-                    }}
-                    className="flex-1 py-2.5 rounded-none text-xs font-bold text-white transition-all duration-200 bg-tenant-primary hover:opacity-95 active:scale-98 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer animate-in fade-in zoom-in-95 duration-200"
-                  >
-                    <Ticket size={14} />
-                    Vstupenka
-                  </button>
-                )}
                 <button
                   onClick={() => {
                     setBookingType(null);
                     setSelectedEvent(null);
                   }}
-                  className="flex-1 py-2.5 rounded-none text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 border border-slate-200/40 dark:border-slate-700/40 transition-colors cursor-pointer"
+                  className="btn btn-tenant flex-1"
                 >
                   Zavřít
                 </button>
@@ -3338,7 +3705,7 @@ export default function CalendarView({
                       });
                     }
                   }}
-                  className="btn-danger-filled flex-1 py-2.5 rounded-none text-xs font-bold"
+                  className="btn btn-danger flex-1"
                 >
                   Zrušit rezervaci
                 </button>
@@ -3361,14 +3728,14 @@ export default function CalendarView({
                       window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
                     }}
                     disabled={isPending}
-                    className="flex-1 py-2.5 rounded-none text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#151522]/55 dark:hover:bg-[#1C1C30]/55 text-slate-700 dark:text-slate-300 border border-slate-200/40 dark:border-[#2A2A40] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn btn-tenant flex-1"
                   >
                     Zrušit
                   </button>
                   <button
                     onClick={handleBooking}
                     disabled={!isCurrentSelectionAvailable || isPending}
-                    className="flex-1 py-2.5 rounded-none text-xs text-white font-bold bg-[#7000FF] hover:bg-[#5B00D6] dark:bg-[#7000FF] dark:hover:bg-[#6000EE] shadow-[0_4px_14px_rgba(112,0,255,0.3)] transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none"
+                    className="btn btn-tenant flex-1"
                   >
                     {isPending ? (
                       <>
@@ -3431,7 +3798,7 @@ export default function CalendarView({
             className="w-full max-w-sm relative flex flex-col filter drop-shadow-[0_25px_50px_rgba(0,0,0,0.5)] z-10"
           >
             {/* Ticket Top Part */}
-            <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#1E1E2F] dark:via-[#0D0D15] dark:to-[#0D0D15] rounded-none rounded-none border-t border-x border-slate-200/60 dark:border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] p-6 pb-4 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="bg-gradient-to-br from-slate-50/60 via-white to-slate-50/60 dark:from-[#131322]/80 dark:via-[#0D0D15]/95 dark:to-[#0D0D15]/95 rounded-none p-6 pb-4 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
               {/* Metallic Sheen Overlay */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
               
@@ -3466,11 +3833,11 @@ export default function CalendarView({
 
             {/* Ticket Divider */}
             <div className="relative h-[1px] z-20">
-              <div className="absolute left-6 right-6 border-t border-dashed border-slate-300 dark:border-white/10 -translate-y-1/2" />
+              <div className="absolute left-6 right-6 border-t border-dashed border-slate-200/30 dark:border-white/10 -translate-y-1/2" />
             </div>
 
             {/* Ticket Bottom Part (QR Code) */}
-            <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0D0D15] dark:via-[#0D0D15] dark:to-[#0B0B12] rounded-none-b-[2.5rem] rounded-none-t-2xl border-b border-x border-slate-200/60 dark:border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] p-6 pt-4 flex flex-col items-center text-center gap-4 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-50/60 via-white to-slate-50/60 dark:from-[#0D0D15]/80 dark:via-[#0D0D15]/95 dark:to-[#0B0B12]/95 rounded-none p-6 pt-4 flex flex-col items-center text-center gap-4 relative overflow-hidden">
               {/* Metallic Sheen Overlay */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
               
@@ -3479,7 +3846,7 @@ export default function CalendarView({
               </div>
               
               {/* Premium looking QR Code visual representation */}
-              <div className="relative p-4 bg-white rounded-none border border-slate-200 flex items-center justify-center shadow-md select-none overflow-hidden group z-20">
+              <div className="relative p-4 bg-white rounded-none flex items-center justify-center shadow-md select-none overflow-hidden group z-20">
                 <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
                   {dynamicQrPayload ? (
                     <img 
@@ -3518,7 +3885,7 @@ export default function CalendarView({
 
               <button
                 onClick={() => setActiveTicket(null)}
-                className="w-full py-2.5 bg-tenant-gradient hover:opacity-95 text-white text-xs font-bold rounded-none transition-all cursor-pointer mt-2 relative z-20 shadow-md shadow-tenant-primary/15 active:scale-[0.98]"
+                className="btn btn-tenant w-full mt-2 relative z-20"
               >
                 Zavřít vstupenku
               </button>

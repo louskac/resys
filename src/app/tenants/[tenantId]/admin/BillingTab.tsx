@@ -596,10 +596,19 @@ export default function BillingTab({
         <div className="grid lg:grid-cols-12 gap-6 animate-fade-in">
           
           {/* Draggable Users Directory */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+              <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                <Users size={14} />
+                Adresář zákazníků a uživatelů
+              </h4>
+              <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                Zákazníci
+              </span>
+            </div>
+
             <div className="flex justify-between items-center gap-4 flex-wrap">
               <div>
-                <h3 className="font-extrabold text-sm text-foreground">Registrovaní zákazníci a uživatelé</h3>
                 <p className="text-[11px] text-slate-400">Přetáhněte libovolného uživatele doprava pro promování na stálého partnera.</p>
               </div>
               <div className="relative w-full sm:w-60">
@@ -756,11 +765,16 @@ export default function BillingTab({
             )}
 
             {/* Partner Program FAQ Card */}
-            <div className="p-5 bg-white/45 dark:bg-[#0D0D15]/40 border border-slate-200/50 dark:border-[#1F1F35] rounded-none space-y-3.5">
-              <h4 className="font-extrabold text-xs text-foreground flex items-center gap-1.5">
-                <BadgePercent size={14} className="text-tenant-primary" />
-                Jak funguje partnerský účet?
-              </h4>
+            <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+                <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                  <BadgePercent size={14} />
+                  Jak funguje partnerský účet?
+                </h4>
+                <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                  Partnerský program
+                </span>
+              </div>
               <div className="space-y-2.5 text-[10.5px] text-slate-500 leading-relaxed">
                 <p>
                   <strong className="text-foreground">1. Automatické uplatnění:</strong> Když uživatele promujete, jakékoliv rezervace, které udělá ve frontendovém rezervačním portálu, budou mít automaticky odečtenou jeho smluvní slevu. Zákazník vidí pouze konečnou sníženou cenu.
@@ -779,26 +793,32 @@ export default function BillingTab({
 
       {/* SUBTAB 2: PARTNERS LIST */}
       {subTab === "partners" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h3 className="font-bold text-sm text-foreground">Seznam korporátních partnerů ({activePartners.length})</h3>
-              <p className="text-[11px] text-slate-400">Přehled firemních partnerů a nastavených slev.</p>
+        <div className="space-y-6 animate-fade-in">
+          <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3 flex-wrap gap-3">
+              <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                <BadgePercent size={14} />
+                Seznam korporátních partnerů ({activePartners.length})
+              </h4>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                  Slevové programy
+                </span>
+                {!isReceptionist && (
+                  <button
+                    onClick={() => setPartnerModal({
+                      open: true,
+                      mode: "add",
+                      data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
+                    })}
+                    className="btn btn-tenant flex items-center justify-center gap-1.5 text-xs py-1.5 px-3 h-[28px]"
+                  >
+                    <Plus size={12} />
+                    Zaregistrovat partnera
+                  </button>
+                )}
+              </div>
             </div>
-            {!isReceptionist && (
-              <button
-                onClick={() => setPartnerModal({
-                  open: true,
-                  mode: "add",
-                  data: { name: "", email: "", phone: "", companyId: "", vatId: "", discount: 0, active: true }
-                })}
-                className="btn btn-tenant flex items-center justify-center gap-1.5 text-xs py-2 px-4"
-              >
-                <Plus size={14} />
-                Zaregistrovat partnera
-              </button>
-            )}
-          </div>
 
           {activePartners.length === 0 ? (
             <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
@@ -928,17 +948,25 @@ export default function BillingTab({
               })}
             </div>
           )}
+          </div>
         </div>
       )}
 
       {/* SUBTAB 3: TRANSACTIONS LOG */}
       {subTab === "transactions" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex justify-between items-center gap-4 flex-wrap">
-            <div>
-              <h3 className="font-bold text-sm text-foreground">Kniha všech transakcí a rezervací</h3>
-              <p className="text-[11px] text-slate-400">Přehled všech plateb a rezervací v systému.</p>
+        <div className="space-y-6 animate-fade-in">
+          <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+              <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                <FileText size={14} />
+                Kniha všech transakcí a rezervací
+              </h4>
+              <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                Transakční log
+              </span>
             </div>
+
+            <div className="flex justify-between items-center gap-4 flex-wrap">
             
             <div className="flex gap-2 flex-wrap items-center w-full sm:w-auto">
               {/* Type Filter */}
@@ -1050,13 +1078,23 @@ export default function BillingTab({
               </table>
             </div>
           )}
+          </div>
         </div>
       )}
 
       {/* SUBTAB 4: INVOICES LIST */}
       {subTab === "invoices" && (
-        <div className="space-y-4 animate-fade-in">
-          <h3 className="font-bold text-sm text-foreground">Vystavené faktury a zúčtování ({invoices.length})</h3>
+        <div className="space-y-6 animate-fade-in">
+          <div className="p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1A1A2E]/60 pb-3">
+              <h4 className="text-xs font-black text-tenant-primary uppercase tracking-widest flex items-center gap-2 select-none">
+                <DollarSign size={14} />
+                Vystavené faktury a zúčtování ({invoices.length})
+              </h4>
+              <span className="text-[9px] bg-slate-100 dark:bg-[#1A1A2E]/50 text-slate-500 dark:text-zinc-400 px-2 py-0.5 font-bold uppercase tracking-wider select-none border border-slate-200/30 dark:border-white/5">
+                Faktury B2B
+              </span>
+            </div>
 
           {invoices.length === 0 ? (
             <div className="py-12 text-center text-slate-500 dark:text-zinc-450 border border-slate-200/50 dark:border-[#1F1F35] border-l-2 border-l-slate-400 bg-white/45 dark:bg-[#0D0D15]/40 rounded-none font-mono">
@@ -1252,6 +1290,7 @@ export default function BillingTab({
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
 

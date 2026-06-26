@@ -127,6 +127,12 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
 
   // 3. Enforce administrator authorization checks
   const attributes = (tenant.attributes as Record<string, any>) || {};
+  if (attributes.bannerImage) {
+    const match = attributes.bannerImage.match(/^(?:\/images)?\/hero-vibe-(\d+)\.(jpg|png)$/);
+    if (match) {
+      attributes.bannerImage = `/images/hero-vibe-${match[1]}.png`;
+    }
+  }
   const adminEmails = attributes.adminEmails || [];
   const userEmail = session.user.email || "";
   const userRole = (session.user as any).role;

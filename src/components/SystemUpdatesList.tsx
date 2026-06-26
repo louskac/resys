@@ -42,7 +42,10 @@ function UpdateCard({
       </span>
 
       {/* Main Release Card */}
-      <div className={`p-5 bg-white/45 dark:bg-[#0D0D15]/40 backdrop-blur-xl border border-slate-200/50 dark:border-[#1F1F35] rounded-none shadow-sm space-y-4 ${cardBorderHover} hover:scale-[1.01] hover:shadow-md transition-all duration-300`}>
+      <div className={isHost 
+        ? "p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:scale-[1.01] transition-all duration-300 space-y-4"
+        : "p-6 bg-white/35 dark:bg-[#09090F]/30 backdrop-blur-xl border border-slate-200/40 dark:border-[#1A1A2E]/50 border-l-[3px] border-l-tenant-primary rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:scale-[1.01] transition-all duration-300 space-y-4"
+      }>
         
         {/* Card Header (Version Tag + Date) */}
         <div className="flex items-center justify-between flex-wrap gap-2">
