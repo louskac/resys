@@ -103,7 +103,7 @@ export default function AdminLoginClient({
             <div className="flex w-full gap-3">
               <button
                 onClick={handleOneidLogin}
-                className="btn-secondary flex-1 py-2.5 text-xs font-semibold"
+                className="btn-tenant flex-1 py-2.5 text-xs font-bold"
               >
                 Přepnout účet
               </button>

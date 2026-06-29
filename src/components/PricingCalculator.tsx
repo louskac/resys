@@ -645,7 +645,7 @@ export default function PricingCalculator() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setModalOpen(false)}
-                    className="btn-secondary flex-1 py-2 rounded-none text-xs font-bold transition-all cursor-pointer hover:bg-slate-100/80 active:scale-95"
+                    className="btn-tenant flex-1 py-2 rounded-none text-xs font-bold transition-all cursor-pointer hover:opacity-90 active:scale-95"
                   >
                     Zavřít
                   </button>

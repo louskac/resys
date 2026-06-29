@@ -1321,7 +1321,7 @@ export default function HostConsole() {
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Cancel
                         </button>
@@ -1464,7 +1464,7 @@ export default function HostConsole() {
                         <button
                           type="button"
                           onClick={handleCancelUserEdit}
-                          className="btn-secondary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
+                          className="btn-primary flex-1 py-2 cursor-pointer transition-all rounded-none hover:scale-[1.02] active:scale-[0.98]"
                         >
                           Cancel
                         </button>

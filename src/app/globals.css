@@ -229,17 +229,17 @@ body {
   background-color: color-mix(in srgb, var(--foreground) 6%, transparent);
   color: var(--foreground);
   border-color: var(--border);
-  border-left-color: var(--foreground) !important;
+  border-left-color: var(--border) !important;
 }
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--foreground);
-  color: var(--background);
+  background-color: var(--secondary);
+  color: var(--foreground);
 }
 
 .btn-outline {
   background-color: transparent;
   border-color: var(--border);
-  border-left-color: var(--foreground) !important;
+  border-left-color: var(--border) !important;
   color: var(--foreground);
 }
 .btn-outline:hover:not(:disabled) {

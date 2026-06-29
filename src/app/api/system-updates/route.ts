@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: eliminate black-bordered buttons across the platform":
+      "Vzhled a styl: Kompletní odstranění tmavých/černých ohraničení u tlačítek napříč celou platformou a zavedení moderních barevných motivů pro akce a přepínání účtů.",
     "feat: style ticket button on user dashboard":
       "Uživatelské rozhraní: Sjednocení stylu tlačítka Vstupenka s designovým manuálem a tlačítkem pro zrušení rezervace.",
     "feat: style cancel button on user dashboard and restart dev servers":
