@@ -7,6 +7,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
 import Pusher from "pusher-js";
 import { getTranslations, formatCurrency, translateError } from "@/lib/translations";
+import { calculateLightingSurcharge, getMockTemperature } from "@/lib/pricing";
 
 export interface CalendarEvent {
   id: string;
@@ -25,6 +26,7 @@ export interface CalendarEvent {
   status?: string;
   dateStr?: string;
   isDraft?: boolean;
+  rentedEquipment?: any;
 }
 
 export interface Partner {
@@ -385,6 +387,7 @@ export default function CalendarView({
   const [isBooked, setIsBooked] = useState(false);
   const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [rentedEquipments, setRentedEquipments] = useState<Record<string, number>>({});
 
   const toLocalDateString = (d: Date) => {
     const year = d.getFullYear();
@@ -471,6 +474,7 @@ export default function CalendarView({
     setIsPending(false);
     setRecurrencePattern("none");
     setRecurrenceCount(4);
+    setRentedEquipments({});
     router.refresh();
   };
 
@@ -599,6 +603,7 @@ export default function CalendarView({
                   isOccupied: true,
                   resourceName: booking.resourceName || (resource?.name || "Rezervace"),
                   status: booking.status,
+                  rentedEquipment: booking.rentedEquipment,
                   dateStr,
                 });
 
@@ -1607,6 +1612,73 @@ export default function CalendarView({
     setSelectedEvent(null);
   };
 
+  const getEquipmentAvailableQty = (eq: any) => {
+    if (eq.category !== "extra") return eq.quantity;
+    
+    if (bookingType !== "custom" || selectedDayIndex === null || !selectedTimeStr) {
+      return eq.quantity;
+    }
+    
+    const monday = getMondayOfDate(baseDate);
+    const targetDate = new Date(monday);
+    targetDate.setDate(monday.getDate() + selectedDayIndex);
+    const targetDateStr = toLocalDateString(targetDate);
+    
+    const [sh, sm] = selectedTimeStr.split(":").map(Number);
+    const targetStartHour = sh + sm / 60;
+    const targetEndHour = targetStartHour + customDuration;
+    
+    const cooldownMin = Number(eq.cooldownMinutes) || 0;
+    const cooldownHours = cooldownMin / 60;
+    
+    let rentedQty = 0;
+    
+    const getAncestors = (id: string): string[] => {
+      const res = resources.find(r => r.id === id);
+      const parentId = (res?.attributes as any)?.parentId;
+      if (!parentId) return [];
+      return [parentId, ...getAncestors(parentId)];
+    };
+
+    const getDescendants = (id: string): string[] => {
+      const children = resources.filter(r => (r.attributes as any)?.parentId === id);
+      const childIds = children.map(c => c.id);
+      const grandchildIds = childIds.flatMap(cid => getDescendants(cid));
+      return [...childIds, ...grandchildIds];
+    };
+
+    const conflictingResourceIds = customResourceId
+      ? [customResourceId, ...getAncestors(customResourceId), ...getDescendants(customResourceId)]
+      : [];
+
+    clientEvents.forEach((ev) => {
+      if (!ev.isOccupied || ev.status === "TECHNICAL_BREAK" || ev.status === "CLOSED" || ev.dateStr !== targetDateStr) return;
+      if (!ev.resourceId || !conflictingResourceIds.includes(ev.resourceId)) return;
+      if (!ev.rentedEquipment) return;
+      
+      let list = [];
+      try {
+        list = typeof ev.rentedEquipment === "string" ? JSON.parse(ev.rentedEquipment) : ev.rentedEquipment;
+      } catch (e) {
+        return;
+      }
+      if (!Array.isArray(list)) return;
+      
+      const rentedItem = list.find((item: any) => item.id === eq.id);
+      if (!rentedItem || !rentedItem.quantity) return;
+      
+      const evStart = ev.startHour;
+      const evEnd = evStart + ev.durationHours;
+      const evBlockedEnd = evEnd + cooldownHours;
+      
+      if (evStart < targetEndHour && evBlockedEnd > targetStartHour) {
+        rentedQty += Number(rentedItem.quantity) || 0;
+      }
+    });
+    
+    return Math.max(0, eq.quantity - rentedQty);
+  };
+
   const handleBooking = async () => {
     if (isPending) return;
     setIsPending(true);
@@ -1641,12 +1713,45 @@ export default function CalendarView({
         return;
       }
 
+      // Extract optional rented equipment payload
+      const activeResource = resources.find(r => r.id === customResourceId);
+      const resAttrs = (activeResource?.attributes as any) || {};
+      const equipmentList = resAttrs.equipmentList || [];
+      
+      const rentedEquipmentPayload = equipmentList
+        .map((eq: any) => {
+          if (eq.category === "default") {
+            return {
+              id: eq.id,
+              name: eq.name,
+              category: eq.category,
+              price: 0,
+              quantity: eq.quantity
+            };
+          } else {
+            const available = getEquipmentAvailableQty(eq);
+            const qty = Math.min(rentedEquipments[eq.id] || 0, available);
+            if (qty > 0) {
+              return {
+                id: eq.id,
+                name: eq.name,
+                category: eq.category,
+                price: eq.price,
+                quantity: qty
+              };
+            }
+          }
+          return null;
+        })
+        .filter(Boolean);
+
       payload.resourceId = customResourceId;
       payload.dayIndex = selectedDayIndex;
       payload.startTime = selectedTimeStr;
       payload.endTime = calculatedEndTime;
       payload.recurrencePattern = recurrencePattern;
       payload.recurrenceCount = recurrenceCount;
+      payload.rentedEquipment = rentedEquipmentPayload;
     } else {
       setIsPending(false);
       return;
@@ -3146,6 +3251,39 @@ export default function CalendarView({
                       </div>
                     </div>
                   </div>
+
+                  {/* Rented Equipment Info */}
+                  {selectedEvent.rentedEquipment && (() => {
+                    const parsedEquip = typeof selectedEvent.rentedEquipment === "string" 
+                      ? JSON.parse(selectedEvent.rentedEquipment) 
+                      : selectedEvent.rentedEquipment;
+                    if (!Array.isArray(parsedEquip) || parsedEquip.length === 0) return null;
+                    return (
+                      <div className="mt-4 pt-3.5 border-t border-dashed border-slate-200/50 dark:border-white/[0.04] select-none">
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest block mb-2">
+                          Vypůjčené vybavení
+                        </span>
+                        <div className="space-y-1.5">
+                          {parsedEquip.map((eq: any, index: number) => (
+                            <div 
+                              key={index} 
+                              className="flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.01] px-3 py-2 border border-slate-200/60 dark:border-white/[0.02] hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-tenant-primary shrink-0 animate-pulse" />
+                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                  {eq.name}
+                                </span>
+                              </div>
+                              <span className="text-xs font-black text-tenant-primary dark:text-tenant-primary-light bg-tenant-primary/10 dark:bg-tenant-primary/20 px-2.5 py-0.5 rounded-none">
+                                {eq.quantity} ks
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Ticket Divider with Side Cut-out Punches */}
@@ -3268,8 +3406,81 @@ export default function CalendarView({
             {!isBooked && bookingType === "custom" && selectedDayIndex !== null && (() => {
               const isCurrentSelectionAvailable = isResourceAvailable(customResourceId, selectedDayIndex, selectedTimeStr, customDuration);
               const activeResource = resources.find(r => r.id === customResourceId);
-              const hourlyRate = Number((activeResource?.attributes as any)?.price) || 0;
-              const estimatedPrice = hourlyRate * customDuration;
+              const resAttrs = (activeResource?.attributes as any) || {};
+              const hourlyRate = Number(resAttrs.price) || 0;
+
+              // Calculate date bounds for dynamic surcharges
+              const monday = getMondayOfDate(baseDate);
+              const targetDate = new Date(monday);
+              targetDate.setUTCDate(monday.getUTCDate() + selectedDayIndex);
+
+              const [startHourStr, startMinStr] = selectedTimeStr.split(":");
+              const [sh, sm] = selectedTimeStr.split(":").map(Number);
+              const totalMinutes = sh * 60 + sm + customDuration * 60;
+              const eh = Math.floor(totalMinutes / 60);
+              const em = totalMinutes % 60;
+
+              const reservedFrom = new Date(targetDate);
+              reservedFrom.setUTCHours(parseInt(startHourStr, 10), parseInt(startMinStr, 10), 0, 0);
+
+              const reservedTo = new Date(targetDate);
+              reservedTo.setUTCHours(eh, em, 0, 0);
+
+              // Calculate Lighting Surcharge
+              let lightingSurcharge = 0;
+              if (resAttrs.autoLightingPricingEnabled) {
+                const flatRate = Number(resAttrs.autoLightingFlatRate) || 0;
+                const offsetMin = resAttrs.autoLightingOffsetMinutes !== undefined ? Number(resAttrs.autoLightingOffsetMinutes) : 60;
+                if (flatRate > 0) {
+                  lightingSurcharge = calculateLightingSurcharge(reservedFrom, reservedTo, flatRate, offsetMin);
+                }
+              }
+
+              // Calculate Heating Surcharge
+              let heatingSurcharge = 0;
+              if (resAttrs.autoHeatingPricingEnabled) {
+                const flatRate = Number(resAttrs.autoHeatingFlatRate) || 0;
+                const tempThreshold = resAttrs.autoHeatingTempThreshold !== undefined ? Number(resAttrs.autoHeatingTempThreshold) : 15;
+                if (flatRate > 0) {
+                  const midpoint = new Date((reservedFrom.getTime() + reservedTo.getTime()) / 2);
+                  const mockTemp = getMockTemperature(midpoint);
+                  if (mockTemp < tempThreshold) {
+                    heatingSurcharge = customDuration * flatRate;
+                  }
+                }
+              }
+
+              // Calculate Rented Equipment Cost
+              let equipmentCost = 0;
+              const equipmentList = resAttrs.equipmentList || [];
+              equipmentList.forEach((eq: any) => {
+                if (eq.category === "extra") {
+                  const available = getEquipmentAvailableQty(eq);
+                  const qty = Math.min(rentedEquipments[eq.id] || 0, available);
+                  equipmentCost += eq.price * qty;
+                }
+              });
+
+              // Apply B2B discount if selected partner has discount
+              let basePrice = hourlyRate * customDuration;
+              let activeDiscount = 0;
+              const userEmail = session?.user?.email;
+              if (isAdmin && selectedPartnerId && partners) {
+                const partnerObj = partners.find(p => p.id === selectedPartnerId);
+                if (partnerObj && (partnerObj as any).discount) {
+                  activeDiscount = Number((partnerObj as any).discount) || 0;
+                }
+              } else if (!isAdmin && userEmail && partners) {
+                const partnerObj = partners.find(p => p.email.toLowerCase() === userEmail.toLowerCase());
+                if (partnerObj && (partnerObj as any).discount) {
+                  activeDiscount = Number((partnerObj as any).discount) || 0;
+                }
+              }
+              if (activeDiscount > 0) {
+                basePrice = basePrice * (1 - activeDiscount / 100);
+              }
+
+              const estimatedPrice = basePrice + equipmentCost + lightingSurcharge + heatingSurcharge;
               return (
                 <div className="space-y-4 mb-6 bg-slate-50/50 dark:bg-[#151522]/45 backdrop-blur-md p-5 rounded-none border border-slate-200/60 dark:border-[#2A2A40]">
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-200/40 dark:border-zinc-800/50 pb-2 mb-2 flex items-center gap-1.5 font-sans tracking-wider">
@@ -3418,11 +3629,112 @@ export default function CalendarView({
                     </div>
                   </div>
 
+                  {/* Equipment Selection */}
+                  {equipmentList && equipmentList.length > 0 && (
+                    <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-[#2A2A40]/40 mt-3">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider block">Doplňkové vybavení</span>
+                      <div className="space-y-2">
+                        {equipmentList.map((eq: any) => {
+                          const available = getEquipmentAvailableQty(eq);
+                          const currentQty = Math.min(rentedEquipments[eq.id] || 0, available);
+                          return (
+                            <div key={eq.id} className="flex items-center justify-between py-1.5 px-3 bg-slate-100/50 dark:bg-[#0D0D15]/40 border border-slate-200/40 dark:border-[#2A2A40]/30 text-xs">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-slate-700 dark:text-slate-200">{eq.name}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                  {eq.category === "default" 
+                                    ? "Zdarma v ceně" 
+                                    : `+${eq.price} Kč / ks (max. ${eq.quantity} ks, dostupných ${available} ks)`}
+                                </span>
+                              </div>
+                              {eq.category === "extra" ? (
+                                <div className="flex items-center gap-2 bg-white dark:bg-black/40 border border-slate-250 dark:border-zinc-800 p-0.5 h-[28px]">
+                                  <button
+                                    type="button"
+                                    disabled={currentQty <= 0}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRentedEquipments(prev => ({
+                                        ...prev,
+                                        [eq.id]: Math.max(0, currentQty - 1)
+                                      }));
+                                      setModalError(null);
+                                    }}
+                                    className={`w-6 h-full flex items-center justify-center text-sm font-extrabold transition-colors ${
+                                      currentQty <= 0 
+                                        ? "text-slate-300 dark:text-zinc-700 cursor-not-allowed bg-slate-50 dark:bg-[#131320]" 
+                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                    }`}
+                                  >
+                                    -
+                                  </button>
+                                  <span className="w-4 text-center font-bold text-slate-800 dark:text-slate-350">
+                                    {currentQty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={currentQty >= available}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRentedEquipments(prev => ({
+                                        ...prev,
+                                        [eq.id]: Math.min(available, currentQty + 1)
+                                      }));
+                                      setModalError(null);
+                                    }}
+                                    className={`w-6 h-full flex items-center justify-center text-sm font-extrabold transition-colors ${
+                                      currentQty >= available 
+                                        ? "text-slate-300 dark:text-zinc-700 cursor-not-allowed bg-slate-50 dark:bg-[#131320]" 
+                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                    }`}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] bg-emerald-550/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 font-bold uppercase">Aktivní</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Price info if > 0 */}
                   {estimatedPrice > 0 && (
-                    <div className="flex justify-between items-center py-2.5 px-4 bg-tenant-primary/10 dark:bg-tenant-primary/5 border border-tenant-primary/20 rounded-none text-xs font-semibold text-tenant-primary dark:text-zinc-200 select-none animate-in fade-in duration-200">
-                      <span>{getTranslations(locale).ui.price}:</span>
-                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{formatCurrency(estimatedPrice, currency, locale)}</span>
+                    <div className="space-y-1.5 py-2.5 px-4 bg-tenant-primary/10 dark:bg-tenant-primary/5 border border-tenant-primary/20 rounded-none text-xs font-semibold text-tenant-primary dark:text-zinc-200 select-none animate-in fade-in duration-200">
+                      <div className="flex justify-between items-center font-bold">
+                        <span>{getTranslations(locale).ui.price}:</span>
+                        <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{formatCurrency(estimatedPrice, currency, locale)}</span>
+                      </div>
+                      
+                      {(equipmentCost > 0 || lightingSurcharge > 0 || heatingSurcharge > 0) && (
+                        <div className="border-t border-tenant-primary/10 dark:border-zinc-800/40 pt-1.5 mt-1.5 space-y-1 text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                          <div className="flex justify-between">
+                            <span>Základní cena:</span>
+                            <span>{formatCurrency(basePrice, currency, locale)}</span>
+                          </div>
+                          {equipmentCost > 0 && (
+                            <div className="flex justify-between">
+                              <span>Zapůjčení vybavení:</span>
+                              <span>+{formatCurrency(equipmentCost, currency, locale)}</span>
+                            </div>
+                          )}
+                          {lightingSurcharge > 0 && (
+                            <div className="flex justify-between">
+                              <span>Příplatek za osvětlení:</span>
+                              <span>+{formatCurrency(lightingSurcharge, currency, locale)}</span>
+                            </div>
+                          )}
+                          {heatingSurcharge > 0 && (
+                            <div className="flex justify-between">
+                              <span>Příplatek za vytápění:</span>
+                              <span>+{formatCurrency(heatingSurcharge, currency, locale)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -3728,7 +4040,7 @@ export default function CalendarView({
                       window.dispatchEvent(new CustomEvent("assistant-booking-cancelled"));
                     }}
                     disabled={isPending}
-                    className="btn btn-tenant flex-1"
+                    className="btn btn-danger flex-1"
                   >
                     Zrušit
                   </button>

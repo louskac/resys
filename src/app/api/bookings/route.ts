@@ -6,7 +6,7 @@ import { makeErrorResponse } from "@/lib/errors";
 import { triggerBookingUpdate } from "@/lib/pusher";
 import { sendSSEUpdate } from "@/lib/sse";
 import crypto from "crypto";
-import { calculateLightingSurcharge } from "@/lib/pricing";
+import { calculateLightingSurcharge, calculateHeatingSurcharge } from "@/lib/pricing";
 
 const getLocalAsUtcDate = (d: Date, timeZone: string = "Europe/Prague"): Date => {
   try {
@@ -118,14 +118,21 @@ export async function POST(request: NextRequest) {
         let finalPartnerId = partnerId;
 
         // Enforce subscription plan checks: block booking if canceled or past_due
-        const dbTenant = await tx.tenant.findUnique({
-          where: { id: tenantId }
+        tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          include: { 
+            resources: {
+              include: {
+                scheduleRules: true
+              }
+            }
+          },
         });
-        if (!dbTenant) {
+        if (!tenant) {
           throw new Error("TENANT_NOT_FOUND");
         }
-        if (dbTenant.subscriptionStatus === "CANCELED" || dbTenant.subscriptionStatus === "PAST_DUE") {
-          throw new Error(`SUBSCRIPTION_INACTIVE:${dbTenant.subscriptionStatus}`);
+        if (tenant.subscriptionStatus === "CANCELED" || tenant.subscriptionStatus === "PAST_DUE") {
+          throw new Error(`SUBSCRIPTION_INACTIVE:${tenant.subscriptionStatus}`);
         }
 
         // If no explicit partnerId is provided, check if the booking user is linked to a partner
@@ -160,21 +167,6 @@ export async function POST(request: NextRequest) {
           // --- Case B: Booking an ad-hoc custom time slot (e.g. sport field rental) ---
           if (!resourceId || !startTime || !endTime) {
             throw new Error("MISSING_PARAMETER");
-          }
-
-          tenant = await tx.tenant.findUnique({
-            where: { id: tenantId },
-            include: { 
-              resources: {
-                include: {
-                  scheduleRules: true
-                }
-              }
-            },
-          });
-
-          if (!tenant) {
-            throw new Error("TENANT_NOT_FOUND");
           }
 
           const resource = tenant.resources.find((r: any) => r.id === resourceId);
@@ -290,9 +282,9 @@ export async function POST(request: NextRequest) {
         const recurrenceGroup = count > 1 ? crypto.randomUUID() : null;
         let createdBookingId = "";
 
-        // Calculate conflicting resource IDs if custom booking
+        // Calculate conflicting resource IDs
         let conflictingResourceIds: string[] = [];
-        if (!scheduleRuleId && tenant) {
+        if (tenant && finalResourceId) {
           const tenantResources = tenant.resources;
           const getAncestors = (id: string): string[] => {
             const res = tenantResources.find((r: any) => r.id === id);
@@ -309,9 +301,9 @@ export async function POST(request: NextRequest) {
           };
 
           conflictingResourceIds = [
-            resourceId,
-            ...getAncestors(resourceId),
-            ...getDescendants(resourceId),
+            finalResourceId,
+            ...getAncestors(finalResourceId),
+            ...getDescendants(finalResourceId),
           ];
         }
 
@@ -451,7 +443,7 @@ export async function POST(request: NextRequest) {
           }
 
           // --- Validate that the booking is not in the past ---
-          if (reservedFrom < getLocalAsUtcDate(new Date(), dbTenant.timezone)) {
+          if (reservedFrom < getLocalAsUtcDate(new Date(), tenant.timezone)) {
             throw new Error("PAST_BOOKING_NOT_ALLOWED");
           }
 
@@ -540,18 +532,30 @@ export async function POST(request: NextRequest) {
 
           // Calculate automatic lighting surcharge (not subject to partner discount)
           let lightingSurcharge = 0;
+          // Calculate automatic heating surcharge (not subject to partner discount)
+          let heatingSurcharge = 0;
+
+          const tenantLocation = (tenant?.attributes as any)?.location || "";
           const resource = tenant.resources.find((r: any) => r.id === finalResourceId);
           if (resource) {
             const resAttrs = (resource.attributes as any) || {};
             if (resAttrs.autoLightingPricingEnabled) {
               const flatRate = Number(resAttrs.autoLightingFlatRate) || 0;
+              const offsetMin = resAttrs.autoLightingOffsetMinutes !== undefined ? Number(resAttrs.autoLightingOffsetMinutes) : 60;
               if (flatRate > 0) {
-                lightingSurcharge = calculateLightingSurcharge(reservedFrom, reservedTo, flatRate);
+                lightingSurcharge = calculateLightingSurcharge(reservedFrom, reservedTo, flatRate, offsetMin);
+              }
+            }
+            if (resAttrs.autoHeatingPricingEnabled) {
+              const flatRate = Number(resAttrs.autoHeatingFlatRate) || 0;
+              const tempThreshold = resAttrs.autoHeatingTempThreshold !== undefined ? Number(resAttrs.autoHeatingTempThreshold) : 15;
+              if (flatRate > 0) {
+                heatingSurcharge = await calculateHeatingSurcharge(reservedFrom, reservedTo, flatRate, tempThreshold, tenantLocation);
               }
             }
           }
 
-          const totalBasePrice = basePrice + equipmentCost + lightingSurcharge;
+          const totalBasePrice = basePrice + equipmentCost + lightingSurcharge + heatingSurcharge;
 
           // Round to 2 decimal places
           const finalPrice = Math.round((totalBasePrice + Number.EPSILON) * 100) / 100;

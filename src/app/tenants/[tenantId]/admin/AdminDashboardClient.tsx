@@ -106,6 +106,7 @@ interface Booking {
   invoiceId: string | null;
   createdAt: string;
   recurrenceGroup?: string | null;
+  rentedEquipment?: any;
 }
 
 interface Device {
@@ -175,6 +176,7 @@ interface AdminDashboardClientProps {
       bannerPosition?: string;
       openingHours?: OpeningHoursDay[];
       onboardingCompleted?: boolean;
+      location?: string;
     };
     subscriptionPlan?: string;
     subscriptionStatus?: string;
@@ -871,6 +873,7 @@ export default function AdminDashboardClient({
   // Portal settings states
   const initialAttributes = tenant.attributes || {};
   const [settingsTagline, setSettingsTagline] = useState(initialAttributes.tagline || "");
+  const [settingsLocation, setSettingsLocation] = useState(initialAttributes.location || "");
   const [settingsOpenTime, setSettingsOpenTime] = useState(initialAttributes.openTime || "08:00");
   const [settingsCloseTime, setSettingsCloseTime] = useState(initialAttributes.closeTime || "22:00");
   const [settingsBannerImage, setSettingsBannerImage] = useState(initialAttributes.bannerImage || "");
@@ -1072,6 +1075,10 @@ export default function AdminDashboardClient({
       technicalBreakMinutes: number;
       autoLightingPricingEnabled?: boolean;
       autoLightingFlatRate?: string | number;
+      autoLightingOffsetMinutes?: number;
+      autoHeatingPricingEnabled?: boolean;
+      autoHeatingFlatRate?: string | number;
+      autoHeatingTempThreshold?: number;
     }
   }>({
     open: false,
@@ -1091,7 +1098,11 @@ export default function AdminDashboardClient({
       technicalBreak: false,
       technicalBreakMinutes: 15,
       autoLightingPricingEnabled: false,
-      autoLightingFlatRate: ""
+      autoLightingFlatRate: "",
+      autoLightingOffsetMinutes: 60,
+      autoHeatingPricingEnabled: false,
+      autoHeatingFlatRate: "",
+      autoHeatingTempThreshold: 15
     }
   });
 
@@ -1164,6 +1175,12 @@ export default function AdminDashboardClient({
         let targetPrice = data.price || "";
         let targetTechnicalBreak = data.technicalBreak !== undefined ? data.technicalBreak : false;
         let targetTechnicalBreakMinutes = data.technicalBreakMinutes !== undefined ? parseInt(data.technicalBreakMinutes, 10) : 15;
+        let targetAutoLightingPricingEnabled = data.autoLightingPricingEnabled !== undefined ? data.autoLightingPricingEnabled : false;
+        let targetAutoLightingFlatRate = data.autoLightingFlatRate !== undefined ? data.autoLightingFlatRate : "";
+        let targetAutoLightingOffsetMinutes = data.autoLightingOffsetMinutes !== undefined ? parseInt(data.autoLightingOffsetMinutes, 10) : 60;
+        let targetAutoHeatingPricingEnabled = data.autoHeatingPricingEnabled !== undefined ? data.autoHeatingPricingEnabled : false;
+        let targetAutoHeatingFlatRate = data.autoHeatingFlatRate !== undefined ? data.autoHeatingFlatRate : "";
+        let targetAutoHeatingTempThreshold = data.autoHeatingTempThreshold !== undefined ? parseInt(data.autoHeatingTempThreshold, 10) : 15;
 
         // Fallback matching by ID or name in existing resources to preserve other attributes
         const existing = resources.find(r => 
@@ -1185,6 +1202,12 @@ export default function AdminDashboardClient({
           if (data.price === undefined) targetPrice = (existing.attributes as any)?.price || "";
           if (data.technicalBreak === undefined) targetTechnicalBreak = (existing.attributes as any)?.technicalBreak || false;
           if (data.technicalBreakMinutes === undefined) targetTechnicalBreakMinutes = (existing.attributes as any)?.technicalBreakMinutes || 15;
+          if (data.autoLightingPricingEnabled === undefined) targetAutoLightingPricingEnabled = (existing.attributes as any)?.autoLightingPricingEnabled || false;
+          if (data.autoLightingFlatRate === undefined) targetAutoLightingFlatRate = (existing.attributes as any)?.autoLightingFlatRate || "";
+          if (data.autoLightingOffsetMinutes === undefined) targetAutoLightingOffsetMinutes = (existing.attributes as any)?.autoLightingOffsetMinutes || 60;
+          if (data.autoHeatingPricingEnabled === undefined) targetAutoHeatingPricingEnabled = (existing.attributes as any)?.autoHeatingPricingEnabled || false;
+          if (data.autoHeatingFlatRate === undefined) targetAutoHeatingFlatRate = (existing.attributes as any)?.autoHeatingFlatRate || "";
+          if (data.autoHeatingTempThreshold === undefined) targetAutoHeatingTempThreshold = (existing.attributes as any)?.autoHeatingTempThreshold || 15;
         }
 
         setResourceModal({
@@ -1203,7 +1226,13 @@ export default function AdminDashboardClient({
             equipmentList: targetEquipmentList,
             price: targetPrice,
             technicalBreak: targetTechnicalBreak,
-            technicalBreakMinutes: targetTechnicalBreakMinutes
+            technicalBreakMinutes: targetTechnicalBreakMinutes,
+            autoLightingPricingEnabled: targetAutoLightingPricingEnabled,
+            autoLightingFlatRate: targetAutoLightingFlatRate,
+            autoLightingOffsetMinutes: targetAutoLightingOffsetMinutes,
+            autoHeatingPricingEnabled: targetAutoHeatingPricingEnabled,
+            autoHeatingFlatRate: targetAutoHeatingFlatRate,
+            autoHeatingTempThreshold: targetAutoHeatingTempThreshold
           }
         });
       }
@@ -1254,6 +1283,7 @@ export default function AdminDashboardClient({
         if (data.closeTime !== undefined) setSettingsCloseTime(data.closeTime);
         if (Array.isArray(data.adminEmails)) setSettingsAdminEmails(data.adminEmails.join(", "));
         if (data.aiInstructions !== undefined) setSettingsAiInstructions(data.aiInstructions);
+        if (data.location !== undefined) setSettingsLocation(data.location);
       }
     };
 
@@ -1342,6 +1372,17 @@ export default function AdminDashboardClient({
   // --- CRUD API Triggers ---
   const handleResourceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate that location is present if auto-pricing rules are enabled
+    if ((resourceModal.data.autoLightingPricingEnabled || resourceModal.data.autoHeatingPricingEnabled) && !settingsLocation.trim()) {
+      setNotification({
+        type: "error",
+        title: "Lokalita areálu chybí",
+        message: "Pro uložení zdroje s aktivním automatickým osvětlením nebo vytápěním musíte nejdříve v záložce Nastavení vyplnit 'Lokalitu / Město areálu' pro určení západu slunce a počasí."
+      });
+      return;
+    }
+
     const dataToSend = {
       id: resourceModal.data.id || undefined,
       tenantId: tenant.id,
@@ -1359,7 +1400,13 @@ export default function AdminDashboardClient({
         equipmentList: resourceModal.data.equipmentList,
         price: resourceModal.data.price,
         technicalBreak: resourceModal.data.technicalBreak,
-        technicalBreakMinutes: resourceModal.data.technicalBreakMinutes
+        technicalBreakMinutes: resourceModal.data.technicalBreakMinutes,
+        autoLightingPricingEnabled: resourceModal.data.autoLightingPricingEnabled,
+        autoLightingFlatRate: resourceModal.data.autoLightingFlatRate,
+        autoLightingOffsetMinutes: resourceModal.data.autoLightingOffsetMinutes,
+        autoHeatingPricingEnabled: resourceModal.data.autoHeatingPricingEnabled,
+        autoHeatingFlatRate: resourceModal.data.autoHeatingFlatRate,
+        autoHeatingTempThreshold: resourceModal.data.autoHeatingTempThreshold
       }
     };
 
@@ -1546,6 +1593,7 @@ export default function AdminDashboardClient({
             bannerPosition: settingsBannerPosition,
             adminEmails: emailsArray,
             aiInstructions: settingsAiInstructions,
+            location: settingsLocation,
           }
         };
 
@@ -1606,6 +1654,7 @@ export default function AdminDashboardClient({
               openingHours: settingsOpeningHours,
               adminEmails: emailsArray,
               aiInstructions: settingsAiInstructions,
+              location: settingsLocation,
             }
           };
 
@@ -1758,6 +1807,7 @@ export default function AdminDashboardClient({
         isOccupied: true,
         resourceName: booking.resourceName,
         status: booking.status,
+        rentedEquipment: booking.rentedEquipment,
       });
     });
 
@@ -1909,7 +1959,13 @@ export default function AdminDashboardClient({
                             equipmentList: resAttrs.equipmentList || [],
                             price: resAttrs.price || "",
                             technicalBreak: resAttrs.technicalBreak || false,
-                            technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15
+                            technicalBreakMinutes: resAttrs.technicalBreakMinutes || 15,
+                            autoLightingPricingEnabled: resAttrs.autoLightingPricingEnabled || false,
+                            autoLightingFlatRate: resAttrs.autoLightingFlatRate || "",
+                            autoLightingOffsetMinutes: resAttrs.autoLightingOffsetMinutes !== undefined ? resAttrs.autoLightingOffsetMinutes : 60,
+                            autoHeatingPricingEnabled: resAttrs.autoHeatingPricingEnabled || false,
+                            autoHeatingFlatRate: resAttrs.autoHeatingFlatRate || "",
+                            autoHeatingTempThreshold: resAttrs.autoHeatingTempThreshold !== undefined ? resAttrs.autoHeatingTempThreshold : 15
                           }
                         })}
                         className="p-3 sm:p-1.5 rounded-none bg-slate-200/50 hover:bg-slate-200/80 dark:bg-black/60 dark:hover:bg-zinc-800/80 text-tenant-primary border border-slate-300 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
@@ -2633,7 +2689,7 @@ export default function AdminDashboardClient({
                      <button
                        onClick={() => setResourceModal({
                          open: true, mode: "add",
-                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
+                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "", autoLightingOffsetMinutes: 60, autoHeatingPricingEnabled: false, autoHeatingFlatRate: "", autoHeatingTempThreshold: 15 }
                        })}
                        className="hidden md:flex border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white dark:hover:text-white text-[10px] py-2.5 px-4 rounded-none font-black uppercase tracking-widest transition-all duration-300 items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-tenant-primary/5 hover:scale-[1.02] active:scale-[0.98]"
                      >
@@ -2643,7 +2699,7 @@ export default function AdminDashboardClient({
                      <button
                        onClick={() => setResourceModal({
                          open: true, mode: "add",
-                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "" }
+                         data: { id: "", name: "", type: "SPACE", maxCapacity: 10, instructor: "", room: "", parentId: "", surface: "", equipment: "", equipmentList: [], price: "", technicalBreak: false, technicalBreakMinutes: 15, autoLightingPricingEnabled: false, autoLightingFlatRate: "", autoLightingOffsetMinutes: 60, autoHeatingPricingEnabled: false, autoHeatingFlatRate: "", autoHeatingTempThreshold: 15 }
                        })}
                        className="flex md:hidden p-2.5 bg-tenant-primary/10 text-tenant-primary hover:bg-tenant-primary hover:text-white border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary rounded-none active:scale-[0.95] transition-all cursor-pointer items-center justify-center shadow-sm"
                        title="Přidat zdroj"
@@ -3186,6 +3242,23 @@ export default function AdminDashboardClient({
                         </div>
                         <span className="text-[10px] text-muted-foreground mt-1.5 block font-medium">
                           Nahradí výchozí slogan na hlavním uvítacím banneru.
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-500 dark:text-zinc-400 mb-1.5 font-bold uppercase tracking-wider text-[9px]">Lokalita / Město areálu</label>
+                        <div className="relative flex items-center">
+                          <MapPin size={14} className="absolute left-3 text-slate-400 dark:text-zinc-500" />
+                          <input
+                            type="text"
+                            value={settingsLocation}
+                            onChange={(e) => setSettingsLocation(e.target.value)}
+                            className="w-full bg-white/50 dark:bg-black/30 border border-slate-200/50 dark:border-[#2A2A40] focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all rounded-none pl-9 pr-3 py-2 text-xs outline-none shadow-sm"
+                            placeholder="např. Pardubice"
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1.5 block font-medium">
+                          Slouží pro automatický výpočet západu slunce a předpověď počasí pro dynamic pricing.
                         </span>
                       </div>
 
@@ -4744,6 +4817,142 @@ export default function AdminDashboardClient({
                       />
                     </div>
                   )}
+
+                  {/* Dynamic Technical Surcharges (Lighting, Heating) */}
+                  <div className="border-t border-slate-200/20 dark:border-zinc-800/30 pt-3 space-y-4">
+                    <div>
+                      <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Technické příplatky</h4>
+                    </div>
+
+                    {/* Automatic Lighting Surcharge */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">Automatický příplatek za osvětlení</label>
+                        <p className="text-[9.5px] text-slate-400 dark:text-slate-500 mt-0.5">Připočítat příplatek před/po západu slunce.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={resourceModal.data.autoLightingPricingEnabled || false}
+                          onChange={(e) => {
+                            if (e.target.checked && !settingsLocation.trim()) {
+                              setNotification({
+                                type: "error",
+                                title: "Lokalita areálu chybí",
+                                message: "Pro zapnutí automatických příplatků za osvětlení musíte nejdříve v záložce Nastavení (Nastavení portálu) vyplnit 'Lokalitu / Město areálu', aby bylo možné určit čas západu slunce."
+                              });
+                              return;
+                            }
+                            setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoLightingPricingEnabled: e.target.checked }
+                            });
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-tenant-primary/25 dark:peer-checked:bg-tenant-primary/30 peer-checked:border-tenant-primary peer-checked:after:bg-tenant-primary"></div>
+                      </label>
+                    </div>
+
+                    {resourceModal.data.autoLightingPricingEnabled && (
+                      <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-200">
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Sazba (Kč/hod)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            required
+                            value={resourceModal.data.autoLightingFlatRate || ""}
+                            onChange={(e) => setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoLightingFlatRate: parseFloat(e.target.value) || 0 }
+                            })}
+                            className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                            placeholder="např. 100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Spustit před západem (minut)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            required
+                            value={resourceModal.data.autoLightingOffsetMinutes !== undefined ? resourceModal.data.autoLightingOffsetMinutes : 60}
+                            onChange={(e) => setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoLightingOffsetMinutes: parseInt(e.target.value, 10) || 0 }
+                            })}
+                            className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                            placeholder="např. 60"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Automatic Heating Surcharge */}
+                    <div className="flex items-center justify-between border-t border-slate-200/20 dark:border-zinc-800/30 pt-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">Automatický příplatek za vytápění</label>
+                        <p className="text-[9.5px] text-slate-400 dark:text-slate-500 mt-0.5">Připočítat příplatek, pokud venkovní teplota klesne pod limit.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={resourceModal.data.autoHeatingPricingEnabled || false}
+                          onChange={(e) => {
+                            if (e.target.checked && !settingsLocation.trim()) {
+                              setNotification({
+                                type: "error",
+                                title: "Lokalita areálu chybí",
+                                message: "Pro zapnutí automatických příplatků za vytápění musíte nejdříve v záložce Nastavení (Nastavení portálu) vyplnit 'Lokalitu / Město areálu', aby bylo možné načíst správnou předpověď počasí."
+                              });
+                              return;
+                            }
+                            setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoHeatingPricingEnabled: e.target.checked }
+                            });
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200/50 dark:bg-black/60 rounded-none peer border border-slate-300 dark:border-zinc-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 dark:after:bg-zinc-500 after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-tenant-primary/25 dark:peer-checked:bg-tenant-primary/30 peer-checked:border-tenant-primary peer-checked:after:bg-tenant-primary"></div>
+                      </label>
+                    </div>
+
+                    {resourceModal.data.autoHeatingPricingEnabled && (
+                      <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-200">
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Sazba (Kč/hod)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            required
+                            value={resourceModal.data.autoHeatingFlatRate || ""}
+                            onChange={(e) => setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoHeatingFlatRate: parseFloat(e.target.value) || 0 }
+                            })}
+                            className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                            placeholder="např. 150"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Teplotní limit (°C)</label>
+                          <input
+                            type="number"
+                            required
+                            value={resourceModal.data.autoHeatingTempThreshold !== undefined ? resourceModal.data.autoHeatingTempThreshold : 15}
+                            onChange={(e) => setResourceModal({
+                              ...resourceModal,
+                              data: { ...resourceModal.data, autoHeatingTempThreshold: parseFloat(e.target.value) || 0 }
+                            })}
+                            className="w-full text-xs py-3.5 md:py-2.5 px-4 bg-white/50 dark:bg-[#131322]/45 border border-slate-200/60 dark:border-[#2A2A40] rounded-none outline-none focus:border-tenant-primary/50 focus:ring-1 focus:ring-tenant-primary/20 transition-all text-slate-800 dark:text-slate-200 font-semibold"
+                            placeholder="např. 15"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -215,6 +215,7 @@ export default async function TenantAdminPage({ params, searchParams }: AdminPag
     invoiceId: booking.invoiceId,
     createdAt: booking.createdAt.toISOString(),
     recurrenceGroup: booking.recurrenceGroup,
+    rentedEquipment: booking.rentedEquipment ? (booking.rentedEquipment as any) : null,
   }));
 
   const serializedDevices = tenant.devices.map(device => ({
