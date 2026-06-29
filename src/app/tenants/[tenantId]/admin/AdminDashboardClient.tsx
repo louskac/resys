@@ -1809,6 +1809,31 @@ export default function AdminDashboardClient({
         status: booking.status,
         rentedEquipment: booking.rentedEquipment,
       });
+
+      const resAttrs = (resource?.attributes as any) || {};
+      if (resAttrs.technicalBreak && resAttrs.technicalBreakMinutes) {
+        const breakDuration = resAttrs.technicalBreakMinutes / 60;
+        
+        const year = from.getUTCFullYear();
+        const month = String(from.getUTCMonth() + 1).padStart(2, "0");
+        const day = String(from.getUTCDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+
+        events.push({
+          id: `${booking.id}-break`,
+          name: `Technická pauza`,
+          room: "Úklid / Příprava",
+          instructor: "Systém",
+          dayIndex,
+          startHour: endHour,
+          durationHours: breakDuration,
+          resourceId: booking.resourceId,
+          isOccupied: true,
+          resourceName: booking.resourceName || (resource?.name || "Rezervace"),
+          status: "TECHNICAL_BREAK",
+          dateStr,
+        });
+      }
     });
 
     // B. Add schedule rules (for classes/regular programs)

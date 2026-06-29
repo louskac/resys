@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: show technical breaks in admin calendar view":
+      "Správa rezervací: Oprava zobrazení technických pauz (blokátorů) v kalendáři administrátora, které se dosud zobrazovaly pouze na klientské straně.",
     "feat: eliminate black-bordered buttons across the platform":
       "Vzhled a styl: Kompletní odstranění tmavých/černých ohraničení u tlačítek napříč celou platformou a zavedení moderních barevných motivů pro akce a přepínání účtů.",
     "feat: style ticket button on user dashboard":
