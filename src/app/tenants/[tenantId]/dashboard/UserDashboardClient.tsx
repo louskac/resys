@@ -755,11 +755,7 @@ export default function UserDashboardClient({
                           ) : (
                             <button
                               onClick={() => setActiveTicket(b)}
-                              className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                              style={{ 
-                                background: theme.gradientStart ? `linear-gradient(135deg, ${theme.gradientStart}, ${theme.gradientEnd})` : theme.primary,
-                                boxShadow: `0 4px 12px rgba(112,0,255,0.15)`
-                              }}
+                              className="btn-tenant flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <Ticket size={14} />
                               Vstupenka

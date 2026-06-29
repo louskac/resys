@@ -2337,15 +2337,36 @@ export default function CalendarView({
                                             e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
                                             
                                             const tooltipHeight = 180;
-                                            const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
-                                            const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                            const tooltipWidth = 288;
+                                            
+                                            // Determine vertical positioning relative to viewport to avoid off-screen overflow
+                                            let tooltipViewportY = e.clientY + 15; // default to showing below the cursor
+                                            if (tooltipViewportY + tooltipHeight > window.innerHeight - 10) {
+                                              // Does not fit below, show above instead
+                                              tooltipViewportY = e.clientY - tooltipHeight - 15;
+                                            }
+                                            // Clamp tooltip viewport position to keep it inside visible screen boundaries
+                                            tooltipViewportY = Math.max(10, Math.min(tooltipViewportY, window.innerHeight - tooltipHeight - 10));
+                                            
+                                            // Convert viewport coordinates back to card relative coordinates
+                                            const tooltipY = tooltipViewportY - rect.top;
                                             e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
-                                            const tooltipWidth = 288;
+                                            // Determine horizontal positioning relative to parent grid container / viewport
                                             const gridElement = e.currentTarget.closest(".overflow-x-auto");
                                             const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
-                                            const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
-                                            const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                            const boundaryLeft = gridElement ? gridElement.getBoundingClientRect().left : 0;
+                                            
+                                            let tooltipViewportX = e.clientX + 15; // default to showing to the right of the cursor
+                                            if (tooltipViewportX + tooltipWidth > boundaryRight - 20) {
+                                              // Does not fit on the right, show on the left instead
+                                              tooltipViewportX = e.clientX - tooltipWidth - 15;
+                                            }
+                                            // Clamp tooltip horizontal viewport position within bounds
+                                            tooltipViewportX = Math.max(boundaryLeft + 10, Math.min(tooltipViewportX, boundaryRight - tooltipWidth - 10));
+                                            
+                                            // Convert to card relative coordinates
+                                            const tooltipX = tooltipViewportX - rect.left;
                                             e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                                           }}
                                           onMouseMove={(e) => {
@@ -2356,15 +2377,36 @@ export default function CalendarView({
                                             e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
                                             
                                             const tooltipHeight = 180;
-                                            const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
-                                            const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
+                                            const tooltipWidth = 288;
+                                            
+                                            // Determine vertical positioning relative to viewport to avoid off-screen overflow
+                                            let tooltipViewportY = e.clientY + 15; // default to showing below the cursor
+                                            if (tooltipViewportY + tooltipHeight > window.innerHeight - 10) {
+                                              // Does not fit below, show above instead
+                                              tooltipViewportY = e.clientY - tooltipHeight - 15;
+                                            }
+                                            // Clamp tooltip viewport position to keep it inside visible screen boundaries
+                                            tooltipViewportY = Math.max(10, Math.min(tooltipViewportY, window.innerHeight - tooltipHeight - 10));
+                                            
+                                            // Convert viewport coordinates back to card relative coordinates
+                                            const tooltipY = tooltipViewportY - rect.top;
                                             e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
-                                            const tooltipWidth = 288;
+                                            // Determine horizontal positioning relative to parent grid container / viewport
                                             const gridElement = e.currentTarget.closest(".overflow-x-auto");
                                             const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
-                                            const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
-                                            const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
+                                            const boundaryLeft = gridElement ? gridElement.getBoundingClientRect().left : 0;
+                                            
+                                            let tooltipViewportX = e.clientX + 15; // default to showing to the right of the cursor
+                                            if (tooltipViewportX + tooltipWidth > boundaryRight - 20) {
+                                              // Does not fit on the right, show on the left instead
+                                              tooltipViewportX = e.clientX - tooltipWidth - 15;
+                                            }
+                                            // Clamp tooltip horizontal viewport position within bounds
+                                            tooltipViewportX = Math.max(boundaryLeft + 10, Math.min(tooltipViewportX, boundaryRight - tooltipWidth - 10));
+                                            
+                                            // Convert to card relative coordinates
+                                            const tooltipX = tooltipViewportX - rect.left;
                                             e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
                                           }}
                                           onClick={(e) => {
@@ -2537,7 +2579,7 @@ export default function CalendarView({
                                                   top: "var(--mouse-y-tooltip, 10px)",
                                                   left: "var(--mouse-x-tooltip, 10px)",
                                                 }}
-                                                className={`absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans`}
+                                                className={`absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-[opacity,transform] duration-300 ease-out z-50 space-y-3.5 select-none font-sans`}
                                               >
                                                 <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-zinc-800/50 pb-2.5">
                                                   <span className={`font-bold text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${styles.textHex}`}>
@@ -2782,43 +2824,85 @@ export default function CalendarView({
                                 ...(!isPastEvent && !isDraftEvent ? { "--glow-color": (styles as any).glowColor || "rgba(139, 92, 246, 0.15)" } : {})
                               }}
                               onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-                                e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-                                
-                                const tooltipHeight = 180;
-                                const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
-                                const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
-                                e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+                                 const rect = e.currentTarget.getBoundingClientRect();
+                                 const x = e.clientX - rect.left;
+                                 const y = e.clientY - rect.top;
+                                 e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                 e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                                 
+                                 const tooltipHeight = 180;
+                                 const tooltipWidth = 288;
+                                 
+                                 // Determine vertical positioning relative to viewport to avoid off-screen overflow
+                                 let tooltipViewportY = e.clientY + 15; // default to showing below the cursor
+                                 if (tooltipViewportY + tooltipHeight > window.innerHeight - 10) {
+                                   // Does not fit below, show above instead
+                                   tooltipViewportY = e.clientY - tooltipHeight - 15;
+                                 }
+                                 // Clamp tooltip viewport position to keep it inside visible screen boundaries
+                                 tooltipViewportY = Math.max(10, Math.min(tooltipViewportY, window.innerHeight - tooltipHeight - 10));
+                                 
+                                 // Convert viewport coordinates back to card relative coordinates
+                                 const tooltipY = tooltipViewportY - rect.top;
+                                 e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
-                                const tooltipWidth = 288;
-                                const gridElement = e.currentTarget.closest(".overflow-x-auto");
-                                const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
-                                const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
-                                const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
-                                e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
-                              }}
-                              onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-                                e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-                                
-                                const tooltipHeight = 180;
-                                const showAbove = y > rect.height / 2 || (e.clientY + tooltipHeight > window.innerHeight);
-                                const tooltipY = showAbove ? (y - tooltipHeight - 15) : (y + 15);
-                                e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
+                                 // Determine horizontal positioning relative to parent grid container / viewport
+                                 const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                 const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                 const boundaryLeft = gridElement ? gridElement.getBoundingClientRect().left : 0;
+                                 
+                                 let tooltipViewportX = e.clientX + 15; // default to showing to the right of the cursor
+                                 if (tooltipViewportX + tooltipWidth > boundaryRight - 20) {
+                                   // Does not fit on the right, show on the left instead
+                                   tooltipViewportX = e.clientX - tooltipWidth - 15;
+                                 }
+                                 // Clamp tooltip horizontal viewport position within bounds
+                                 tooltipViewportX = Math.max(boundaryLeft + 10, Math.min(tooltipViewportX, boundaryRight - tooltipWidth - 10));
+                                 
+                                 // Convert to card relative coordinates
+                                 const tooltipX = tooltipViewportX - rect.left;
+                                 e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                               }}
+                               onMouseMove={(e) => {
+                                 const rect = e.currentTarget.getBoundingClientRect();
+                                 const x = e.clientX - rect.left;
+                                 const y = e.clientY - rect.top;
+                                 e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                                 e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                                 
+                                 const tooltipHeight = 180;
+                                 const tooltipWidth = 288;
+                                 
+                                 // Determine vertical positioning relative to viewport to avoid off-screen overflow
+                                 let tooltipViewportY = e.clientY + 15; // default to showing below the cursor
+                                 if (tooltipViewportY + tooltipHeight > window.innerHeight - 10) {
+                                   // Does not fit below, show above instead
+                                   tooltipViewportY = e.clientY - tooltipHeight - 15;
+                                 }
+                                 // Clamp tooltip viewport position to keep it inside visible screen boundaries
+                                 tooltipViewportY = Math.max(10, Math.min(tooltipViewportY, window.innerHeight - tooltipHeight - 10));
+                                 
+                                 // Convert viewport coordinates back to card relative coordinates
+                                 const tooltipY = tooltipViewportY - rect.top;
+                                 e.currentTarget.style.setProperty("--mouse-y-tooltip", `${tooltipY}px`);
 
-                                const tooltipWidth = 288;
-                                const gridElement = e.currentTarget.closest(".overflow-x-auto");
-                                const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
-                                const showLeft = e.clientX + tooltipWidth > boundaryRight - 20;
-                                const tooltipX = showLeft ? (x - tooltipWidth - 15) : (x + 15);
-                                e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
-                              }}
+                                 // Determine horizontal positioning relative to parent grid container / viewport
+                                 const gridElement = e.currentTarget.closest(".overflow-x-auto");
+                                 const boundaryRight = gridElement ? gridElement.getBoundingClientRect().right : window.innerWidth;
+                                 const boundaryLeft = gridElement ? gridElement.getBoundingClientRect().left : 0;
+                                 
+                                 let tooltipViewportX = e.clientX + 15; // default to showing to the right of the cursor
+                                 if (tooltipViewportX + tooltipWidth > boundaryRight - 20) {
+                                   // Does not fit on the right, show on the left instead
+                                   tooltipViewportX = e.clientX - tooltipWidth - 15;
+                                 }
+                                 // Clamp tooltip horizontal viewport position within bounds
+                                 tooltipViewportX = Math.max(boundaryLeft + 10, Math.min(tooltipViewportX, boundaryRight - tooltipWidth - 10));
+                                 
+                                 // Convert to card relative coordinates
+                                 const tooltipX = tooltipViewportX - rect.left;
+                                 e.currentTarget.style.setProperty("--mouse-x-tooltip", `${tooltipX}px`);
+                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isPastEvent) return;
@@ -3001,7 +3085,7 @@ export default function CalendarView({
                                   return borderClasses[color] || "border-indigo-500/25 dark:border-indigo-500/20";
                                 })();
 
-                                const tooltipClass = `absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-all duration-300 ease-out z-50 space-y-3.5 select-none font-sans`;
+                                const tooltipClass = `absolute w-72 bg-white/90 dark:bg-[#07070C]/85 backdrop-blur-xl text-slate-800 dark:text-slate-200 text-xs p-5 rounded-none border ${tooltipBorderClass} shadow-neon-glow opacity-0 scale-95 pointer-events-none group-hover/card:opacity-100 group-hover/card:scale-100 transition-[opacity,transform] duration-300 ease-out z-50 space-y-3.5 select-none font-sans`;
 
                                 return (
                                   <div 

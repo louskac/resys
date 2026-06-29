@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: style ticket button on user dashboard":
+      "Uživatelské rozhraní: Sjednocení stylu tlačítka Vstupenka s designovým manuálem a tlačítkem pro zrušení rezervace.",
     "feat: style cancel button on user dashboard and restart dev servers":
       "Uživatelské rozhraní: Vylepšení vzhledu tlačítka pro zrušení rezervace na nástěnce a restartování vývojových serverů pro načtení Stripe parametrů.",
     "feat: stripe pre-fetching, faster redirect, and checkout form facelift":
