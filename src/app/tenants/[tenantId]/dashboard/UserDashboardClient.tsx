@@ -240,6 +240,56 @@ export default function UserDashboardClient({
     };
   }, [activeTicket]);
 
+  // Handle Stripe redirect parameter verification
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const stripeSuccess = params.get("stripe_success");
+    const bookingId = params.get("bookingId");
+    const paymentIntentId = params.get("payment_intent");
+
+    if (stripeSuccess === "true" && bookingId && paymentIntentId) {
+      // Clear query parameters from URL to avoid re-triggering on refresh
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+
+      const verifyPayment = async () => {
+        showModalAlert("Ověřování platby", "Ověřujeme vaši platbu u brány Stripe...", "info");
+        try {
+          const res = await fetch("/api/bookings/pay/stripe-intent/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookingId, paymentIntentId }),
+          });
+          const data = await res.json();
+
+          if (res.ok && data.status === "success") {
+            setBookings(prevBookings =>
+              prevBookings.map(b =>
+                b.id === bookingId ? { ...b, status: "CONFIRMED" } : b
+              )
+            );
+            showModalAlert("Platba ověřena", "Vaše rezervace byla úspěšně uhrazena a potvrzena.", "success");
+          } else {
+            showModalAlert(
+              "Platba nepotvrzena",
+              data.message || "Nepodařilo se automaticky ověřit platbu. Zkontrolujte stav za chvíli nebo kontaktujte podporu.",
+              "error"
+            );
+          }
+        } catch (err) {
+          console.error("Verification error:", err);
+          showModalAlert(
+            "Chyba při ověřování",
+            "Došlo k chybě při spojení se serverem při ověřování platby.",
+            "error"
+          );
+        }
+      };
+      verifyPayment();
+    }
+  }, []);
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString(tenant.locale || "cs-CZ", {

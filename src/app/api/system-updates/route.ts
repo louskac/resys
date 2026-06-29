@@ -20,6 +20,8 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: translate and mask custom API errors inside user booking modal":
+      "Uživatelské rozhraní: Sjednocení a překlad chybových hlášení při vytváření rezervací, skrytí technických kódů chyb před běžnými uživateli.",
     "feat: auto surcharges for lighting offsets and temperature-based heating":
       "Ceník a tarify: Automatické přirážky za osvětlení s nastavitelným předstihem a vytápění podle reálné venkovní teploty z meteorologické služby.",
     "feat: standardise calendar buttons, enforce minimum break duration, and fix exception overlays":

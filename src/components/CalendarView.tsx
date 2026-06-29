@@ -3185,7 +3185,7 @@ export default function CalendarView({
                 <AlertCircle size={15} className="mt-0.5 text-rose-500 dark:text-rose-400 shrink-0" />
                 <div className="flex-1 space-y-1">
                   <p className="font-extrabold uppercase tracking-widest text-[9px] text-rose-500 dark:text-rose-400 font-sans">
-                    {modalError.code.replace(/_/g, " ")}
+                    {getTranslations(locale).ui.error || "Chyba"}
                   </p>
                   <p className="font-semibold leading-relaxed mt-0.5">
                     {modalError.message}
