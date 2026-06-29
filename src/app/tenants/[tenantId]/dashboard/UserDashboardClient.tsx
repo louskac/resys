@@ -768,8 +768,7 @@ export default function UserDashboardClient({
                           <button
                             onClick={() => handleCancelBooking(b.id)}
                             disabled={cancellingId === b.id}
-                            className="btn-outline text-rose-500 hover:bg-rose-500/10 border-border py-2 px-3 shrink-0 cursor-pointer"
-                            style={{ color: "oklch(0.60 0.18 15)" }}
+                            className="btn-danger py-2 px-3 shrink-0 cursor-pointer"
                           >
                             {cancellingId === b.id ? "Rušení..." : "Zrušit"}
                           </button>
