@@ -1803,12 +1803,16 @@ export default function CalendarView({
         setIsPendingPayment(true);
       }
       setIsBooked(true);
-      window.dispatchEvent(new CustomEvent("assistant-booking-success"));
+      
+      // Only notify AI assistant of full success if payment is not pending
+      if (data.bookingStatus !== "PENDING_PAYMENT") {
+        window.dispatchEvent(new CustomEvent("assistant-booking-success"));
+      }
       
       if (data.bookingStatus === "PENDING_PAYMENT") {
         const timer = setTimeout(() => {
           window.location.href = `/tenants/${tenantId}/checkout?bookingId=${data.bookingId}`;
-        }, 1500);
+        }, 300); // Fast redirect to checkout (reduced from 1500ms)
         bookingTimeoutRef.current = timer;
         return;
       }

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { getTenantTheme } from "@/lib/tenantThemes";
 import CheckoutClient from "./CheckoutClient";
+import { stripe, isStripeConfigured } from "@/lib/stripe";
 
 interface CheckoutPageProps {
   params: Promise<{
@@ -48,6 +49,31 @@ export default async function TenantCheckoutPage({ params, searchParams }: Check
     rentedEquipment: booking.rentedEquipment ? (booking.rentedEquipment as any) : null,
   };
 
+  // 3. Precreate Stripe PaymentIntent on the server to speed up client load
+  let stripeEnabled = false;
+  let clientSecret = "";
+  let publishableKey = "";
+
+  const bookingPrice = Number(booking.price || 0);
+  if (isStripeConfigured() && stripe && bookingPrice > 0 && booking.status === "PENDING_PAYMENT") {
+    try {
+      const amountInSubunits = Math.round(bookingPrice * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInSubunits,
+        currency: booking.tenant.currency.toLowerCase() || "czk",
+        metadata: {
+          bookingId: booking.id,
+          tenantId: booking.tenantId,
+        },
+      });
+      clientSecret = paymentIntent.client_secret || "";
+      publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+      stripeEnabled = true;
+    } catch (err) {
+      console.error("Failed to precreate Stripe PaymentIntent on the server:", err);
+    }
+  }
+
   return (
     <div 
       className="min-h-screen bg-slate-50 dark:bg-[#07070C] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-4 md:p-8 transition-colors duration-250"
@@ -71,6 +97,9 @@ export default async function TenantCheckoutPage({ params, searchParams }: Check
         theme={theme}
         locale={booking.tenant.locale}
         currency={booking.tenant.currency}
+        initialStripeEnabled={stripeEnabled}
+        initialClientSecret={clientSecret}
+        initialPublishableKey={publishableKey}
       />
     </div>
   );
