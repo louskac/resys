@@ -80,6 +80,7 @@ interface CalendarViewProps {
   locale?: string;
   timezone?: string;
   currency?: string;
+  dynamicQrEnabled?: boolean;
 }
 
 const SLOT_HEIGHT = 60;
@@ -232,11 +233,23 @@ export interface UnifiedSwitcherProps<T> {
   options: SwitcherOption<T>[];
   activeValue: T;
   onChange: (value: T) => void;
+  className?: string;
+  buttonClassName?: string;
+  pxClass?: string;
+  trackingClass?: string;
 }
 
-export function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSwitcherProps<T>) {
+export function UnifiedSwitcher<T>({ 
+  options, 
+  activeValue, 
+  onChange, 
+  className, 
+  buttonClassName,
+  pxClass = "px-5",
+  trackingClass = "tracking-widest"
+}: UnifiedSwitcherProps<T>) {
   return (
-    <div className="flex items-center h-9 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none w-fit max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shadow-sm">
+    <div className={`flex items-center h-9 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shadow-sm ${className || "w-fit"}`}>
       {options.map((option) => {
         const isActive = activeValue === option.value;
         return (
@@ -244,11 +257,11 @@ export function UnifiedSwitcher<T>({ options, activeValue, onChange }: UnifiedSw
             key={String(option.value)}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`h-full px-5 py-0 text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 cursor-pointer whitespace-nowrap rounded-none flex items-center justify-center ${
+            className={`h-full ${pxClass} py-0 text-[10px] font-extrabold uppercase ${trackingClass} transition-all duration-200 cursor-pointer whitespace-nowrap rounded-none flex items-center justify-center ${
               isActive
                 ? "bg-tenant-primary/15 text-tenant-primary font-black shadow-[inset_0_-2px_0_0_var(--tenant-primary)]"
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-200/5 dark:hover:bg-white/5"
-            }`}
+            } ${buttonClassName || ""}`}
           >
             {option.label}
           </button>
@@ -272,7 +285,8 @@ export default function CalendarView({
   weekStart,
   locale = "cs-CZ",
   timezone = "Europe/Prague",
-  currency = "CZK"
+  currency = "CZK",
+  dynamicQrEnabled = false
 }: CalendarViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -3769,48 +3783,38 @@ export default function CalendarView({
                       <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-dashed border-slate-200/40 dark:border-[#2A2A40]/40 animate-in fade-in slide-in-from-top-2 duration-250">
                         <div>
                           <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Frekvence</label>
-                          <div className="flex bg-slate-100/70 dark:bg-[#0D0D15]/60 p-1 rounded-none gap-1 border border-slate-200/40 dark:border-[#2A2A40]/30">
-                            {[
+                          <UnifiedSwitcher<"weekly" | "bi-weekly" | "monthly">
+                            options={[
                               { value: "weekly", label: "Týdně" },
                               { value: "bi-weekly", label: "14 dní" },
                               { value: "monthly", label: "Měsíc" }
-                            ].map((opt) => {
-                              const isSelected = recurrencePattern === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => {
-                                    setRecurrencePattern(opt.value as any);
-                                    setModalError(null);
-                                  }}
-                                  className={`flex-1 py-1.5 text-[11px] font-bold rounded-none transition-all ${
-                                    isSelected
-                                      ? "bg-[#7000FF] text-white shadow-md shadow-[#7000FF]/15"
-                                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
+                            ]}
+                            activeValue={recurrencePattern as any}
+                            onChange={(val) => {
+                              setRecurrencePattern(val);
+                              setModalError(null);
+                            }}
+                            className="w-full"
+                            buttonClassName="flex-1"
+                            pxClass="px-2"
+                            trackingClass="tracking-wide"
+                          />
                         </div>
 
                         <div>
                           <label className="block text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Počet opakování</label>
-                          <div className="flex items-center justify-between bg-slate-100/70 dark:bg-[#0D0D15]/60 p-1 rounded-none border border-slate-200/40 dark:border-[#2A2A40]/30 h-[34px]">
+                          <div className="flex items-center justify-between h-9 bg-slate-200/50 dark:bg-black/60 border border-slate-300 dark:border-zinc-700 divide-x divide-slate-300 dark:divide-zinc-700 rounded-none shadow-sm w-full">
                             <button
                               type="button"
                               onClick={() => {
                                 setRecurrenceCount(Math.max(2, recurrenceCount - 1));
                                 setModalError(null);
                               }}
-                              className="w-8 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-none hover:bg-slate-200/60 dark:hover:bg-[#1C1C2D]/60 transition-colors"
+                              className="flex-1 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/5 dark:hover:bg-white/5 transition-all duration-200"
                             >
                               -
                             </button>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-300">
+                            <span className="flex-1 h-full flex items-center justify-center text-[10px] font-extrabold uppercase tracking-widest text-slate-800 dark:text-slate-200 select-none">
                               {recurrenceCount}x
                             </span>
                             <button
@@ -3819,7 +3823,7 @@ export default function CalendarView({
                                 setRecurrenceCount(Math.min(12, recurrenceCount + 1));
                                 setModalError(null);
                               }}
-                              className="w-8 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-none hover:bg-slate-200/60 dark:hover:bg-[#1C1C2D]/60 transition-colors"
+                              className="flex-1 h-full flex items-center justify-center text-sm font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/5 dark:hover:bg-white/5 transition-all duration-200"
                             >
                               +
                             </button>
@@ -4115,6 +4119,7 @@ export default function CalendarView({
           tenantName: "ZŠ Komenského"
         } : null}
         tenantLocale={locale}
+        dynamicQrEnabled={dynamicQrEnabled}
       />
 
       <TicketModal
@@ -4134,6 +4139,7 @@ export default function CalendarView({
           tenantName: "ZŠ Komenského"
         } : null}
         tenantLocale={locale}
+        dynamicQrEnabled={dynamicQrEnabled}
         onCancelBooking={async (bookingId) => {
           const hasSeries = !!selectedEvent?.recurrenceGroup;
           const executeCancellation = async (cancelSeries: boolean) => {
