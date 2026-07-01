@@ -309,7 +309,14 @@ export async function GET(req: NextRequest) {
       if (version.startsWith("0.2.")) {
         const patchStr = version.split(".")[2] || "0";
         const patch = parseInt(patchStr, 10);
-        if (patch >= 22) {
+        
+        const isStripeCommit = 
+          trimmedMessage.includes("stripe sandbox") ||
+          trimmedMessage.includes("stripe refund") ||
+          trimmedMessage.includes("pricing breakdown") ||
+          trimmedMessage.includes("release v0.2.2");
+
+        if (patch >= 22 || isStripeCommit) {
           commitVersion = "0.2.2";
           commitDate = "2026-07-01";
         } else if (patch >= 6) {
