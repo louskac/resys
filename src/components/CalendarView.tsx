@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Check, Calendar, AlertCircle, ShieldCheck, L
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import AlertDialog from "./AlertDialog";
+import TicketModal from "./TicketModal";
 import Pusher from "pusher-js";
 import { getTranslations, formatCurrency, translateError } from "@/lib/translations";
 import { calculateLightingSurcharge, getMockTemperature } from "@/lib/pricing";
@@ -1214,74 +1215,32 @@ export default function CalendarView({
   const [activeTicket, setActiveTicket] = useState<CalendarEvent | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
-  // Dynamic QR Code states
-  const [dynamicQrPayload, setDynamicQrPayload] = useState<string>("");
-  const [qrState, setQrState] = useState<number>(0);
-  const [qrTimeLeft, setQrTimeLeft] = useState<number>(60);
-
-  useEffect(() => {
-    const targetEvent = activeTicket || (bookingType === "admin_view" ? selectedEvent : null);
-    if (!targetEvent) {
-      setDynamicQrPayload("");
-      return;
-    }
-
-    let baseTimestamp = Date.now();
-    let currentState = 0;
-    
-    const updatePayload = async (ts: number, state: number) => {
-      const bookingId = targetEvent.id;
-      const secret = "resys-dynamic-qr-secret-key-2026";
-      const dataStr = `${bookingId}:${ts}:${state}`;
-      
-      try {
-        const msgBuffer = new TextEncoder().encode(`${dataStr}:${secret}`);
-        const hashBuffer = await window.crypto.subtle.digest("SHA-256", msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-        
-        setDynamicQrPayload(`${dataStr}:${hashHex}`);
-      } catch (err) {
-        console.error("Failed to generate secure QR signature:", err);
-        // Fallback to static ID if subtle crypto fails
-        setDynamicQrPayload(bookingId);
-      }
-    };
-
-    // Initial update
-    updatePayload(baseTimestamp, currentState);
-
-    // Interval to toggle state (flashes every 1.5 seconds)
-    const stateInterval = setInterval(() => {
-      currentState = currentState === 0 ? 1 : 0;
-      setQrState(currentState);
-      updatePayload(baseTimestamp, currentState);
-    }, 1500);
-
-    // Interval to update base timestamp every 60 seconds
-    const timestampInterval = setInterval(() => {
-      baseTimestamp = Date.now();
-      setQrTimeLeft(60);
-      updatePayload(baseTimestamp, currentState);
-    }, 60000);
-
-    // Countdown timer for visualization
-    const countdownInterval = setInterval(() => {
-      setQrTimeLeft(prev => (prev > 1 ? prev - 1 : 60));
-    }, 1000);
-
-    return () => {
-      clearInterval(stateInterval);
-      clearInterval(timestampInterval);
-      clearInterval(countdownInterval);
-    };
-  }, [activeTicket, selectedEvent, bookingType]);
-
   const getSelectedEventDateString = (dayIndex: number) => {
     if (!weekStart) return "";
     const date = new Date(weekStart);
     date.setDate(date.getDate() + dayIndex);
     return date.toLocaleDateString("cs-CZ");
+  };
+
+  const getEventIsoString = (event: CalendarEvent, hourOffset: number) => {
+    let dateStr = event.dateStr;
+    if (!dateStr && weekStart) {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + event.dayIndex);
+      dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+    if (!dateStr) return new Date().toISOString();
+    
+    const [yr, mo, dy] = dateStr.split("-").map(Number);
+    const date = new Date(Date.UTC(yr, mo - 1, dy));
+    date.setUTCHours(0, 0, 0, 0);
+    
+    const totalMinutes = Math.round(hourOffset * 60);
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    
+    date.setUTCHours(hrs, mins, 0, 0);
+    return date.toISOString();
   };
 
   const getEventFormattedDate = (event: CalendarEvent) => {
@@ -3222,7 +3181,7 @@ export default function CalendarView({
       </div>
 
       {/* Interactive Booking Modal */}
-      {bookingType && (
+      {bookingType && !(bookingType === "admin_view" && isSelectedEventMyBooking && !isAdmin) && (
         <div 
           onClick={() => {
             setIsAreaDropdownOpen(false);
@@ -3385,50 +3344,6 @@ export default function CalendarView({
 
                 {/* Bottom Ticket Section */}
                 <div className="p-5 pt-2 space-y-4 relative z-10">
-                  {/* Secure Entry Code Integration */}
-                  {isSelectedEventMyBooking && (
-                    <div className="flex flex-col items-center text-center gap-4 py-1 pb-2">
-                      <div className="flex items-center gap-1.5 select-none bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                        Aktivní zabezpečený kód pro vstup
-                      </div>
-                      
-                      {/* Larger Scannable QR Code Graphic */}
-                      <div className="relative p-3 bg-white rounded-none flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.06)] select-none overflow-hidden hover:scale-[1.01] transition-transform duration-350">
-                        <div className="h-44 w-44 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
-                          {dynamicQrPayload ? (
-                            <img 
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(dynamicQrPayload)}`}
-                              alt={`QR Code pro rezervaci ${selectedEvent.id}`}
-                              className="h-40 w-40 object-contain transition-all duration-300"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <Loader2 className="animate-spin text-tenant-primary" size={24} />
-                              <span className="text-[10px] text-slate-400 font-bold">Generování...</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5 relative w-full flex flex-col items-center">
-                        <code className="text-[9px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100/50 dark:bg-slate-900/30 py-0.5 px-2.5 rounded-none border-none">
-                          {selectedEvent.id.substring(0, 8)}...{selectedEvent.id.substring(selectedEvent.id.length - 8)}
-                        </code>
-                        
-                        <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold select-none">
-                          <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
-                            <span 
-                              className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
-                              style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
-                            />
-                          </span>
-                          <span>Obnova za {qrTimeLeft}s</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Collapsible Technical Details Accordion */}
                   <div className="pt-1.5">
                     <button
@@ -4186,113 +4101,96 @@ export default function CalendarView({
         }}
       />
 
-      {/* Ticket boarding pass modal overlay */}
-      {activeTicket && (
-        <div 
-          onClick={() => setActiveTicket(null)}
-          className="fixed inset-0 bg-[#07070C]/75 backdrop-blur-md flex items-center justify-center p-6 z-55 animate-in fade-in duration-200"
-        >
-          {/* Boarding Pass Ticket representation */}
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm relative flex flex-col filter drop-shadow-[0_25px_50px_rgba(0,0,0,0.5)] z-10"
-          >
-            {/* Ticket Top Part */}
-            <div className="bg-gradient-to-br from-slate-50/60 via-white to-slate-50/60 dark:from-[#131322]/80 dark:via-[#0D0D15]/95 dark:to-[#0D0D15]/95 rounded-none p-6 pb-4 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-              {/* Metallic Sheen Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
-              
-              {/* Glow badge */}
-              <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-tr from-tenant-primary to-tenant-primary opacity-[0.12] dark:opacity-20 blur-2xl rounded-full pointer-events-none" />
-              
-              <div className="flex items-center justify-between relative z-20">
-                <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary dark:text-white">
-                  Rezervační portál
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
-                  Aktivní vstup
-                </span>
-              </div>
+      <TicketModal
+        isOpen={!!activeTicket}
+        onClose={() => setActiveTicket(null)}
+        booking={activeTicket ? {
+          id: activeTicket.id,
+          resourceName: activeTicket.resourceName || activeTicket.name,
+          reservedFrom: getEventIsoString(activeTicket, activeTicket.startHour),
+          reservedTo: getEventIsoString(activeTicket, activeTicket.startHour + activeTicket.durationHours),
+          userName: session?.user?.name || "Uživatel",
+          userEmail: session?.user?.email || "",
+          rentedEquipment: activeTicket.rentedEquipment,
+          tenantName: "ZŠ Komenského"
+        } : null}
+        tenantLocale={locale}
+      />
 
-              <div className="relative z-20">
-                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Sportoviště / Plocha</span>
-                <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 leading-tight mt-0.5">{activeTicket.resourceName || activeTicket.name}</h3>
-              </div>
+      <TicketModal
+        isOpen={!!selectedEvent && isSelectedEventMyBooking && !isAdmin}
+        onClose={() => {
+          setSelectedEvent(null);
+          setBookingType(null);
+        }}
+        booking={selectedEvent ? {
+          id: selectedEvent.id,
+          resourceName: selectedEvent.resourceName || selectedEvent.name,
+          reservedFrom: getEventIsoString(selectedEvent, selectedEvent.startHour),
+          reservedTo: getEventIsoString(selectedEvent, selectedEvent.startHour + selectedEvent.durationHours),
+          userName: selectedEvent.name,
+          userEmail: selectedEvent.instructor,
+          rentedEquipment: selectedEvent.rentedEquipment,
+          tenantName: "ZŠ Komenského"
+        } : null}
+        tenantLocale={locale}
+        onCancelBooking={async (bookingId) => {
+          const hasSeries = !!selectedEvent?.recurrenceGroup;
+          const executeCancellation = async (cancelSeries: boolean) => {
+            try {
+              const res = await fetch(`/api/bookings?bookingId=${bookingId}&cancelSeries=${cancelSeries}`, {
+                method: "DELETE"
+              });
+              if (res.ok) {
+                setNotification({
+                  type: "success",
+                  title: "Rezervace zrušena",
+                  message: cancelSeries ? "Celá série rezervací byla úspěšně zrušena!" : "Rezervace byla úspěšně zrušena!",
+                  onClose: () => {
+                    setBookingType(null);
+                    setSelectedEvent(null);
+                    window.location.reload();
+                  }
+                });
+              } else {
+                const data = await res.json();
+                setNotification({
+                  type: "error",
+                  title: "Zrušení selhalo",
+                  message: "Chyba při rušení rezervace: " + (data.error || "Neznámá chyba")
+                });
+              }
+            } catch (err) {
+              console.error(err);
+              setNotification({
+                type: "error",
+                title: "Chyba",
+                message: "Nepodařilo se připojit k serveru."
+              });
+            }
+          };
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-dashed border-slate-200 dark:border-white/10 mt-2 relative z-20">
-                <div>
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Datum vstupu</span>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{getSelectedEventDateString(activeTicket.dayIndex)}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Časový úsek</span>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{getSelectedEventTimeRange(activeTicket)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Ticket Divider */}
-            <div className="relative h-[1px] z-20">
-              <div className="absolute left-6 right-6 border-t border-dashed border-slate-200/30 dark:border-white/10 -translate-y-1/2" />
-            </div>
-
-            {/* Ticket Bottom Part (QR Code) */}
-            <div className="bg-gradient-to-br from-slate-50/60 via-white to-slate-50/60 dark:from-[#0D0D15]/80 dark:via-[#0D0D15]/95 dark:to-[#0B0B12]/95 rounded-none p-6 pt-4 flex flex-col items-center text-center gap-4 relative overflow-hidden">
-              {/* Metallic Sheen Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] dark:via-white/[0.02] to-transparent pointer-events-none z-10 rotate-12 scale-150" />
-              
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider relative z-20">
-                Aktivní zabezpečený kód
-              </div>
-              
-              {/* Premium looking QR Code visual representation */}
-              <div className="relative p-4 bg-white rounded-none flex items-center justify-center shadow-md select-none overflow-hidden group z-20">
-                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
-                  {dynamicQrPayload ? (
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dynamicQrPayload)}`}
-                      alt={`QR Code pro rezervaci ${activeTicket.id}`}
-                      className="h-36 w-36 object-contain transition-all duration-300"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-tenant-primary" size={24} />
-                      <span className="text-[10px] text-slate-400 font-bold">Šifrování...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5 relative z-20 w-full">
-                <code className="text-[9px] font-mono text-slate-550 dark:text-slate-400 uppercase tracking-widest bg-white/70 dark:bg-slate-900/40 py-1 px-3.5 rounded-none border border-slate-200 dark:border-white/[0.05]">
-                  {activeTicket.id.substring(0, 8)}...{activeTicket.id.substring(activeTicket.id.length - 8)}
-                </code>
-                
-                <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500 font-semibold select-none">
-                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
-                    <span 
-                      className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
-                      style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
-                    />
-                  </span>
-                  <span>Obnova za {qrTimeLeft}s</span>
-                </div>
-              </div>
-
-              <p className="text-[9px] text-slate-400 dark:text-zinc-500 leading-normal max-w-[220px] relative z-20">
-                Kód se z bezpečnostních důvodů každou minutu generuje znovu a bliká. Snímky obrazovky ani videozáznamy nebudou čtečkou přijaty.
-              </p>
-
-              <button
-                onClick={() => setActiveTicket(null)}
-                className="btn btn-tenant w-full mt-2 relative z-20"
-              >
-                Zavřít vstupenku
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          if (hasSeries) {
+            setConfirmModal({
+              title: "Zrušit rezervaci",
+              message: "Tato rezervace je součástí opakující se série. Chcete zrušit pouze tento termín, nebo celou sérii?",
+              confirmLabel: "Zrušit celou sérii",
+              cancelLabel: "Zpět",
+              thirdOptionLabel: "Pouze tento termín",
+              onConfirm: () => executeCancellation(true),
+              onThirdOption: () => executeCancellation(false)
+            });
+          } else {
+            setConfirmModal({
+              title: "Zrušit rezervaci",
+              message: "Opravdu chcete zrušit tuto rezervaci?",
+              confirmLabel: "Zrušit",
+              cancelLabel: "Zpět",
+              onConfirm: () => executeCancellation(false)
+            });
+          }
+        }}
+      />
 
     </div>
   );

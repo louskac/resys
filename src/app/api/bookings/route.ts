@@ -6,6 +6,7 @@ import { makeErrorResponse } from "@/lib/errors";
 import { triggerBookingUpdate } from "@/lib/pusher";
 import { sendSSEUpdate } from "@/lib/sse";
 import crypto from "crypto";
+import { stripe } from "@/lib/stripe";
 import { calculateLightingSurcharge, calculateHeatingSurcharge } from "@/lib/pricing";
 
 const getLocalAsUtcDate = (d: Date, timeZone: string = "Europe/Prague"): Date => {
@@ -869,6 +870,21 @@ export async function DELETE(request: NextRequest) {
         }
       }
 
+      // Refund via Stripe for all bookings in the series
+      if (stripe) {
+        const txIds = Array.from(new Set(seriesBookings.map(b => b.paymentTransactionId).filter(Boolean)));
+        for (const txId of txIds) {
+          try {
+            await stripe.refunds.create({
+              payment_intent: txId!,
+            });
+            console.log(`Stripe series refund successful for transaction: ${txId}`);
+          } catch (refundErr: any) {
+            console.error(`Failed to refund Stripe transaction ${txId}:`, refundErr.message);
+          }
+        }
+      }
+
       await prisma.booking.deleteMany({
         where: { recurrenceGroup: booking.recurrenceGroup },
       });
@@ -895,6 +911,18 @@ export async function DELETE(request: NextRequest) {
           where: { id: booking.partnerId },
           data: { creditBalance: { increment: Number(booking.price) } }
         });
+      }
+
+      // Refund via Stripe if paid
+      if (booking.paymentTransactionId && stripe) {
+        try {
+          await stripe.refunds.create({
+            payment_intent: booking.paymentTransactionId,
+          });
+          console.log(`Stripe refund successful for booking ${booking.id}, transaction: ${booking.paymentTransactionId}`);
+        } catch (refundErr: any) {
+          console.error(`Failed to refund Stripe payment for booking ${booking.id}:`, refundErr.message);
+        }
       }
 
       await prisma.booking.delete({

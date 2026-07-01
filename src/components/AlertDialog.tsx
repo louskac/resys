@@ -49,7 +49,7 @@ export default function AlertDialog({
   const message = transformed.message;
 
   return (
-    <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-[#07070C]/60 dark:bg-black/75 backdrop-blur-md flex items-center justify-center z-[110] p-6 animate-in fade-in duration-200">
       <style>{`
         @keyframes draw-circle {
           0% { stroke-dashoffset: 188; }
@@ -284,10 +284,10 @@ function getInterestingSuccessMessage(title: string, message: string): Transform
   if (t.includes("Rezervace zrušena") || m.includes("stornována")) {
     const isSeries = m.includes("série") || m.includes("Celá");
     return {
-      title: isSeries ? "Celá řada slotů uvolněna" : "Slot uvolněn pro další hru",
+      title: isSeries ? "Série zrušena & peníze vráceny" : "Rezervace zrušena & peníze vráceny",
       message: isSeries 
-        ? "Celá série rezervací byla úspěšně zrušena. Kalendář má opět volné kapacity."
-        : "Rezervace byla úspěšně stornována. Místo je opět volné pro nové zájemce."
+        ? "Celá série rezervací byla úspěšně stornována. Veškeré platby byly odeslány zpět na vaši kartu a kalendář má opět volné kapacity."
+        : "Rezervace byla úspěšně stornována. Platba byla odeslána zpět na vaši kartu a částka by se měla na vašem účtu objevit během několika dní."
     };
   }
 
