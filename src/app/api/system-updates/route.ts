@@ -20,6 +20,14 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "feat: implement stripe sandbox payments and dashboard confirmation sync":
+      "Platby kartou: Implementován zabezpečený Stripe Sandbox pro online úhradu rezervací a automatické potvrzování stavu po návratu na nástěnku.",
+    "feat: implement stripe refund on reservation cancellation":
+      "Stornování a vratky: Automatické odeslání vratky na platební kartu při zrušení zaplacené rezervace administrátorem nebo uživatelem.",
+    "feat: display detailed pricing breakdown on reservation card":
+      "Uživatelské rozhraní: Zobrazení detailního rozpisu ceny na kartě rezervace (vstupné vs. zapůjčené vybavení) včetně celkového přehledu.",
+    "feat: redesign confirmation dialog in brand styling":
+      "Vzhled a styl: Přepracován design potvrzovacích oken (odstraněny rušivé ikony a zavedeny elegantní fialové a červené motivy s levým pruhem).",
     "feat: show technical breaks in admin calendar view":
       "Správa rezervací: Oprava zobrazení technických pauz (blokátorů) v kalendáři administrátora, které se dosud zobrazovaly pouze na klientské straně.",
     "feat: eliminate black-bordered buttons across the platform":
@@ -295,13 +303,16 @@ export async function GET(req: NextRequest) {
         files = [];
       }
 
-      // Group all 0.2.x commits under v0.2.0 or v0.2.1
+      // Group all 0.2.x commits under v0.2.0, v0.2.1 or v0.2.2
       let commitVersion = version;
       let commitDate = date;
       if (version.startsWith("0.2.")) {
         const patchStr = version.split(".")[2] || "0";
         const patch = parseInt(patchStr, 10);
-        if (patch >= 6) {
+        if (patch >= 22) {
+          commitVersion = "0.2.2";
+          commitDate = "2026-07-01";
+        } else if (patch >= 6) {
           commitVersion = "0.2.1";
           commitDate = "2026-06-25";
         } else {
@@ -379,6 +390,8 @@ export async function GET(req: NextRequest) {
         displayVersion = "v0.2.0 - Design overhaul";
       } else if (g.version === "0.2.1") {
         displayVersion = "v0.2.1 - Unified Settings & QoL";
+      } else if (g.version === "0.2.2") {
+        displayVersion = "v0.2.2 - Stripe sandbox";
       }
       
       const benefits = Array.from(new Set(
