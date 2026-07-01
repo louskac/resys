@@ -12,18 +12,36 @@ if (!fs.existsSync(certDir)) {
 }
 
 if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-  console.log('SSL development certificates not found. Generating self-signed certificates...');
+  console.log('SSL development certificates not found. Generating wildcard certificates for localhost and *.localhost...');
+  
+  // Try using mkcert if available
+  let generated = false;
   try {
-    // Run openssl to generate self-signed certificate
+    execSync('which mkcert', { stdio: 'ignore' });
+    console.log('Found mkcert! Generating trusted local certificates...');
     execSync(
-      `openssl req -x509 -newkey rsa:2048 -keyout "${keyPath}" -out "${certPath}" -sha256 -days 365 -nodes -subj "/CN=localhost"`,
+      `mkcert -key-file "${keyPath}" -cert-file "${certPath}" localhost "*.localhost" sfera.localhost umelka.localhost zskomenskeho.localhost londonfit.localhost`,
       { stdio: 'inherit' }
     );
-    console.log('Self-signed SSL certificates generated successfully.');
-  } catch (error) {
-    console.error('Error generating SSL certificates with openssl:', error.message);
-    console.error('Please make sure openssl is installed and on your PATH.');
-    process.exit(1);
+    console.log('Trusted local certificates generated successfully with mkcert.');
+    generated = true;
+  } catch (e) {
+    console.log('mkcert is not installed. Falling back to self-signed openssl wildcard certificate.');
+  }
+
+  if (!generated) {
+    try {
+      // Run openssl to generate self-signed wildcard certificate
+      execSync(
+        `openssl req -x509 -newkey rsa:2048 -keyout "${keyPath}" -out "${certPath}" -sha256 -days 365 -nodes -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:*.localhost,DNS:sfera.localhost,DNS:umelka.localhost,DNS:zskomenskeho.localhost,DNS:londonfit.localhost"`,
+        { stdio: 'inherit' }
+      );
+      console.log('Self-signed SSL wildcard certificates generated successfully with openssl.');
+    } catch (error) {
+      console.error('Error generating SSL certificates with openssl:', error.message);
+      console.error('Please make sure openssl is installed and on your PATH.');
+      process.exit(1);
+    }
   }
 }
 

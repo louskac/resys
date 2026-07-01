@@ -69,7 +69,17 @@ export default function CheckoutClient({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [paymentStage, setPaymentStage] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains("dark"));
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch Stripe Intent client-side ONLY if it wasn't pre-created on the server
   useEffect(() => {
@@ -240,12 +250,64 @@ export default function CheckoutClient({
   const formattedTime = `${String(fromDate.getUTCHours()).padStart(2, "0")}:${String(fromDate.getUTCMinutes()).padStart(2, "0")} – ${String(toDate.getUTCHours()).padStart(2, "0")}:${String(toDate.getUTCMinutes()).padStart(2, "0")}`;
 
   const stripeAppearance = {
-    theme: 'flat' as const,
+    theme: 'stripe' as const,
     variables: {
       colorPrimary: theme.primary,
-      fontFamily: 'Inter, system-ui, sans-serif',
+      fontFamily: 'Outfit, Inter, system-ui, sans-serif',
       borderRadius: '0px',
+      colorBackground: isDarkMode ? '#0d0d15' : '#f8fafc',
+      colorText: isDarkMode ? '#f8fafc' : '#1e293b',
+      colorDanger: '#ef4444',
+      colorTextPlaceholder: isDarkMode ? '#475569' : '#94a3b8',
+      colorTextSecondary: isDarkMode ? '#94a3b8' : '#64748b',
+      borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
+      spacingGridRow: '16px',
     },
+    rules: {
+      '.Input': {
+        border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0',
+        boxShadow: 'none',
+        padding: '12px 14px',
+        borderRadius: '0px',
+        backgroundColor: isDarkMode ? '#0d0d15' : '#f8fafc',
+        color: isDarkMode ? '#f8fafc' : '#1e293b',
+      },
+      '.Input:focus': {
+        borderColor: theme.primary,
+        border: `1px solid ${theme.primary}`,
+        boxShadow: `0 0 0 1px ${theme.primary}22`,
+      },
+      '.Label': {
+        fontSize: '10px',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        color: isDarkMode ? '#94a3b8' : '#64748b',
+        marginBottom: '6px',
+      },
+      '.Tab': {
+        borderRadius: '0px',
+        border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0',
+        boxShadow: 'none',
+        padding: '12px 16px',
+        backgroundColor: isDarkMode ? '#131322' : '#ffffff',
+      },
+      '.Tab:hover': {
+        color: theme.primary,
+      },
+      '.Tab:focus': {
+        borderColor: theme.primary,
+        boxShadow: `0 0 0 1px ${theme.primary}22`,
+      },
+      '.Tab--selected': {
+        border: `1.5px solid ${theme.primary}`,
+        backgroundColor: isDarkMode ? 'rgba(112, 0, 255, 0.08)' : 'rgba(112, 0, 255, 0.04)',
+        color: isDarkMode ? '#ffffff' : '#1e293b',
+      },
+      '.TabLabel': {
+        fontWeight: '700',
+      }
+    }
   };
 
   if (success) {
@@ -569,6 +631,15 @@ function StripePaymentForm({ booking, tenantId, currency, locale, setSuccess }: 
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/tenants/${tenantId}/dashboard?bookingId=${booking.id}&stripe_success=true`,
+          payment_method_data: {
+            billing_details: {
+              name: booking.userName || "Customer",
+              email: booking.userEmail || undefined,
+              address: {
+                country: locale === "cs" ? "CZ" : "GB",
+              }
+            }
+          }
         },
         redirect: "if_required",
       });
@@ -580,7 +651,7 @@ function StripePaymentForm({ booking, tenantId, currency, locale, setSuccess }: 
         setPaymentStage("Dokončování transakce...");
         setSuccess(true);
         setTimeout(() => {
-          window.location.href = `/tenants/${tenantId}/dashboard?success=true`;
+          window.location.href = `/tenants/${tenantId}/dashboard?bookingId=${booking.id}&payment_intent=${paymentIntent.id}&stripe_success=true`;
         }, 1500);
       } else {
         // Redirection will occur automatically for 3D Secure verification
@@ -613,8 +684,20 @@ function StripePaymentForm({ booking, tenantId, currency, locale, setSuccess }: 
       )}
 
       {/* Stripe Payment Element container */}
-      <div className="p-4 bg-slate-50 dark:bg-[#0D0D15]/85 border border-slate-200 dark:border-white/10 rounded-none">
-        <PaymentElement options={{ layout: "tabs" }} />
+      <div className="py-2">
+        <PaymentElement 
+          options={{ 
+            layout: "tabs",
+            fields: {
+              billingDetails: {
+                name: "never",
+                address: {
+                  country: "never"
+                }
+              }
+            }
+          }} 
+        />
       </div>
 
       <div className="flex items-center gap-2 text-[10px] text-slate-550 dark:text-zinc-500 py-1.5 select-none">
