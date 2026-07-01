@@ -192,7 +192,8 @@ export default async function UserDashboardPage({ params }: DashboardPageProps) 
         vertical: tenant.vertical,
         locale: tenant.locale,
         timezone: tenant.timezone,
-        currency: tenant.currency
+        currency: tenant.currency,
+        attributes: tenant.attributes as any
       }}
       user={serializedUser}
       bookings={serializedBookings}

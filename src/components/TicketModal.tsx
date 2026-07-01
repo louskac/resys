@@ -20,6 +20,7 @@ interface TicketModalProps {
   tenantLocale?: string;
   onCancelBooking?: (bookingId: string) => void;
   isCancelling?: boolean;
+  dynamicQrEnabled?: boolean;
 }
 
 export default function TicketModal({
@@ -29,6 +30,7 @@ export default function TicketModal({
   tenantLocale = "cs-CZ",
   onCancelBooking,
   isCancelling = false,
+  dynamicQrEnabled = false,
 }: TicketModalProps) {
   const [dynamicQrPayload, setDynamicQrPayload] = useState<string>("");
   const [qrState, setQrState] = useState<number>(0);
@@ -38,6 +40,11 @@ export default function TicketModal({
   useEffect(() => {
     if (!booking || !isOpen) {
       setDynamicQrPayload("");
+      return;
+    }
+
+    if (!dynamicQrEnabled) {
+      setDynamicQrPayload(booking.id);
       return;
     }
 
@@ -85,7 +92,7 @@ export default function TicketModal({
       clearInterval(timestampInterval);
       clearInterval(countdownInterval);
     };
-  }, [booking, isOpen]);
+  }, [booking, isOpen, dynamicQrEnabled]);
 
   if (!isOpen || !booking) return null;
 
@@ -245,9 +252,11 @@ export default function TicketModal({
           {/* Bottom Ticket Section */}
           <div className="p-5 pt-2 space-y-4 relative z-10">
             <div className="flex flex-col items-center text-center gap-4 py-1 pb-2">
-              <div className="flex items-center gap-1.5 select-none bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                Aktivní zabezpečený kód pro vstup
+              <div className={`text-[10px] font-black uppercase tracking-widest text-tenant-primary mb-1 select-none flex items-center justify-center gap-1.5 ${
+                dynamicQrEnabled ? "animate-pulse" : ""
+              }`}>
+                {dynamicQrEnabled && <span className="h-1.5 w-1.5 bg-tenant-primary rounded-full" />}
+                {dynamicQrEnabled ? "Aktivní zabezpečený kód pro vstup" : "Kód pro vstup"}
               </div>
               
               {/* QR Code */}
@@ -273,15 +282,17 @@ export default function TicketModal({
                   {booking.id.substring(0, 8)}...{booking.id.substring(booking.id.length - 8)}
                 </code>
                 
-                <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold select-none">
-                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
-                    <span 
-                      className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
-                      style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
-                    />
-                  </span>
-                  <span>Obnova za {qrTimeLeft}s</span>
-                </div>
+                {dynamicQrEnabled && (
+                  <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold select-none">
+                    <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
+                      <span 
+                        className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
+                        style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
+                      />
+                    </span>
+                    <span>Obnova za {qrTimeLeft}s</span>
+                  </div>
+                )}
               </div>
             </div>
 

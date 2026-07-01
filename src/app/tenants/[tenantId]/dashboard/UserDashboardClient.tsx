@@ -22,6 +22,9 @@ interface UserDashboardClientProps {
     locale?: string;
     timezone?: string;
     currency?: string;
+    attributes?: {
+      dynamicQrEnabled?: boolean;
+    };
   };
   user: {
     id: string;
@@ -1391,6 +1394,7 @@ export default function UserDashboardClient({
         tenantLocale={tenant.locale}
         onCancelBooking={handleCancelBooking}
         isCancelling={cancellingId === activeTicket?.id}
+        dynamicQrEnabled={!!tenant.attributes?.dynamicQrEnabled}
       />
 
       <AlertDialog

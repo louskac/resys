@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       // 1. Verify device exists and token matches
       const device = await prisma.checkinDevice.findUnique({
         where: { id: deviceId },
+        include: { tenant: true },
       });
 
       if (!device || !device.active) {
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
       if (device.tokenHash !== hashedToken) {
         return NextResponse.json({ status: "denied", reason: "unauthorized" }, { status: 401 });
       }
+
+      const tenantAttributes = (device.tenant?.attributes as any) || {};
+      const dynamicQrEnabled = !!tenantAttributes.dynamicQrEnabled;
 
       // 2. Parse and validate QR payload (dynamic vs. static)
       let bookingId = qrPayload;
@@ -79,9 +83,11 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // Enforce dynamic QR code. Reject static UUIDs unless they are mock dev bypass tokens.
-        const isMockBypass = qrPayload === "mock_dev_ticket_uuid" || qrPayload.startsWith("mock_") || qrPayload.startsWith("test_");
-        if (!isMockBypass) {
-          return NextResponse.json({ status: "denied", reason: "static_qr_forbidden" });
+        if (dynamicQrEnabled) {
+          const isMockBypass = qrPayload === "mock_dev_ticket_uuid" || qrPayload.startsWith("mock_") || qrPayload.startsWith("test_");
+          if (!isMockBypass) {
+            return NextResponse.json({ status: "denied", reason: "static_qr_forbidden" });
+          }
         }
       }
 

@@ -57,6 +57,7 @@ interface TenantAttributes {
     closed: boolean;
   }[];
   aiInstructions?: string;
+  dynamicQrEnabled?: boolean;
 }
 
 interface ResourceAttributes {
@@ -676,6 +677,7 @@ export default async function TenantPage({ params, searchParams }: PageProps) {
               locale={tenant.locale}
               timezone={tenant.timezone}
               currency={tenant.currency}
+              dynamicQrEnabled={!!attributes.dynamicQrEnabled}
             />
           </div>
 

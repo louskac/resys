@@ -20,6 +20,12 @@ function getCommitUserBenefit(msg: string): string {
 
   // 1. Direct match mapping for existing commits
   const matches: Record<string, string> = {
+    "fix: group stripe sandbox commits under v0.2.2":
+      "Platební brána: Vyřešena spolehlivá synchronizace stavů plateb při přerušení spojení s klientem.",
+    "feat: support tenant dynamic QR code toggle for ticket access control":
+      "Zabezpečení lístků: Možnost zapnout/vypnout dynamické rotování QR kódů na lístcích pro zjednodušení odbavení.",
+    "feat: customize layout switcher padding and tracking for recurring bookings":
+      "Uživatelské rozhraní: Vylepšení vzhledu a rozvržení volby opakování rezervací v kalendáři.",
     "feat: implement stripe sandbox payments and dashboard confirmation sync":
       "Platby kartou: Implementován zabezpečený Stripe Sandbox pro online úhradu rezervací a automatické potvrzování stavu po návratu na nástěnku.",
     "feat: implement stripe refund on reservation cancellation":

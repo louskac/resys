@@ -301,6 +301,10 @@ You have access to tools to control the admin screen layout and form modals:`;
                   type: "ARRAY",
                   items: { type: "STRING" },
                   description: "List of administrator emails."
+                },
+                dynamicQrEnabled: {
+                  type: "BOOLEAN",
+                  description: "Whether security dynamic QR codes are enabled."
                 }
               }
             }

@@ -10,7 +10,7 @@ import {
   Upload, Eye, List, Move,
   Users, Layers, Wrench, CreditCard, MapPin, User,
   Type, Mail, Save, X, Sparkles, Coins, Camera, ShieldAlert, Menu,
-  Check, Loader2, Terminal
+  Check, Loader2, Terminal, HelpCircle
 } from "lucide-react";
 import jsQR from "jsqr";
 import { getTenantTheme } from "@/lib/tenantThemes";
@@ -177,6 +177,7 @@ interface AdminDashboardClientProps {
       openingHours?: OpeningHoursDay[];
       onboardingCompleted?: boolean;
       location?: string;
+      dynamicQrEnabled?: boolean;
     };
     subscriptionPlan?: string;
     subscriptionStatus?: string;
@@ -881,6 +882,7 @@ export default function AdminDashboardClient({
   const [settingsOpeningHours, setSettingsOpeningHours] = useState<OpeningHoursDay[]>(
     initialAttributes.openingHours || defaultOpeningHours
   );
+  const [settingsDynamicQr, setSettingsDynamicQr] = useState<boolean>(!!initialAttributes.dynamicQrEnabled);
 
   useEffect(() => {
     if (selectedOperatingResourceId === "global") {
@@ -1284,6 +1286,7 @@ export default function AdminDashboardClient({
         if (Array.isArray(data.adminEmails)) setSettingsAdminEmails(data.adminEmails.join(", "));
         if (data.aiInstructions !== undefined) setSettingsAiInstructions(data.aiInstructions);
         if (data.location !== undefined) setSettingsLocation(data.location);
+        if (data.dynamicQrEnabled !== undefined) setSettingsDynamicQr(!!data.dynamicQrEnabled);
       }
     };
 
@@ -1594,6 +1597,7 @@ export default function AdminDashboardClient({
             adminEmails: emailsArray,
             aiInstructions: settingsAiInstructions,
             location: settingsLocation,
+            dynamicQrEnabled: settingsDynamicQr,
           }
         };
 
@@ -1655,6 +1659,7 @@ export default function AdminDashboardClient({
               adminEmails: emailsArray,
               aiInstructions: settingsAiInstructions,
               location: settingsLocation,
+              dynamicQrEnabled: settingsDynamicQr,
             }
           };
 
@@ -2836,6 +2841,7 @@ export default function AdminDashboardClient({
                   activeDate={activeDate}
                   weekStart={weekStart}
                   partners={partners}
+                  dynamicQrEnabled={!!tenant.attributes?.dynamicQrEnabled}
                 />
               ) : (
                 /* List/Table View */
@@ -3324,8 +3330,47 @@ export default function AdminDashboardClient({
                             placeholder="Upřesněte kontext, tón a specifická pravidla pro ReKeepera. Např. 'Jsme fotbalový areál s umělou trávou. Máme Celou plochu a dva sektory (Sektor A, Sektor B). Zaměřujeme se na fotbalové pronájmy.'"
                           />
                         </div>
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 leading-normal block">
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-550 leading-normal block">
                           Pomáhá AI asistentovi přizpůsobit slovní zásobu a chování (např. zda se jedná o fotbal, tenis, masáže atd.).
+                        </span>
+                      </div>
+
+                      {/* Dynamické QR kódy */}
+                      <div className="border border-slate-200/50 dark:border-[#2A2A40] p-4 space-y-3 rounded-none bg-slate-50/30 dark:bg-black/10">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <label className="block text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[9px] cursor-pointer" htmlFor="dynamic-qr-switch">
+                              Zabezpečení dynamickými QR kódy
+                            </label>
+                            {/* Hover Help Info Tooltip */}
+                            <div className="relative group/tooltip inline-block">
+                              <HelpCircle size={13} className="text-slate-400 hover:text-tenant-primary transition-colors cursor-help" />
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 dark:bg-zinc-900 border border-slate-700/50 dark:border-zinc-800 text-white text-[10px] rounded-none shadow-xl leading-relaxed opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50">
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900 dark:border-t-zinc-900"></div>
+                                <span className="font-bold text-tenant-primary block mb-1">Co přináší dynamické QR kódy?</span>
+                                Dynamický QR kód se v mobilu zákazníka každých 15 sekund kryptograficky obměňuje. Tím se zabrání tomu, aby zákazníci sdíleli statické snímky obrazovky (screenshoty) s cizími osobami a obcházeli zabezpečení areálu.
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Toggle Switch */}
+                          <button
+                            type="button"
+                            id="dynamic-qr-switch"
+                            onClick={() => setSettingsDynamicQr(!settingsDynamicQr)}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-tenant-primary/20 ${
+                              settingsDynamicQr ? "bg-tenant-primary" : "bg-slate-200 dark:bg-zinc-800"
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                settingsDynamicQr ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 leading-normal block">
+                          Pokud je aktivní, čtečky u vstupů povolí přístup pouze s platným a čerstvě vygenerovaným QR kódem. Statické QR kódy/obrázky budou odmítnuty.
                         </span>
                       </div>
                     </div>

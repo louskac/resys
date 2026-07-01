@@ -27,7 +27,11 @@ const server = https.createServer(options, (req, res) => {
     port: TARGET_PORT,
     path: req.url,
     method: req.method,
-    headers: req.headers
+    headers: {
+      ...req.headers,
+      'x-forwarded-proto': 'https',
+      'x-forwarded-host': req.headers.host
+    }
   }, (proxyRes) => {
     res.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(res, { end: true });
