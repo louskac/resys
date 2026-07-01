@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import AlertDialog from "@/components/AlertDialog";
+import TicketModal from "@/components/TicketModal";
 import { formatCurrency } from "@/lib/translations";
 
 interface UserDashboardClientProps {
@@ -177,68 +178,6 @@ export default function UserDashboardClient({
 
   // Ticket Modal state
   const [activeTicket, setActiveTicket] = useState<typeof bookings[0] | null>(null);
-
-  // Dynamic QR Code states
-  const [dynamicQrPayload, setDynamicQrPayload] = useState<string>("");
-  const [qrState, setQrState] = useState<number>(0);
-  const [qrTimeLeft, setQrTimeLeft] = useState<number>(60);
-
-  useEffect(() => {
-    if (!activeTicket) {
-      setDynamicQrPayload("");
-      return;
-    }
-
-    let baseTimestamp = Date.now();
-    let currentState = 0;
-    
-    const updatePayload = async (ts: number, state: number) => {
-      const bookingId = activeTicket.id;
-      const secret = "resys-dynamic-qr-secret-key-2026";
-      const dataStr = `${bookingId}:${ts}:${state}`;
-      
-      try {
-        const msgBuffer = new TextEncoder().encode(`${dataStr}:${secret}`);
-        const hashBuffer = await window.crypto.subtle.digest("SHA-256", msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-        
-        setDynamicQrPayload(`${dataStr}:${hashHex}`);
-      } catch (err) {
-        console.error("Failed to generate secure QR signature:", err);
-        // Fallback to static ID if subtle crypto fails
-        setDynamicQrPayload(bookingId);
-      }
-    };
-
-    // Initial update
-    updatePayload(baseTimestamp, currentState);
-
-    // Interval to toggle state (flashes every 1.5 seconds)
-    const stateInterval = setInterval(() => {
-      currentState = currentState === 0 ? 1 : 0;
-      setQrState(currentState);
-      updatePayload(baseTimestamp, currentState);
-    }, 1500);
-
-    // Interval to update base timestamp every 60 seconds
-    const timestampInterval = setInterval(() => {
-      baseTimestamp = Date.now();
-      setQrTimeLeft(60);
-      updatePayload(baseTimestamp, currentState);
-    }, 60000);
-
-    // Countdown timer for visualization
-    const countdownInterval = setInterval(() => {
-      setQrTimeLeft(prev => (prev > 1 ? prev - 1 : 60));
-    }, 1000);
-
-    return () => {
-      clearInterval(stateInterval);
-      clearInterval(timestampInterval);
-      clearInterval(countdownInterval);
-    };
-  }, [activeTicket]);
 
   // Handle Stripe redirect parameter verification
   useEffect(() => {
@@ -678,78 +617,96 @@ export default function UserDashboardClient({
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
-                    {upcomingBookings.map((b) => (
-                      <div 
-                        key={b.id} 
-                        className="card p-5 relative overflow-hidden flex flex-col justify-between gap-4 border-slate-200 dark:border-[#1F1F35]"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[9px] border-l-2 border-tenant-primary text-tenant-primary pl-1.5 font-extrabold uppercase tracking-wider select-none">
-                              {b.tenantName}
-                            </span>
-                            {b.status === "PENDING_PAYMENT" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
-                                <AlertTriangle size={10} className="stroke-[3]" />
-                                Čeká na platbu
-                              </span>
-                            ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                                Právě probíhá
-                              </span>
-                            ) : b.status === "ATTENDED" ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
-                                <CheckCircle size={10} className="stroke-[3]" />
-                                Odbaveno
-                              </span>
-                            ) : (
-                              <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
-                                <Check size={10} className="stroke-[3]" />
-                                Potvrzeno
-                              </span>
-                            )}
-                          </div>
+                    {upcomingBookings.map((b) => {
+                      const equipmentPrice = b.rentedEquipment && Array.isArray(b.rentedEquipment)
+                        ? b.rentedEquipment.reduce((sum: number, eq: any) => sum + (eq.category === "default" ? 0 : (Number(eq.price || 0) * Number(eq.quantity || 0))), 0)
+                        : 0;
+                      const ticketPrice = Math.max(0, Number(b.price || 0) - equipmentPrice);
 
-                          <h3 className="font-extrabold text-base text-foreground leading-tight">{b.resourceName}</h3>
-                          
-                          <div className="space-y-1 text-xs text-muted-foreground">
-                            <p className="flex items-center gap-1.5">
-                              <Calendar size={13} className="text-muted-foreground" />
-                              {formatDate(b.reservedFrom)}
-                            </p>
-                            <p className="flex items-center gap-1.5">
-                              <Clock size={13} className="text-muted-foreground" />
-                              {formatTimeRange(b.reservedFrom, b.reservedTo)}
-                            </p>
-                            {b.rentedEquipment && Array.isArray(b.rentedEquipment) && b.rentedEquipment.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-dashed border-border/60 text-[11px] text-muted-foreground space-y-1">
-                                <span className="block font-bold text-[9px] uppercase tracking-wider text-slate-400">Půjčené vybavení:</span>
-                                <div className="space-y-0.5 pl-1.5">
-                                  {b.rentedEquipment.map((eq: any) => (
-                                    <div key={eq.id} className="flex justify-between items-center">
-                                      <span>• {eq.name} ({eq.quantity} ks)</span>
-                                      <span className="font-semibold text-slate-700 dark:text-zinc-300">
-                                        {eq.category === "default" ? "V ceně" : `${eq.price * eq.quantity} Kč`}
-                                      </span>
+                      return (
+                        <div 
+                          key={b.id} 
+                          className="card p-5 relative overflow-hidden flex flex-col justify-between gap-4 border-slate-200 dark:border-[#1F1F35]"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] border-l-2 border-tenant-primary text-tenant-primary pl-1.5 font-extrabold uppercase tracking-wider select-none">
+                                {b.tenantName}
+                              </span>
+                              {b.status === "PENDING_PAYMENT" ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-none bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                  <AlertTriangle size={10} className="stroke-[3]" />
+                                  Čeká na platbu
+                                </span>
+                              ) : new Date(b.reservedFrom) <= new Date() && new Date(b.reservedTo) > new Date() ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-none bg-indigo-550/10 dark:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                                  Právě probíhá
+                                </span>
+                              ) : b.status === "ATTENDED" ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-none bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                  <CheckCircle size={10} className="stroke-[3]" />
+                                  Odbaveno
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                  <Check size={10} className="stroke-[3]" />
+                                  Potvrzeno
+                                </span>
+                              )}
+                            </div>
+
+                            <h3 className="font-extrabold text-base text-foreground leading-tight">{b.resourceName}</h3>
+                            
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <p className="flex items-center gap-1.5">
+                                <Calendar size={13} className="text-muted-foreground" />
+                                {formatDate(b.reservedFrom)}
+                              </p>
+                              <p className="flex items-center gap-1.5">
+                                <Clock size={13} className="text-muted-foreground" />
+                                {formatTimeRange(b.reservedFrom, b.reservedTo)}
+                              </p>
+
+                              {/* Price Details Block */}
+                              <div className="mt-2.5 pt-2.5 border-t border-dashed border-border/60 text-[11px] space-y-1.5">
+                                <div className="flex justify-between items-center text-muted-foreground">
+                                  <span>Vstupné / Pronájem</span>
+                                  <span className="font-semibold text-slate-750 dark:text-zinc-350">
+                                    {formatCurrency(ticketPrice, tenant.currency || "CZK", tenant.locale || "cs-CZ")}
+                                  </span>
+                                </div>
+                                {b.rentedEquipment && Array.isArray(b.rentedEquipment) && b.rentedEquipment.length > 0 && (
+                                  <div className="space-y-1 mt-1.5 pt-1.5 border-t border-slate-100 dark:border-white/5">
+                                    <span className="block font-bold text-[9px] uppercase tracking-wider text-slate-400">Půjčené vybavení:</span>
+                                    <div className="space-y-0.5 pl-1.5 text-muted-foreground">
+                                      {b.rentedEquipment.map((eq: any) => (
+                                        <div key={eq.id} className="flex justify-between items-center">
+                                          <span>• {eq.name} ({eq.quantity} ks)</span>
+                                          <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                                            {eq.category === "default" ? "V ceně" : `${eq.price * eq.quantity} Kč`}
+                                          </span>
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 dark:border-white/10 font-extrabold text-[12px] text-foreground mt-2">
+                                  <span className="uppercase tracking-wider text-[10px] text-slate-400">Celkem</span>
+                                  <span className="text-tenant-primary font-black">
+                                    {formatCurrency(b.price || "0", tenant.currency || "CZK", tenant.locale || "cs-CZ")}
+                                  </span>
                                 </div>
                               </div>
-                            )}
+                            </div>
                           </div>
-                        </div>
 
                         <div className="flex items-center gap-2 pt-2 border-t border-border mt-1">
                           {b.status === "PENDING_PAYMENT" ? (
                             <Link
                               href={`/tenants/${tenant.id}/checkout?bookingId=${b.id}`}
-                              className="btn-tenant flex-1 py-2 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center"
-                              style={{ 
-                                background: `linear-gradient(135deg, oklch(0.65 0.18 55), oklch(0.55 0.18 45))`, // Amber/Orange gradient
-                                boxShadow: `0 4px 12px rgba(245,158,11,0.15)`
-                              }}
+                              className="flex-1 py-2 rounded-none text-[10.5px] font-bold border border-tenant-primary/20 border-l-[3px] border-l-tenant-primary bg-tenant-primary/10 hover:bg-tenant-primary text-tenant-primary hover:text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm uppercase tracking-widest text-center"
                             >
-                              <CreditCard size={14} />
+                              <CreditCard size={13} />
                               Zaplatit nyní ({formatCurrency(b.price || "0", tenant.currency || "CZK", tenant.locale || "cs-CZ")})
                             </Link>
                           ) : (
@@ -770,8 +727,9 @@ export default function UserDashboardClient({
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
                 )}
               </div>
 
@@ -1424,111 +1382,16 @@ export default function UserDashboardClient({
             </div>
           )}
         </div>
-
       </main>
 
-      {/* Ticket boarding pass modal overlay */}
-      {activeTicket && (
-        <div 
-          onClick={() => setActiveTicket(null)}
-          className="fixed inset-0 bg-[#07070C]/75 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-200"
-        >
-          {/* Boarding Pass Ticket representation */}
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-white dark:bg-[#0D0D15] rounded-none shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden border border-slate-200/50 dark:border-[#1F1F35] relative flex flex-col"
-          >
-            {/* Ticket Top Part */}
-            <div className="p-6 text-xs space-y-4 text-slate-800 dark:text-slate-200 relative">
-              {/* Glow badge */}
-              <div className="absolute top-0 right-0 h-32 w-32 bg-tenant-gradient opacity-15 blur-2xl rounded-full" />
-              
-              <div className="flex items-center justify-between">
-                <span className="font-extrabold text-[10px] uppercase tracking-widest text-tenant-primary">{activeTicket.tenantName}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold uppercase tracking-wider">
-                  Aktivní vstup
-                </span>
-              </div>
-
-              <div>
-                <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Sportoviště / Plocha</span>
-                <h3 className="text-xl font-extrabold text-foreground leading-tight mt-0.5">{activeTicket.resourceName}</h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-dashed border-border mt-2">
-                <div>
-                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Datum vstupu</span>
-                  <p className="font-bold text-foreground mt-0.5">{new Date(activeTicket.reservedFrom).toLocaleDateString(tenant.locale || "cs-CZ")}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Časový úsek</span>
-                  <p className="font-bold text-foreground mt-0.5">{formatTimeRange(activeTicket.reservedFrom, activeTicket.reservedTo).split(" (")[0]}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Ticket Divider with Semi-circle notches on edges */}
-            <div className="relative h-6 flex items-center justify-center">
-              <div className="absolute -left-3 h-6 w-6 rounded-none bg-[#07070C] border-r border-slate-200/50 dark:border-[#1F1F35]" />
-              <div className="absolute -right-3 h-6 w-6 rounded-none bg-[#07070C] border-l border-slate-200/50 dark:border-[#1F1F35]" />
-              <div className="w-full border-t border-dashed border-slate-300 dark:border-[#2A2A45] mx-5" />
-            </div>
-
-            {/* Ticket Bottom Part (QR Code) */}
-            <div className="p-6 flex flex-col items-center bg-slate-50/50 dark:bg-slate-900/20 text-center gap-4">
-              <div className="flex items-center gap-2 select-none bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-1 px-3 rounded-none text-[9px] font-extrabold uppercase tracking-wider">
-                Aktivní zabezpečený kód
-              </div>
-              
-              {/* Premium looking QR Code visual representation */}
-              <div className="relative p-4 bg-white rounded-none border border-slate-200 flex items-center justify-center shadow-md select-none overflow-hidden group">
-                <div className="h-40 w-40 flex flex-col items-center justify-center bg-white rounded-none relative overflow-hidden text-slate-800">
-                  {dynamicQrPayload ? (
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dynamicQrPayload)}`}
-                      alt={`QR Code pro rezervaci ${activeTicket.id}`}
-                      className="h-36 w-36 object-contain transition-all duration-300"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-tenant-primary" size={24} />
-                      <span className="text-[10px] text-slate-400 font-bold">Šifrování...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <code className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest bg-secondary/50 py-1 px-3.5 rounded-none border border-border">
-                  {activeTicket.id.substring(0, 8)}...{activeTicket.id.substring(activeTicket.id.length - 8)}
-                </code>
-                
-                <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500 font-semibold select-none">
-                  <span className="w-16 h-1 bg-slate-200 dark:bg-zinc-800 rounded-none overflow-hidden relative">
-                    <span 
-                      className="absolute inset-y-0 left-0 bg-tenant-primary transition-all duration-1000"
-                      style={{ width: `${(qrTimeLeft / 60) * 100}%` }}
-                    />
-                  </span>
-                  <span>Obnova za {qrTimeLeft}s</span>
-                </div>
-              </div>
-
-              <p className="text-[9px] text-slate-400 dark:text-zinc-500 leading-normal max-w-[220px]">
-                Kód se z bezpečnostních důvodů každou minutu generuje znovu a bliká. Snímky obrazovky ani videozáznamy nebudou čtečkou přijaty.
-              </p>
-
-              <button
-                onClick={() => setActiveTicket(null)}
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-foreground text-xs font-semibold rounded-none transition-all cursor-pointer mt-2"
-              >
-                Zavřít lístek
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+      <TicketModal
+        isOpen={!!activeTicket}
+        onClose={() => setActiveTicket(null)}
+        booking={activeTicket}
+        tenantLocale={tenant.locale}
+        onCancelBooking={handleCancelBooking}
+        isCancelling={cancellingId === activeTicket?.id}
+      />
 
       <AlertDialog
         isOpen={profileMessage !== null}
